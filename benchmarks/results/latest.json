@@ -1,0 +1,371 @@
+{
+  "dataset": "MedWear-Wearable-Analytics-Mini-v1",
+  "version": "1.0.0",
+  "evaluatedAt": "2026-06-26T13:04:38.482Z",
+  "n": 8,
+  "engine": "MedWear-AnalyticsCore-v1",
+  "metrics": {
+    "alerts": {
+      "precision": 0.8889,
+      "recall": 1,
+      "f1": 0.9412
+    },
+    "alertExactMatchRate": 0.875,
+    "anomalyAccuracy": 0.75,
+    "riskAccuracy": 0.625,
+    "healthScoreInRangeRate": 1
+  },
+  "cases": [
+    {
+      "id": "WA-001",
+      "label": "Healthy baseline",
+      "predicted": {
+        "id": "WA-001",
+        "alerts": [],
+        "anomalyDetected": false,
+        "anomalyTypes": [],
+        "healthScore": 90,
+        "riskLevel": "low"
+      },
+      "expected": {
+        "alerts": [],
+        "anomaly": false,
+        "riskLevel": "low",
+        "healthScoreMin": 75
+      },
+      "alertExactMatch": true,
+      "anomalyOk": true,
+      "riskOk": true,
+      "scoreOk": true
+    },
+    {
+      "id": "WA-002",
+      "label": "Tachycardia alert",
+      "predicted": {
+        "id": "WA-002",
+        "alerts": [
+          "心率偏高"
+        ],
+        "anomalyDetected": true,
+        "anomalyTypes": [
+          "心率异常波动"
+        ],
+        "healthScore": 62,
+        "riskLevel": "moderate"
+      },
+      "expected": {
+        "alerts": [
+          "心率偏高"
+        ],
+        "anomaly": false,
+        "riskLevel": "moderate",
+        "healthScoreMin": 50
+      },
+      "alertExactMatch": true,
+      "anomalyOk": false,
+      "riskOk": true,
+      "scoreOk": true
+    },
+    {
+      "id": "WA-003",
+      "label": "Bradycardia alert",
+      "predicted": {
+        "id": "WA-003",
+        "alerts": [
+          "心率偏低"
+        ],
+        "anomalyDetected": false,
+        "anomalyTypes": [],
+        "healthScore": 80,
+        "riskLevel": "low"
+      },
+      "expected": {
+        "alerts": [
+          "心率偏低"
+        ],
+        "anomaly": false,
+        "riskLevel": "moderate",
+        "healthScoreMin": 60
+      },
+      "alertExactMatch": true,
+      "anomalyOk": true,
+      "riskOk": false,
+      "scoreOk": true
+    },
+    {
+      "id": "WA-004",
+      "label": "Hypoxemia alert",
+      "predicted": {
+        "id": "WA-004",
+        "alerts": [
+          "血氧偏低"
+        ],
+        "anomalyDetected": true,
+        "anomalyTypes": [
+          "血氧偏低事件"
+        ],
+        "healthScore": 60,
+        "riskLevel": "moderate"
+      },
+      "expected": {
+        "alerts": [
+          "血氧偏低"
+        ],
+        "anomaly": true,
+        "riskLevel": "high",
+        "healthScoreMin": 40
+      },
+      "alertExactMatch": true,
+      "anomalyOk": true,
+      "riskOk": false,
+      "scoreOk": true
+    },
+    {
+      "id": "WA-005",
+      "label": "Sedentary alert",
+      "predicted": {
+        "id": "WA-005",
+        "alerts": [
+          "活动量不足"
+        ],
+        "anomalyDetected": false,
+        "anomalyTypes": [],
+        "healthScore": 68,
+        "riskLevel": "moderate"
+      },
+      "expected": {
+        "alerts": [
+          "活动量不足"
+        ],
+        "anomaly": false,
+        "riskLevel": "moderate",
+        "healthScoreMin": 55
+      },
+      "alertExactMatch": true,
+      "anomalyOk": true,
+      "riskOk": true,
+      "scoreOk": true
+    },
+    {
+      "id": "WA-006",
+      "label": "HR spike anomaly",
+      "predicted": {
+        "id": "WA-006",
+        "alerts": [
+          "心率偏高"
+        ],
+        "anomalyDetected": true,
+        "anomalyTypes": [
+          "心率异常波动"
+        ],
+        "healthScore": 82,
+        "riskLevel": "low"
+      },
+      "expected": {
+        "alerts": [],
+        "anomaly": true,
+        "riskLevel": "moderate",
+        "healthScoreMin": 60
+      },
+      "alertExactMatch": false,
+      "anomalyOk": true,
+      "riskOk": false,
+      "scoreOk": true
+    },
+    {
+      "id": "WA-007",
+      "label": "Poor sleep high risk",
+      "predicted": {
+        "id": "WA-007",
+        "alerts": [
+          "活动量不足"
+        ],
+        "anomalyDetected": false,
+        "anomalyTypes": [],
+        "healthScore": 42,
+        "riskLevel": "high"
+      },
+      "expected": {
+        "alerts": [
+          "活动量不足"
+        ],
+        "anomaly": true,
+        "riskLevel": "high",
+        "healthScoreMin": 30
+      },
+      "alertExactMatch": true,
+      "anomalyOk": false,
+      "riskOk": true,
+      "scoreOk": true
+    },
+    {
+      "id": "WA-008",
+      "label": "Multi-alert compound",
+      "predicted": {
+        "id": "WA-008",
+        "alerts": [
+          "心率偏高",
+          "血氧偏低",
+          "活动量不足"
+        ],
+        "anomalyDetected": true,
+        "anomalyTypes": [
+          "血氧偏低事件",
+          "血氧偏低事件"
+        ],
+        "healthScore": 41,
+        "riskLevel": "high"
+      },
+      "expected": {
+        "alerts": [
+          "心率偏高",
+          "血氧偏低",
+          "活动量不足"
+        ],
+        "anomaly": true,
+        "riskLevel": "high",
+        "healthScoreMin": 25
+      },
+      "alertExactMatch": true,
+      "anomalyOk": true,
+      "riskOk": true,
+      "scoreOk": true
+    }
+  ],
+  "mismatches": [
+    {
+      "id": "WA-002",
+      "label": "Tachycardia alert",
+      "predicted": {
+        "id": "WA-002",
+        "alerts": [
+          "心率偏高"
+        ],
+        "anomalyDetected": true,
+        "anomalyTypes": [
+          "心率异常波动"
+        ],
+        "healthScore": 62,
+        "riskLevel": "moderate"
+      },
+      "expected": {
+        "alerts": [
+          "心率偏高"
+        ],
+        "anomaly": false,
+        "riskLevel": "moderate",
+        "healthScoreMin": 50
+      },
+      "alertExactMatch": true,
+      "anomalyOk": false,
+      "riskOk": true,
+      "scoreOk": true
+    },
+    {
+      "id": "WA-003",
+      "label": "Bradycardia alert",
+      "predicted": {
+        "id": "WA-003",
+        "alerts": [
+          "心率偏低"
+        ],
+        "anomalyDetected": false,
+        "anomalyTypes": [],
+        "healthScore": 80,
+        "riskLevel": "low"
+      },
+      "expected": {
+        "alerts": [
+          "心率偏低"
+        ],
+        "anomaly": false,
+        "riskLevel": "moderate",
+        "healthScoreMin": 60
+      },
+      "alertExactMatch": true,
+      "anomalyOk": true,
+      "riskOk": false,
+      "scoreOk": true
+    },
+    {
+      "id": "WA-004",
+      "label": "Hypoxemia alert",
+      "predicted": {
+        "id": "WA-004",
+        "alerts": [
+          "血氧偏低"
+        ],
+        "anomalyDetected": true,
+        "anomalyTypes": [
+          "血氧偏低事件"
+        ],
+        "healthScore": 60,
+        "riskLevel": "moderate"
+      },
+      "expected": {
+        "alerts": [
+          "血氧偏低"
+        ],
+        "anomaly": true,
+        "riskLevel": "high",
+        "healthScoreMin": 40
+      },
+      "alertExactMatch": true,
+      "anomalyOk": true,
+      "riskOk": false,
+      "scoreOk": true
+    },
+    {
+      "id": "WA-006",
+      "label": "HR spike anomaly",
+      "predicted": {
+        "id": "WA-006",
+        "alerts": [
+          "心率偏高"
+        ],
+        "anomalyDetected": true,
+        "anomalyTypes": [
+          "心率异常波动"
+        ],
+        "healthScore": 82,
+        "riskLevel": "low"
+      },
+      "expected": {
+        "alerts": [],
+        "anomaly": true,
+        "riskLevel": "moderate",
+        "healthScoreMin": 60
+      },
+      "alertExactMatch": false,
+      "anomalyOk": true,
+      "riskOk": false,
+      "scoreOk": true
+    },
+    {
+      "id": "WA-007",
+      "label": "Poor sleep high risk",
+      "predicted": {
+        "id": "WA-007",
+        "alerts": [
+          "活动量不足"
+        ],
+        "anomalyDetected": false,
+        "anomalyTypes": [],
+        "healthScore": 42,
+        "riskLevel": "high"
+      },
+      "expected": {
+        "alerts": [
+          "活动量不足"
+        ],
+        "anomaly": true,
+        "riskLevel": "high",
+        "healthScoreMin": 30
+      },
+      "alertExactMatch": true,
+      "anomalyOk": false,
+      "riskOk": true,
+      "scoreOk": true
+    }
+  ]
+}

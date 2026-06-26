@@ -1,0 +1,8 @@
+{
+  "short_name": "MedWear",
+  "name": "MedWear 医用可穿戴数据分析平台",
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#1565C0",
+  "background_color": "#f0f4f8"
+}

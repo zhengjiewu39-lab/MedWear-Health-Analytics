@@ -1,0 +1,45 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "MedWear: 启动开发服务器",
+      "type": "shell",
+      "command": "npm run dev",
+      "options": { "cwd": "${workspaceFolder}" },
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "custom",
+        "pattern": { "regexp": "^$" },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": ".",
+          "endsPattern": "webpack compiled|Compiled successfully|MedWear API"
+        }
+      },
+      "presentation": { "reveal": "always", "panel": "dedicated", "close": false }
+    },
+    {
+      "label": "MedWear: 停止并释放端口",
+      "type": "shell",
+      "command": "npm run stop",
+      "options": { "cwd": "${workspaceFolder}" },
+      "presentation": { "reveal": "always", "panel": "shared" }
+    },
+    {
+      "label": "MedWear: 仅启动 API",
+      "type": "shell",
+      "command": "npm run free-ports && npm run server",
+      "options": { "cwd": "${workspaceFolder}" },
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "custom",
+        "pattern": { "regexp": "^$" },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": ".",
+          "endsPattern": "MedWear API"
+        }
+      }
+    }
+  ]
+}

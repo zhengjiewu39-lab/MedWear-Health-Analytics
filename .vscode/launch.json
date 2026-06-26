@@ -1,0 +1,28 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "chrome",
+      "request": "launch",
+      "name": "MedWear 调试前端",
+      "url": "http://localhost:3000",
+      "webRoot": "${workspaceFolder}",
+      "preLaunchTask": "MedWear: 启动开发服务器",
+      "postDebugTask": "MedWear: 停止并释放端口"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "MedWear 调试 API",
+      "program": "${workspaceFolder}/server.js",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "MedWear 全栈调试",
+      "configurations": ["MedWear 调试 API", "MedWear 调试前端"]
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+---
+description: 医用可穿戴设备数据分析平台 (MedWear) 项目规范
+alwaysApply: true
+---
+
+# MedWear 项目规范
+
+## 双模式架构（完全隔离）
+- **演示模式** (`demo`): 仅 `server/mock/clinicalData.js` 模拟数据 + 规则引擎 AI
+- **真实模式** (`real`): 仅 Apple Health 导入数据 + OpenAI 真实 AI
+- 切换：顶栏 Chip · 请求头 `X-MedWear-Mode`
+- 真实模式无数据时不回落模拟数据，显示「数据导入」引导
+
+## 真实模式
+- 侧边栏顶部高亮「数据导入」入口
+- 导入: `POST /api/data/import` → `data/health-store.json`
+- 预约: `data/real-appointments.json`（与演示预约分离）
+- AI: `server/ai/llm.js`（未配置 Key 时不使用演示规则引擎）
+
+## 开发
+- `npm run dev` · `npm run stop`
+- 演示账号: demo/demo123

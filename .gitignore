@@ -1,0 +1,15 @@
+node_modules/
+build/
+.env
+.env.local
+uploads/
+health-import/.tmp-extract/
+health-import/*.zip
+health-import/*.xml
+data/health-store.json
+data/real-appointments.json
+data/ai-config.json
+data/health-vault.enc
+data/audit-log.json
+.DS_Store
+*.log

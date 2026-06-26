@@ -1,0 +1,14 @@
+{
+  "folders": [
+    {
+      "name": "MedWear · 医用可穿戴设备数据分析平台",
+      "path": "."
+    }
+  ],
+  "settings": {
+    "files.exclude": {
+      "node_modules": true,
+      "build": true
+    }
+  }
+}
