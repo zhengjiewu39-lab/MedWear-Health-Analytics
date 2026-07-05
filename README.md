@@ -43,6 +43,8 @@ npm run dev          # API :3001 + frontend :3000
 
 **Accounts:** `demo/demo123` · `admin/admin123`
 
+> **Demo vs production:** Demo accounts work when `NODE_ENV !== 'production'` or `ALLOW_DEMO_AUTH=true`. In production, set `MEDWEAR_JWT_SECRET`, `MEDWEAR_ENCRYPTION_KEY`, and `CORS_ORIGIN`. See `.env.example`.
+
 ---
 
 ## Apple Health Import (Real Mode)
@@ -106,4 +108,9 @@ For demonstration, education, and research prototyping — **not a medical devic
 
 ## License
 
-MIT
+MIT — see [LICENSE](LICENSE).
+
+## Security & contributing
+
+- [SECURITY.md](SECURITY.md) — vulnerability reporting
+- [CONTRIBUTING.md](CONTRIBUTING.md) — development workflow

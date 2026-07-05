@@ -6,6 +6,7 @@ import {
   Assessment, Download, PictureAsPdf, TableChart, TrendingUp,
   Person, CalendarToday, AutoAwesome,
 } from '@mui/icons-material';
+import PageHeader from '../components/PageHeader';
 
 const reportTemplates = [
   { title: '日健康报告', desc: '24小时生命体征汇总与异常事件', icon: <CalendarToday />, type: 'daily' },
@@ -19,10 +20,11 @@ const reportTemplates = [
 function ReportCenter() {
   return (
     <Box>
-      <Typography variant="h5" gutterBottom fontWeight={600}>报告中心</Typography>
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-        一键生成健康分析报告，支持 PDF 导出与临床系统对接
-      </Typography>
+      <PageHeader
+        title="报告中心"
+        subtitle="一键生成健康分析报告，支持 PDF 导出与临床系统对接"
+        breadcrumbs={[{ label: '管理控制台', path: '/admin' }, { label: '报告中心' }]}
+      />
 
       <Grid container spacing={3}>
         {reportTemplates.map(report => (

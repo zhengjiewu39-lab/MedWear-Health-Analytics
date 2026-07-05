@@ -6,5 +6,9 @@ services:
     environment:
       - PORT=3001
       - NODE_ENV=production
+      - MEDWEAR_JWT_SECRET=${MEDWEAR_JWT_SECRET:-change-me-in-production}
+      - MEDWEAR_ENCRYPTION_KEY=${MEDWEAR_ENCRYPTION_KEY:-change-me-32-chars-minimum-secret}
+      - ALLOW_DEMO_AUTH=${ALLOW_DEMO_AUTH:-true}
+      - CORS_ORIGIN=${CORS_ORIGIN:-http://localhost:3000}
     volumes:
       - ./data:/app/data

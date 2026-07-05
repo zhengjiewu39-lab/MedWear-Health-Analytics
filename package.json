@@ -7,17 +7,19 @@
     "@emotion/styled": "^11.14.0",
     "@mui/icons-material": "^5.15.12",
     "@mui/material": "^5.15.12",
+    "adm-zip": "^0.5.16",
     "axios": "^1.9.0",
     "cors": "^2.8.5",
+    "dotenv": "^16.6.1",
     "express": "^5.1.0",
-    "moment": "^2.30.1",
+    "express-rate-limit": "^7.5.1",
+    "helmet": "^8.2.0",
     "multer": "^2.0.0",
-    "sax": "^1.4.1",
-    "adm-zip": "^0.5.16",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.22.3",
     "recharts": "^2.12.2",
+    "sax": "^1.4.1",
     "web-vitals": "^2.1.4"
   },
   "scripts": {
@@ -30,14 +32,30 @@
     "stop": "node scripts/free-ports.js",
     "dev": "node scripts/dev.js",
     "test:server": "node --test server/__tests__/*.test.js",
-    "evaluate": "node scripts/evaluate-analytics.js"
+    "evaluate": "node scripts/evaluate-analytics.js",
+    "export:features": "node scripts/export_features.js",
+    "generate:synth-health": "node scripts/generate_synthetic_healthdata.js --users 200 --days 14",
+    "experiment:export": "npm run export:features",
+    "experiment:train": "python experiments/medwear/train.py --data experiments/data/medwear/features_v1.csv --model rf --cv 5 --seed 42",
+    "experiment:summary": "python experiments/medwear/evaluate.py --results experiments/results --out experiments/results/summary.csv"
   },
   "eslintConfig": {
-    "extends": ["react-app", "react-app/jest"]
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
   },
   "browserslist": {
-    "production": [">0.2%", "not dead", "not op_mini all"],
-    "development": ["last 1 chrome version", "last 1 firefox version", "last 1 safari version"]
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
   },
   "devDependencies": {
     "concurrently": "^8.2.2",

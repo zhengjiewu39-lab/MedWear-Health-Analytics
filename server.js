@@ -1,18 +1,20 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 const { getExamSlots } = require('./server/mock/clinicalData');
 const { runFullAnalysis, getAllReferences } = require('./server/ai/engine');
 const { chatWithLLM } = require('./server/ai/llm');
 const { loadConfig, saveConfig, isAiConfigured } = require('./server/ai/config');
-const { signToken, verifyToken, authMiddleware, securityHeaders, getApiKeys } = require('./server/security/auth');
+const { authenticate, verifyToken, authMiddleware, getApiKeys, ALLOW_DEMO } = require('./server/security/auth');
 const { audit, auditMiddleware, getAuditLog } = require('./server/security/audit');
-const { apiLimiter, authLimiter } = require('./server/security/rateLimit');
 const { saveVault, loadVault, anonymizeProfile, ALGO } = require('./server/security/crypto');
 const { getPlatformStatus, platformVitals, platformScreening, platformReport, platformAnalysis } = require('./server/platform/connect');
 const { modeMiddleware, isRealMode } = require('./server/middleware/mode');
 const { getProvider } = require('./server/data/provider');
 const { registerDataRoutes } = require('./server/routes/data');
+const { registerAdminRoutes } = require('./server/routes/admin');
 const researchRoutes = require('./server/routes/research');
 const { geolocate } = require('./server/geo/location');
 const { findNearbyHospitals } = require('./server/geo/hospitals');
@@ -22,15 +24,34 @@ const app = express();
 const port = process.env.PORT || 3001;
 
 app.set('trust proxy', true);
-app.use(securityHeaders);
+app.use(helmet({ contentSecurityPolicy: false }));
+
+const corsOrigins = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(',').map((o) => o.trim())
+  : null;
+
 app.use(cors({
-  origin(origin, callback) {
-    callback(null, !origin || origin.startsWith('http://localhost') || origin.startsWith('http://127.0.0.1') || process.env.NODE_ENV !== 'production');
-  },
+  origin: corsOrigins || ((origin, callback) => {
+    if (!origin || origin.startsWith('http://localhost') || origin.startsWith('http://127.0.0.1')) {
+      return callback(null, true);
+    }
+    if (process.env.NODE_ENV !== 'production') return callback(null, true);
+    return callback(new Error('Not allowed by CORS'));
+  }),
   credentials: true,
 }));
-app.use(express.json({ limit: '50mb' }));
-app.use(apiLimiter);
+app.use(express.json({ limit: '10mb' }));
+app.use('/api/', rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: Number(process.env.RATE_LIMIT_MAX || 300),
+  standardHeaders: true,
+  legacyHeaders: false,
+}));
+const authLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 30,
+  message: { success: false, message: '登录尝试过于频繁，请稍后再试' },
+});
 app.use(modeMiddleware);
 app.use(auditMiddleware);
 app.use((req, res, next) => {
@@ -40,11 +61,7 @@ app.use((req, res, next) => {
 app.use(authMiddleware);
 
 function resolveUser(req) {
-  if (req.user) return req.user;
-  if (req.headers.authorization === 'Bearer token') {
-    return { id: 1, username: 'demo', name: mockData.profile.name, role: 'user' };
-  }
-  return verifyToken(req.headers.authorization);
+  return req.user || verifyToken(req.headers.authorization);
 }
 
 function provider(req) {
@@ -55,14 +72,13 @@ function provider(req) {
 app.post('/api/auth/login', authLimiter, (req, res) => {
   const username = String(req.body?.username || '').trim();
   const password = String(req.body?.password || '').trim();
-  if ((username === 'admin' && password === 'admin123') || (username === 'demo' && password === 'demo123')) {
-    const user = { id: 1, username, name: mockData.profile.name, role: username === 'admin' ? 'admin' : 'user' };
-    audit('LOGIN', { user: username, ip: req.ip, success: true });
-    res.json({ success: true, token: signToken(user), user });
-  } else {
+  const result = authenticate(username, password);
+  if (!result) {
     audit('LOGIN_FAILED', { user: username, ip: req.ip, success: false });
-    res.status(401).json({ success: false, message: '用户名或密码错误' });
+    return res.status(401).json({ success: false, message: '用户名或密码错误' });
   }
+  audit('LOGIN', { user: username, ip: req.ip, success: true });
+  return res.json({ success: true, ...result });
 });
 app.post('/api/auth/logout', (req, res) => {
   audit('LOGOUT', { user: resolveUser(req)?.username, ip: req.ip });
@@ -74,6 +90,7 @@ app.get('/api/auth/me', (req, res) => {
 });
 
 registerDataRoutes(app, resolveUser);
+registerAdminRoutes(app);
 app.use('/api/research', researchRoutes);
 
 app.get('/api/health', (_, res) => {
@@ -295,4 +312,7 @@ app.get('/api/platform/v1/analysis', (_, res) => res.json(platformAnalysis()));
 app.listen(port, () => {
   console.log(`MedWear API http://localhost:${port} [双模式 · 真实AI · IP定位医院]`);
   console.log(`  真实 AI: ${isAiConfigured() ? '已配置 ✓' : '未配置 — 设置 OPENAI_API_KEY'}`);
+  if (ALLOW_DEMO) {
+    console.log('  演示账号: demo/demo123 或 admin/admin123 (仅 DEV / ALLOW_DEMO_AUTH)');
+  }
 });

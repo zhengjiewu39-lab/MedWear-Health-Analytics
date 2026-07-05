@@ -120,6 +120,19 @@ export const researchApi = {
   analyze: (data) => api.post('/research/analyze', data),
 };
 
+export const patientApi = {
+  getAll: () => api.get('/admin/patients'),
+};
+
+export const organizationApi = {
+  getDepartments: () => api.get('/admin/departments'),
+  getStaff: () => api.get('/admin/staff'),
+};
+
+export const adminApi = {
+  getOverview: () => api.get('/admin/overview'),
+};
+
 export const geoApi = {
   getLocation: () => api.get('/geo/location'),
 };

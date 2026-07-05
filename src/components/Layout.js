@@ -1,187 +1,335 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
   AppBar, Box, CssBaseline, Drawer, IconButton, List, ListItemIcon,
   ListItemText, Toolbar, Typography, Avatar, Menu, MenuItem, Divider,
-  Collapse, ListItemButton, Chip,
+  Collapse, ListItemButton, Chip, Badge, Tooltip, alpha,
 } from '@mui/material';
 import {
-  Menu as MenuIcon, Dashboard, MonitorHeart, Psychology, BugReport,
-  TrendingUp, Bedtime, PersonPin, MergeType, Assessment,
-  Logout, KeyboardArrowDown, KeyboardArrowUp, SmartToy, MonitorHeartOutlined,
-  NotificationsActive, EmojiEvents, SelfImprovement, AutoAwesome, Settings,
-  Biotech, LocalHospital, Assignment, Hub, Science,
+  Menu as MenuIcon, Logout, KeyboardArrowDown, KeyboardArrowUp,
+  CloudUpload, AdminPanelSettings, Dashboard, People, MonitorHeart,
+  MonitorHeartOutlined, NotificationsActive, Biotech, LocalHospital,
+  Assignment, Business, Gavel, Assessment, Hub, Science, Settings,
+  Psychology, SmartToy, AutoAwesome, BugReport, TrendingUp, Bedtime,
+  SelfImprovement, PersonPin, MergeType, EmojiEvents, Devices,
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import { useDataMode } from '../contexts/DataModeContext';
 import { useHealthData } from '../contexts/HealthDataContext';
-import { CloudUpload } from '@mui/icons-material';
+import { NAV_SECTIONS, getPageTitle } from '../config/navigation';
 
-const drawerWidth = 260;
+const drawerWidth = 272;
 
-const menuItems = [
-  { text: '健康总览', icon: <Dashboard />, path: '/dashboard' },
-  { text: '实时监测', icon: <MonitorHeart />, path: '/monitoring' },
-  { text: 'ECG 心电', icon: <MonitorHeartOutlined />, path: '/ecg' },
-  { text: '预警中心', icon: <NotificationsActive />, path: '/alerts' },
-  {
-    text: '临床筛查',
-    icon: <Biotech />,
-    badge: 'NEW',
-    children: [
-      { text: '临床筛查中心', path: '/screening', icon: <Biotech /> },
-      { text: '预约体检', path: '/appointments', icon: <LocalHospital /> },
-      { text: '医生接诊报告', path: '/doctor-report', icon: <Assignment /> },
-    ],
-  },
-  { text: '分析评价中心', icon: <Science />, path: '/research' },
-  { text: '互联平台', icon: <Hub />, path: '/platform' },
-  {
-    text: 'AI 智能分析',
-    icon: <Psychology />,
-    badge: 'AI',
-    children: [
-      { text: 'AI 健康助手', path: '/ai/assistant', icon: <SmartToy /> },
-      { text: 'AI 健康报告', path: '/ai/report', icon: <AutoAwesome /> },
-      { text: '异常检测', path: '/ai/anomaly', icon: <BugReport /> },
-      { text: '预测分析', path: '/ai/predictive', icon: <TrendingUp /> },
-      { text: '睡眠分析', path: '/ai/sleep', icon: <Bedtime /> },
-      { text: '恢复与压力', path: '/ai/recovery', icon: <SelfImprovement /> },
-      { text: '数字孪生', path: '/ai/digital-twin', icon: <PersonPin /> },
-      { text: '数据融合', path: '/ai/fusion', icon: <MergeType /> },
-      { text: '健康目标', path: '/ai/goals', icon: <EmojiEvents /> },
-    ],
-  },
-  { text: '我的设备', icon: <Assessment />, path: '/devices' },
-  { text: '设置', icon: <Settings />, path: '/settings' },
-];
+const ICONS = {
+  '管理控制台': AdminPanelSettings,
+  '健康总览': Dashboard,
+  '患者管理': People,
+  '实时监测': MonitorHeart,
+  'ECG 心电': MonitorHeartOutlined,
+  '预警中心': NotificationsActive,
+  '临床筛查': Biotech,
+  '预约体检': LocalHospital,
+  '医生报告': Assignment,
+  '组织架构': Business,
+  '合规管理': Gavel,
+  '报告中心': Assessment,
+  '互联平台': Hub,
+  '分析评价': Science,
+  '系统设置': Settings,
+  'AI 健康助手': SmartToy,
+  'AI 健康报告': AutoAwesome,
+  '异常检测': BugReport,
+  '预测分析': TrendingUp,
+  '睡眠分析': Bedtime,
+  '恢复与压力': SelfImprovement,
+  '数字孪生': PersonPin,
+  '数据融合': MergeType,
+  '健康目标': EmojiEvents,
+  '我的设备': Devices,
+};
 
-const allLabels = [
-  { path: '/import', text: '数据导入' },
-  ...menuItems.flatMap(i => i.children ? i.children.map(c => ({ path: c.path, text: c.text })) : [{ path: i.path, text: i.text }]),
-];
+function NavIcon({ name }) {
+  const Icon = ICONS[name] || Dashboard;
+  return <Icon fontSize="small" />;
+}
 
 export function Layout({ children }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
-  const [openSubMenus, setOpenSubMenus] = useState({ '临床筛查': true, 'AI 智能分析': true });
+  const [openSections, setOpenSections] = useState(() =>
+    Object.fromEntries(
+      NAV_SECTIONS.filter((s) => s.collapsible).map((s) => [s.id, s.defaultOpen ?? false])
+    )
+  );
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, logout } = useAuth();
+  const { user, logout, isAdmin } = useAuth();
   const { toggleMode, isDemo, isReal } = useDataMode();
   const { hasData } = useHealthData();
 
+  const sections = useMemo(
+    () => NAV_SECTIONS.filter((section) => !section.adminOnly || isAdmin),
+    [isAdmin]
+  );
+
   const isActive = (path) => location.pathname === path;
-  const getTitle = () => allLabels.find(m => m.path === location.pathname)?.text || 'MedWear AI';
+  const title = getPageTitle(location.pathname, isAdmin);
+
+  const renderNavItem = (item) => {
+    if (item.adminOnly && !isAdmin) return null;
+    return (
+      <ListItemButton
+        key={item.path}
+        selected={isActive(item.path)}
+        onClick={() => { navigate(item.path); setMobileOpen(false); }}
+        sx={{
+          py: 1,
+          px: 1.5,
+          color: '#cbd5e1',
+          '&.Mui-selected': {
+            bgcolor: alpha('#818cf8', 0.2),
+            color: '#fff',
+            '& .MuiListItemIcon-root': { color: '#a5b4fc' },
+            '&:hover': { bgcolor: alpha('#818cf8', 0.28) },
+          },
+          '&:hover': { bgcolor: alpha('#fff', 0.06) },
+        }}
+      >
+        <ListItemIcon sx={{ minWidth: 36, color: isActive(item.path) ? '#a5b4fc' : '#64748b' }}>
+          <NavIcon name={item.text} />
+        </ListItemIcon>
+        <ListItemText
+          primary={item.text}
+          primaryTypographyProps={{ fontSize: '0.875rem', fontWeight: isActive(item.path) ? 700 : 500 }}
+        />
+      </ListItemButton>
+    );
+  };
 
   const drawer = (
-    <div>
-      <Toolbar sx={{ flexDirection: 'column', alignItems: 'flex-start', py: 2 }}>
-        <Typography variant="h6" sx={{ fontWeight: 800, color: 'primary.main' }}>MedWear AI</Typography>
-        <Typography variant="caption" color="text.secondary">智能健康分析平台</Typography>
-        <Chip label="演示模式" size="small" color="secondary" sx={{ mt: 0.5, height: 20, fontSize: '0.65rem', display: isDemo ? 'inline-flex' : 'none' }} />
-        <Chip label="真实模式" size="small" color="success" sx={{ mt: 0.5, height: 20, fontSize: '0.65rem', display: isReal ? 'inline-flex' : 'none' }} />
-      </Toolbar>
-      <Divider />
+    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', bgcolor: '#0f172a', color: '#e2e8f0' }}>
+      <Box sx={{ px: 2.5, py: 2.5 }}>
+        <Typography variant="h6" sx={{ fontWeight: 800, color: '#fff', letterSpacing: '-0.02em' }}>
+          MedWear
+        </Typography>
+        <Typography variant="caption" sx={{ color: '#94a3b8' }}>
+          医用可穿戴数据分析
+        </Typography>
+        <Box sx={{ mt: 1.25, display: 'flex', gap: 0.75, flexWrap: 'wrap' }}>
+          <Chip
+            label={isDemo ? '演示' : '真实'}
+            size="small"
+            sx={{ height: 22, fontSize: '0.65rem', bgcolor: alpha('#fff', 0.08), color: '#e2e8f0' }}
+          />
+          {isAdmin && (
+            <Chip label="管理员" size="small" color="secondary" sx={{ height: 22, fontSize: '0.65rem' }} />
+          )}
+        </Box>
+      </Box>
+
+      <Divider sx={{ borderColor: alpha('#fff', 0.08) }} />
+
       {isReal && (
-        <>
-          <List sx={{ px: 1, pt: 1 }}>
-            <ListItemButton
-              selected={isActive('/import')}
-              onClick={() => navigate('/import')}
-              sx={{
-                borderRadius: 2, mx: 0.5, mb: 0.5,
-                bgcolor: hasData ? 'success.50' : 'warning.50',
-                border: '1px solid',
-                borderColor: hasData ? 'success.light' : 'warning.light',
-              }}
-            >
-              <ListItemIcon sx={{ minWidth: 40, color: hasData ? 'success.main' : 'warning.main' }}>
-                <CloudUpload />
-              </ListItemIcon>
-              <ListItemText
-                primary="数据导入"
-                secondary={hasData ? 'Apple Health 已导入' : '导入 Apple Health →'}
-                primaryTypographyProps={{ fontWeight: 700, fontSize: '0.9rem' }}
-                secondaryTypographyProps={{ fontSize: '0.7rem' }}
-              />
-            </ListItemButton>
-          </List>
-          <Divider sx={{ mb: 1 }} />
-        </>
+        <Box sx={{ px: 1.5, pt: 1.5 }}>
+          <ListItemButton
+            selected={isActive('/import')}
+            onClick={() => navigate('/import')}
+            sx={{
+              borderRadius: 2,
+              bgcolor: hasData ? alpha('#059669', 0.15) : alpha('#d97706', 0.15),
+              '&:hover': { bgcolor: hasData ? alpha('#059669', 0.22) : alpha('#d97706', 0.22) },
+            }}
+          >
+            <ListItemIcon sx={{ minWidth: 36, color: hasData ? '#34d399' : '#fbbf24' }}>
+              <CloudUpload fontSize="small" />
+            </ListItemIcon>
+            <ListItemText
+              primary="数据导入"
+              secondary={hasData ? '已导入' : '导入 Apple Health'}
+              primaryTypographyProps={{ fontSize: '0.875rem', fontWeight: 700, color: '#f8fafc' }}
+              secondaryTypographyProps={{ fontSize: '0.7rem', color: '#94a3b8' }}
+            />
+          </ListItemButton>
+        </Box>
       )}
-      <List sx={{ px: 1 }}>
-        {menuItems.map(item => {
-          if (item.children) {
+
+      <Box sx={{ flex: 1, overflowY: 'auto', px: 1.5, py: 1.5 }}>
+        {sections.map((section) => {
+          const visibleItems = section.items.filter((item) => !item.adminOnly || isAdmin);
+          if (!visibleItems.length) return null;
+
+          if (section.collapsible) {
+            const open = openSections[section.id];
             return (
-              <React.Fragment key={item.text}>
-                <ListItemButton onClick={() => setOpenSubMenus(p => ({ ...p, [item.text]: !p[item.text] }))}>
-                  <ListItemIcon sx={{ minWidth: 40 }}>{item.icon}</ListItemIcon>
-                  <ListItemText primary={item.text} />
-                  <Chip label={item.badge} size="small" color="primary" sx={{ mr: 1, height: 18, fontSize: '0.6rem' }} />
-                  {openSubMenus[item.text] ? <KeyboardArrowUp /> : <KeyboardArrowDown />}
+              <Box key={section.id} sx={{ mb: 1 }}>
+                <ListItemButton
+                  onClick={() => setOpenSections((p) => ({ ...p, [section.id]: !p[section.id] }))}
+                  sx={{ py: 0.75, px: 1, borderRadius: 2 }}
+                >
+                  <ListItemIcon sx={{ minWidth: 32, color: '#64748b' }}>
+                    <Psychology fontSize="small" />
+                  </ListItemIcon>
+                  <ListItemText
+                    primary={section.label}
+                    primaryTypographyProps={{ fontSize: '0.75rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em' }}
+                  />
+                  {open ? <KeyboardArrowUp sx={{ color: '#64748b', fontSize: 18 }} /> : <KeyboardArrowDown sx={{ color: '#64748b', fontSize: 18 }} />}
                 </ListItemButton>
-                <Collapse in={openSubMenus[item.text]} unmountOnExit>
-                  <List disablePadding>
-                    {item.children.map(c => (
-                      <ListItemButton key={c.path} selected={isActive(c.path)} onClick={() => navigate(c.path)} sx={{ pl: 4, borderRadius: 2, mx: 0.5, mb: 0.5 }}>
-                        <ListItemIcon sx={{ minWidth: 36 }}>{c.icon}</ListItemIcon>
-                        <ListItemText primary={c.text} primaryTypographyProps={{ fontSize: '0.875rem' }} />
-                      </ListItemButton>
-                    ))}
+                <Collapse in={open} unmountOnExit>
+                  <List disablePadding sx={{ pl: 0.5 }}>
+                    {visibleItems.map(renderNavItem)}
                   </List>
                 </Collapse>
-              </React.Fragment>
+              </Box>
             );
           }
-          if (item.realOnly && !isReal) return null;
-          if (item.demoOnly && !isDemo) return null;
+
           return (
-            <ListItemButton key={item.text} selected={isActive(item.path)} onClick={() => navigate(item.path)} sx={{ borderRadius: 2, mx: 0.5, mb: 0.5 }}>
-              <ListItemIcon sx={{ minWidth: 40 }}>{item.icon}</ListItemIcon>
-              <ListItemText primary={item.text} />
-            </ListItemButton>
+            <Box key={section.id} sx={{ mb: 1.5 }}>
+              <Typography
+                variant="caption"
+                sx={{
+                  px: 1.5, py: 0.75, display: 'block',
+                  fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em',
+                }}
+              >
+                {section.label}
+              </Typography>
+              <List disablePadding>
+                {visibleItems.map(renderNavItem)}
+              </List>
+            </Box>
           );
         })}
-      </List>
-    </div>
+      </Box>
+
+      <Box sx={{ p: 2, borderTop: `1px solid ${alpha('#fff', 0.08)}` }}>
+        <Typography variant="caption" sx={{ color: '#64748b' }}>
+          {user?.name || '用户'} · {user?.role === 'admin' ? '系统管理员' : '普通用户'}
+        </Typography>
+      </Box>
+    </Box>
   );
 
   return (
-    <Box sx={{ display: 'flex' }}>
+    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'background.default' }}>
       <CssBaseline />
-      <AppBar position="fixed" sx={{ width: { sm: `calc(100% - ${drawerWidth}px)` }, ml: { sm: `${drawerWidth}px` } }}>
-        <Toolbar>
-          <IconButton color="inherit" edge="start" onClick={() => setMobileOpen(!mobileOpen)} sx={{ mr: 2, display: { sm: 'none' } }}>
+      <AppBar
+        position="fixed"
+        elevation={0}
+        sx={{
+          width: { sm: `calc(100% - ${drawerWidth}px)` },
+          ml: { sm: `${drawerWidth}px` },
+        }}
+      >
+        <Toolbar sx={{ gap: 1 }}>
+          <IconButton
+            edge="start"
+            onClick={() => setMobileOpen(!mobileOpen)}
+            sx={{ mr: 1, display: { sm: 'none' }, color: 'text.primary' }}
+          >
             <MenuIcon />
           </IconButton>
-          <Typography variant="h6" sx={{ flexGrow: 1 }}>{getTitle()}</Typography>
-          <Chip
-            label={isDemo ? '演示模式' : '真实模式'}
-            size="small"
-            color={isDemo ? 'secondary' : 'success'}
-            onClick={toggleMode}
-            sx={{ mr: 2, cursor: 'pointer', fontWeight: 600 }}
-            title="点击切换演示/真实模式"
-          />
-          <Chip label={isReal ? '真实 AI' : '模拟 AI'} size="small" sx={{ mr: 2, bgcolor: 'rgba(255,255,255,0.15)', color: '#fff' }} className="live-indicator" />
-          <IconButton onClick={(e) => setAnchorEl(e.currentTarget)} color="inherit">
-            <Avatar sx={{ width: 34, height: 34, bgcolor: 'secondary.main' }}>{user?.name?.[0] || 'U'}</Avatar>
+          <Typography variant="h6" sx={{ flexGrow: 1, fontWeight: 700, fontSize: '1.05rem' }}>
+            {title}
+          </Typography>
+
+          <Tooltip title="切换演示 / 真实数据模式">
+            <Chip
+              label={isDemo ? '演示模式' : '真实模式'}
+              size="small"
+              variant="outlined"
+              onClick={toggleMode}
+              sx={{ cursor: 'pointer', fontWeight: 600 }}
+              color={isDemo ? 'default' : 'success'}
+            />
+          </Tooltip>
+
+          {isAdmin && (
+            <Tooltip title="管理控制台">
+              <IconButton onClick={() => navigate('/admin')} sx={{ color: 'primary.main' }}>
+                <AdminPanelSettings />
+              </IconButton>
+            </Tooltip>
+          )}
+
+          <Tooltip title="预警中心">
+            <IconButton onClick={() => navigate('/alerts')} sx={{ color: 'text.secondary' }}>
+              <Badge badgeContent={isAdmin ? 3 : 0} color="error">
+                <NotificationsActive />
+              </Badge>
+            </IconButton>
+          </Tooltip>
+
+          <IconButton onClick={(e) => setAnchorEl(e.currentTarget)}>
+            <Avatar sx={{ width: 36, height: 36, bgcolor: isAdmin ? 'primary.main' : 'secondary.main', fontSize: 14 }}>
+              {user?.name?.[0] || 'U'}
+            </Avatar>
           </IconButton>
-          <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={() => setAnchorEl(null)}>
-            <MenuItem disabled><Typography variant="body2">{user?.name || '演示用户'}</Typography></MenuItem>
+
+          <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={() => setAnchorEl(null)} PaperProps={{ sx: { minWidth: 220, mt: 1 } }}>
+            <Box sx={{ px: 2, py: 1.5 }}>
+              <Typography variant="subtitle2" fontWeight={700}>{user?.name}</Typography>
+              <Typography variant="caption" color="text.secondary">
+                {user?.role === 'admin' ? '系统管理员' : '演示用户'}
+              </Typography>
+            </Box>
+            <Divider />
+            {isAdmin && (
+              <MenuItem onClick={() => { setAnchorEl(null); navigate('/admin'); }}>
+                <ListItemIcon><AdminPanelSettings fontSize="small" /></ListItemIcon>
+                <ListItemText>管理控制台</ListItemText>
+              </MenuItem>
+            )}
+            <MenuItem onClick={() => { setAnchorEl(null); navigate('/settings'); }}>
+              <ListItemIcon><Settings fontSize="small" /></ListItemIcon>
+              <ListItemText>系统设置</ListItemText>
+            </MenuItem>
             <Divider />
             <MenuItem onClick={() => { logout(); navigate('/login'); }}>
-              <ListItemIcon><Logout fontSize="small" /></ListItemIcon><ListItemText>退出</ListItemText>
+              <ListItemIcon><Logout fontSize="small" /></ListItemIcon>
+              <ListItemText>退出登录</ListItemText>
             </MenuItem>
           </Menu>
         </Toolbar>
       </AppBar>
+
       <Box component="nav" sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}>
-        <Drawer variant="temporary" open={mobileOpen} onClose={() => setMobileOpen(false)} sx={{ display: { xs: 'block', sm: 'none' }, '& .MuiDrawer-paper': { width: drawerWidth } }}>{drawer}</Drawer>
-        <Drawer variant="permanent" sx={{ display: { xs: 'none', sm: 'block' }, '& .MuiDrawer-paper': { width: drawerWidth } }} open>{drawer}</Drawer>
+        <Drawer
+          variant="temporary"
+          open={mobileOpen}
+          onClose={() => setMobileOpen(false)}
+          ModalProps={{ keepMounted: true }}
+          sx={{
+            display: { xs: 'block', sm: 'none' },
+            '& .MuiDrawer-paper': { width: drawerWidth, border: 'none' },
+          }}
+        >
+          {drawer}
+        </Drawer>
+        <Drawer
+          variant="permanent"
+          sx={{
+            display: { xs: 'none', sm: 'block' },
+            '& .MuiDrawer-paper': { width: drawerWidth, border: 'none', boxSizing: 'border-box' },
+          }}
+          open
+        >
+          {drawer}
+        </Drawer>
       </Box>
-      <Box component="main" sx={{ flexGrow: 1, p: 3, width: { sm: `calc(100% - ${drawerWidth}px)` }, mt: '64px' }}>{children}</Box>
+
+      <Box
+        component="main"
+        sx={{
+          flexGrow: 1,
+          p: { xs: 2, md: 3 },
+          width: { sm: `calc(100% - ${drawerWidth}px)` },
+          mt: '64px',
+        }}
+      >
+        {children}
+      </Box>
     </Box>
   );
 }

@@ -6,6 +6,8 @@ import {
 import { MonitorHeart, Devices, LocalHospital } from '@mui/icons-material';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { patientApi } from '../services/api';
+import PageHeader from '../components/PageHeader';
+import { ADMIN_PATIENTS_FALLBACK } from '../data/adminFallback';
 
 const riskColor = { low: 'success', medium: 'warning', high: 'error' };
 
@@ -16,17 +18,21 @@ function PatientManagement() {
   const [tab, setTab] = useState(0);
 
   useEffect(() => {
-    patientApi.getAll().then(res => { setPatients(res.data); setLoading(false); }).catch(() => setLoading(false));
+    patientApi.getAll()
+      .then(res => { setPatients(res.data?.length ? res.data : ADMIN_PATIENTS_FALLBACK); })
+      .catch(() => setPatients(ADMIN_PATIENTS_FALLBACK))
+      .finally(() => setLoading(false));
   }, []);
 
   if (loading) return <LinearProgress />;
 
   return (
     <Box>
-      <Typography variant="h5" gutterBottom fontWeight={600}>患者管理</Typography>
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-        管理佩戴可穿戴设备的患者档案，点击卡片查看详细健康数据
-      </Typography>
+      <PageHeader
+        title="患者管理"
+        subtitle="管理佩戴可穿戴设备的患者档案，查看风险分级与健康趋势"
+        breadcrumbs={[{ label: '管理控制台', path: '/admin' }, { label: '患者管理' }]}
+      />
 
       <Grid container spacing={3}>
         {patients.map(patient => (

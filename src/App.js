@@ -8,10 +8,16 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { DataModeProvider } from './contexts/DataModeContext';
 import { HealthDataProvider } from './contexts/HealthDataContext';
 import ProtectedRoute from './components/ProtectedRoute';
+import AdminGuard from './components/AdminGuard';
 import ModeShell from './components/ModeShell';
 
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
+import AdminOverview from './pages/AdminOverview';
+import PatientManagement from './pages/PatientManagement';
+import Organization from './pages/Organization';
+import Compliance from './pages/Compliance';
+import ReportCenter from './pages/ReportCenter';
 import RealTimeMonitoring from './pages/RealTimeMonitoring';
 import ECGMonitoring from './pages/ECGMonitoring';
 import AlertCenter from './pages/AlertCenter';
@@ -47,6 +53,16 @@ function wrap(Page, title, requireData = true) {
   );
 }
 
+function adminWrap(Page, title, requireData = false) {
+  return (
+    <AdminGuard>
+      <ModeShell title={title} requireData={requireData}>
+        <Page />
+      </ModeShell>
+    </AdminGuard>
+  );
+}
+
 function AppRoutes() {
   const { loading } = useAuth();
   if (loading) return <AppLoading />;
@@ -58,6 +74,11 @@ function AppRoutes() {
           <Route path="/login" element={<Login />} />
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route element={<ProtectedRoute />}>
+            <Route path="/admin" element={adminWrap(AdminOverview, '管理控制台', false)} />
+            <Route path="/admin/patients" element={adminWrap(PatientManagement, '患者管理', false)} />
+            <Route path="/admin/organization" element={adminWrap(Organization, '组织架构', false)} />
+            <Route path="/admin/compliance" element={adminWrap(Compliance, '合规管理', false)} />
+            <Route path="/admin/reports" element={adminWrap(ReportCenter, '报告中心', false)} />
             <Route path="/import" element={wrap(DataImport, '数据导入', false)} />
             <Route path="/dashboard" element={wrap(Dashboard, '健康总览')} />
             <Route path="/monitoring" element={wrap(RealTimeMonitoring, '实时监测')} />
@@ -78,7 +99,7 @@ function AppRoutes() {
             <Route path="/ai/fusion" element={wrap(DataFusion, '数据融合')} />
             <Route path="/ai/goals" element={wrap(HealthGoals, '健康目标')} />
             <Route path="/research" element={wrap(ResearchCenter, '分析评价中心', false)} />
-            <Route path="/settings" element={wrap(SettingsPage, '设置', false)} />
+            <Route path="/settings" element={wrap(SettingsPage, '系统设置', false)} />
           </Route>
         </Routes>
       </HealthDataProvider>

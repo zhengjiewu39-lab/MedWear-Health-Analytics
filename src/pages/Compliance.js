@@ -3,6 +3,7 @@ import {
   Box, Typography, Paper, Grid, Chip, LinearProgress, List, ListItem, ListItemIcon, ListItemText,
 } from '@mui/material';
 import { Gavel, CheckCircle, Warning, Security, Lock, VerifiedUser } from '@mui/icons-material';
+import PageHeader from '../components/PageHeader';
 
 const complianceItems = [
   { name: 'HIPAA 合规', status: 'compliant', score: 98, desc: '美国健康保险流通与责任法案' },
@@ -23,10 +24,11 @@ const auditLogs = [
 function Compliance() {
   return (
     <Box>
-      <Typography variant="h5" gutterBottom fontWeight={600}>合规管理</Typography>
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-        医疗数据安全与隐私合规监控，确保平台符合国内外监管要求
-      </Typography>
+      <PageHeader
+        title="合规管理"
+        subtitle="医疗数据安全与隐私合规监控，确保平台符合监管要求"
+        breadcrumbs={[{ label: '管理控制台', path: '/admin' }, { label: '合规管理' }]}
+      />
 
       <Grid container spacing={3} sx={{ mb: 3 }}>
         <Grid item xs={12} sm={4}>

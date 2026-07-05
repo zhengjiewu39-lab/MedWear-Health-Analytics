@@ -5,6 +5,8 @@ import {
 } from '@mui/material';
 import { Business, People, LocalHospital } from '@mui/icons-material';
 import { organizationApi } from '../services/api';
+import PageHeader from '../components/PageHeader';
+import { ADMIN_DEPARTMENTS_FALLBACK, ADMIN_STAFF_FALLBACK } from '../data/adminFallback';
 
 function Organization() {
   const [departments, setDepartments] = useState([]);
@@ -13,23 +15,23 @@ function Organization() {
 
   useEffect(() => {
     Promise.all([
-      organizationApi.getDepartments(),
-      organizationApi.getStaff(),
+      organizationApi.getDepartments().catch(() => ({ data: ADMIN_DEPARTMENTS_FALLBACK })),
+      organizationApi.getStaff().catch(() => ({ data: ADMIN_STAFF_FALLBACK })),
     ]).then(([d, s]) => {
-      setDepartments(d.data);
-      setStaff(s.data);
-      setLoading(false);
-    });
+      setDepartments(d.data || ADMIN_DEPARTMENTS_FALLBACK);
+      setStaff(s.data || ADMIN_STAFF_FALLBACK);
+    }).finally(() => setLoading(false));
   }, []);
 
   if (loading) return <LinearProgress />;
 
   return (
     <Box>
-      <Typography variant="h5" gutterBottom fontWeight={600}>组织架构</Typography>
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-        管理医院科室结构与医护人员，分配设备监测权限
-      </Typography>
+      <PageHeader
+        title="组织架构"
+        subtitle="管理医院科室结构与医护人员，分配设备监测权限"
+        breadcrumbs={[{ label: '管理控制台', path: '/admin' }, { label: '组织架构' }]}
+      />
 
       <Grid container spacing={3} sx={{ mb: 3 }}>
         {departments.map(dept => (

@@ -11,7 +11,7 @@ if (!fs.existsSync(IMPORT_DIR)) fs.mkdirSync(IMPORT_DIR, { recursive: true });
 
 const upload = multer({
   dest: IMPORT_DIR,
-  limits: { fileSize: 500 * 1024 * 1024 },
+  limits: { fileSize: 50 * 1024 * 1024, files: 1 },
   fileFilter: (_, file, cb) => {
     const ok = /\.(zip|xml)$/i.test(file.originalname);
     cb(ok ? null : new Error('仅支持 .zip 或 .xml 文件'), ok);

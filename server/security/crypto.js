@@ -6,9 +6,18 @@ const DATA_DIR = path.join(__dirname, '../../data');
 const VAULT_FILE = path.join(DATA_DIR, 'health-vault.enc');
 const AUDIT_FILE = path.join(DATA_DIR, 'audit-log.json');
 
+const IS_PROD = process.env.NODE_ENV === 'production';
+const ALLOW_DEMO = !IS_PROD || process.env.ALLOW_DEMO_AUTH === 'true';
+const SECRET = process.env.MEDWEAR_ENCRYPTION_KEY || process.env.MEDWEAR_SECRET;
+
+if (IS_PROD && !SECRET) {
+  console.error('[security] MEDWEAR_ENCRYPTION_KEY is required when NODE_ENV=production');
+  process.exit(1);
+}
+
 const ALGO = 'aes-256-gcm';
 const KEY = crypto.scryptSync(
-  process.env.MEDWEAR_SECRET || 'medwear-demo-secret-change-in-production',
+  SECRET || (ALLOW_DEMO ? 'medwear-demo-secret-change-in-production' : 'missing-key'),
   'medwear-salt-v1',
   32
 );

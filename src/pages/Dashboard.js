@@ -16,6 +16,7 @@ import { dashboardApi } from '../services/api';
 import useModeRefresh from '../hooks/useModeRefresh';
 import { useDataMode } from '../contexts/DataModeContext';
 import { ActivityRing, ScoreRing } from '../components/charts/VitalGauge';
+import PageHeader from '../components/PageHeader';
 import { STANDARDS } from '../constants/clinicalStandards';
 
 const insightIcon = { positive: <CheckCircle color="success" />, warning: <Warning color="warning" />, info: <Info color="info" /> };
@@ -68,19 +69,19 @@ function Dashboard() {
 
   return (
     <Box>
-      {/* 头部 */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 3 }}>
-        <Box>
-          <Typography variant="h5" fontWeight={700}>健康总览</Typography>
-          <Typography variant="body2" color="text.secondary">{subtitle}</Typography>
-        </Box>
-        <Chip
-          icon={<Psychology />}
-          label={isReal ? '真实数据分析' : '演示 AI 分析'}
-          color={isReal ? 'success' : 'primary'}
-          variant="outlined"
-        />
-      </Box>
+      <PageHeader
+        title="健康总览"
+        subtitle={subtitle}
+        badge={
+          <Chip
+            icon={<Psychology />}
+            label={isReal ? '真实数据分析' : '演示 AI 分析'}
+            color={isReal ? 'success' : 'primary'}
+            variant="outlined"
+            size="small"
+          />
+        }
+      />
 
       {/* 第一行：评分 + 三环 + 核心指标 */}
       <Grid container spacing={3} sx={{ mb: 3 }}>
