@@ -1,7 +1,12 @@
 {
-    "folders": [
-        {
-            "path": "../中药药房"
-        }
-    ]
+  "folders": [
+    {
+      "name": "MedWear",
+      "path": "."
+    },
+    {
+      "name": "中药药房",
+      "path": "../中药药房/chinese-medicine-pharmacy"
+    }
+  ]
 }
