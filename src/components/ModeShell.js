@@ -6,7 +6,7 @@ import { RequireHealthData, RealDataChip } from './RealDataGuard';
 
 /** 演示/真实模式隔离：演示显示模拟数据提示；真实无数据时引导导入 */
 export function ModeShell({ children, title, requireData = true }) {
-  const { isDemo, isReal } = useDataMode();
+  const { isDemo } = useDataMode();
   const { hasData, loading, primarySource, meta } = useHealthData();
 
   if (isDemo) {
