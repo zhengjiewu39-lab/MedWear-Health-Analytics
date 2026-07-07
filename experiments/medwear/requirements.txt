@@ -12,4 +12,4 @@ optuna>=3.4
 torch>=2.0
 tsfresh>=0.20
 jupyter>=1.0
-ipykernel>=6.0
+ipykernel>=7.3.0
