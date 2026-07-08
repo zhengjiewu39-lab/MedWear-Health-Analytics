@@ -87,13 +87,9 @@ function RealTimeMonitoring() {
       .catch(() => {});
   }, []);
 
-  useModeRefresh(() => {
-    setVitals(null);
-    fetchVitals();
-  });
+  useModeRefresh(fetchVitals);
 
   useEffect(() => {
-    fetchVitals();
     const t = setInterval(fetchVitals, 5000);
     return () => clearInterval(t);
   }, [fetchVitals]);

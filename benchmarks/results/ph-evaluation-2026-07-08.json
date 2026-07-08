@@ -1,0 +1,2095 @@
+{
+  "evaluation_date": "2026-07-08",
+  "evaluated_at": "2026-07-08T08:59:28.674Z",
+  "dataset": "MedWear-Public-Health-Surveillance-v1",
+  "dataset_version": "1.0.0",
+  "engine": "MedWear-PHM-v0.1",
+  "time_window_hours": 72,
+  "total_cases": 52,
+  "results": [
+    {
+      "case_id": "PH-301",
+      "title": "Workplace Influenza Cluster",
+      "category": "workplace_cluster",
+      "schema_level": "complete",
+      "synthetic_bootstrap": false,
+      "level1": {
+        "individuals_total": 5,
+        "anomalies_recorded": 14,
+        "individuals_with_anomalies": 5
+      },
+      "level2": {
+        "clusters_detected": 1,
+        "top_cluster_id": "CL-mrbujp5p-1",
+        "outbreak_likelihood": 0.772
+      },
+      "level3": {
+        "regional_trend_alert": false,
+        "growth_ratio": 0.25,
+        "unique_users": 5,
+        "level": 0
+      },
+      "expected": {
+        "cluster_detected": true,
+        "regional_trend_alert": null,
+        "detection_timing_hours": 36
+      },
+      "detected": true,
+      "expected_detection": true,
+      "true_positive": true,
+      "false_positive": false,
+      "false_negative": false,
+      "true_negative": false,
+      "detection_timing_hours": 36,
+      "lead_time": 36,
+      "lead_time_hours": 36,
+      "severity_accuracy": 0.67,
+      "preventable_cases_estimated": 0
+    },
+    {
+      "case_id": "PH-302",
+      "title": "Manufacturing Line Gastroenteritis Cluster",
+      "category": "workplace_cluster",
+      "schema_level": "complete",
+      "synthetic_bootstrap": false,
+      "level1": {
+        "individuals_total": 5,
+        "anomalies_recorded": 8,
+        "individuals_with_anomalies": 5
+      },
+      "level2": {
+        "clusters_detected": 1,
+        "top_cluster_id": "CL-mrbujp5p-1",
+        "outbreak_likelihood": 0.756
+      },
+      "level3": {
+        "regional_trend_alert": false,
+        "growth_ratio": 0.667,
+        "unique_users": 5,
+        "level": 0
+      },
+      "expected": {
+        "cluster_detected": true,
+        "regional_trend_alert": null,
+        "detection_timing_hours": 24
+      },
+      "detected": true,
+      "expected_detection": true,
+      "true_positive": true,
+      "false_positive": false,
+      "false_negative": false,
+      "true_negative": false,
+      "detection_timing_hours": 24,
+      "lead_time": 24,
+      "lead_time_hours": 24,
+      "severity_accuracy": 0.67,
+      "preventable_cases_estimated": 0
+    },
+    {
+      "case_id": "PH-303",
+      "title": "Warehouse Cold Chain GI Cluster",
+      "category": "workplace_cluster",
+      "schema_level": "framework",
+      "synthetic_bootstrap": true,
+      "level1": {
+        "individuals_total": 6,
+        "anomalies_recorded": 12,
+        "individuals_with_anomalies": 6
+      },
+      "level2": {
+        "clusters_detected": 1,
+        "top_cluster_id": "CL-mrbujp5p-1",
+        "outbreak_likelihood": 0.765
+      },
+      "level3": {
+        "regional_trend_alert": false,
+        "growth_ratio": 0,
+        "unique_users": 6,
+        "level": 0
+      },
+      "expected": {
+        "cluster_detected": true,
+        "regional_trend_alert": null,
+        "detection_timing_hours": 36
+      },
+      "detected": true,
+      "expected_detection": true,
+      "true_positive": true,
+      "false_positive": false,
+      "false_negative": false,
+      "true_negative": false,
+      "detection_timing_hours": 36,
+      "lead_time": null,
+      "lead_time_hours": null,
+      "severity_accuracy": null,
+      "preventable_cases_estimated": 1
+    },
+    {
+      "case_id": "PH-304",
+      "title": "Tech Campus COVID-like Cluster",
+      "category": "workplace_cluster",
+      "schema_level": "framework",
+      "synthetic_bootstrap": true,
+      "level1": {
+        "individuals_total": 9,
+        "anomalies_recorded": 18,
+        "individuals_with_anomalies": 9
+      },
+      "level2": {
+        "clusters_detected": 1,
+        "top_cluster_id": "CL-mrbujp5p-1",
+        "outbreak_likelihood": 0.805
+      },
+      "level3": {
+        "regional_trend_alert": false,
+        "growth_ratio": 0,
+        "unique_users": 9,
+        "level": 0
+      },
+      "expected": {
+        "cluster_detected": true,
+        "regional_trend_alert": null,
+        "detection_timing_hours": 36
+      },
+      "detected": true,
+      "expected_detection": true,
+      "true_positive": true,
+      "false_positive": false,
+      "false_negative": false,
+      "true_negative": false,
+      "detection_timing_hours": 36,
+      "lead_time": null,
+      "lead_time_hours": null,
+      "severity_accuracy": null,
+      "preventable_cases_estimated": 1
+    },
+    {
+      "case_id": "PH-305",
+      "title": "Restaurant Staff Febrile Cluster",
+      "category": "workplace_cluster",
+      "schema_level": "framework",
+      "synthetic_bootstrap": true,
+      "level1": {
+        "individuals_total": 5,
+        "anomalies_recorded": 10,
+        "individuals_with_anomalies": 5
+      },
+      "level2": {
+        "clusters_detected": 1,
+        "top_cluster_id": "CL-mrbujp5p-1",
+        "outbreak_likelihood": 0.752
+      },
+      "level3": {
+        "regional_trend_alert": false,
+        "growth_ratio": 0,
+        "unique_users": 5,
+        "level": 0
+      },
+      "expected": {
+        "cluster_detected": true,
+        "regional_trend_alert": null,
+        "detection_timing_hours": 36
+      },
+      "detected": true,
+      "expected_detection": true,
+      "true_positive": true,
+      "false_positive": false,
+      "false_negative": false,
+      "true_negative": false,
+      "detection_timing_hours": 36,
+      "lead_time": null,
+      "lead_time_hours": null,
+      "severity_accuracy": null,
+      "preventable_cases_estimated": 0
+    },
+    {
+      "case_id": "PH-306",
+      "title": "Construction Site Injury-Fever Mix",
+      "category": "workplace_cluster",
+      "schema_level": "framework",
+      "synthetic_bootstrap": true,
+      "level1": {
+        "individuals_total": 3,
+        "anomalies_recorded": 6,
+        "individuals_with_anomalies": 3
+      },
+      "level2": {
+        "clusters_detected": 1,
+        "top_cluster_id": "CL-mrbujp5p-1",
+        "outbreak_likelihood": 0.726
+      },
+      "level3": {
+        "regional_trend_alert": false,
+        "growth_ratio": 0,
+        "unique_users": 3,
+        "level": 0
+      },
+      "expected": {
+        "cluster_detected": true,
+        "regional_trend_alert": null,
+        "detection_timing_hours": 36
+      },
+      "detected": true,
+      "expected_detection": true,
+      "true_positive": true,
+      "false_positive": false,
+      "false_negative": false,
+      "true_negative": false,
+      "detection_timing_hours": 36,
+      "lead_time": null,
+      "lead_time_hours": null,
+      "severity_accuracy": null,
+      "preventable_cases_estimated": 0
+    },
+    {
+      "case_id": "PH-307",
+      "title": "Call Center Respiratory Spread",
+      "category": "workplace_cluster",
+      "schema_level": "framework",
+      "synthetic_bootstrap": true,
+      "level1": {
+        "individuals_total": 9,
+        "anomalies_recorded": 18,
+        "individuals_with_anomalies": 9
+      },
+      "level2": {
+        "clusters_detected": 1,
+        "top_cluster_id": "CL-mrbujp5p-1",
+        "outbreak_likelihood": 0.805
+      },
+      "level3": {
+        "regional_trend_alert": false,
+        "growth_ratio": 0,
+        "unique_users": 9,
+        "level": 0
+      },
+      "expected": {
+        "cluster_detected": true,
+        "regional_trend_alert": null,
+        "detection_timing_hours": 36
+      },
+      "detected": true,
+      "expected_detection": true,
+      "true_positive": true,
+      "false_positive": false,
+      "false_negative": false,
+      "true_negative": false,
+      "detection_timing_hours": 36,
+      "lead_time": null,
+      "lead_time_hours": null,
+      "severity_accuracy": null,
+      "preventable_cases_estimated": 1
+    },
+    {
+      "case_id": "PH-308",
+      "title": "Hospital Admin Wing Cluster",
+      "category": "workplace_cluster",
+      "schema_level": "framework",
+      "synthetic_bootstrap": true,
+      "level1": {
+        "individuals_total": 4,
+        "anomalies_recorded": 8,
+        "individuals_with_anomalies": 4
+      },
+      "level2": {
+        "clusters_detected": 1,
+        "top_cluster_id": "CL-mrbujp5p-1",
+        "outbreak_likelihood": 0.739
+      },
+      "level3": {
+        "regional_trend_alert": false,
+        "growth_ratio": 0,
+        "unique_users": 4,
+        "level": 0
+      },
+      "expected": {
+        "cluster_detected": true,
+        "regional_trend_alert": null,
+        "detection_timing_hours": 36
+      },
+      "detected": true,
+      "expected_detection": true,
+      "true_positive": true,
+      "false_positive": false,
+      "false_negative": false,
+      "true_negative": false,
+      "detection_timing_hours": 36,
+      "lead_time": null,
+      "lead_time_hours": null,
+      "severity_accuracy": null,
+      "preventable_cases_estimated": 0
+    },
+    {
+      "case_id": "PH-309",
+      "title": "Retail Mall Staff Cluster",
+      "category": "workplace_cluster",
+      "schema_level": "framework",
+      "synthetic_bootstrap": true,
+      "level1": {
+        "individuals_total": 7,
+        "anomalies_recorded": 14,
+        "individuals_with_anomalies": 7
+      },
+      "level2": {
+        "clusters_detected": 1,
+        "top_cluster_id": "CL-mrbujp5q-1",
+        "outbreak_likelihood": 0.779
+      },
+      "level3": {
+        "regional_trend_alert": false,
+        "growth_ratio": 0,
+        "unique_users": 7,
+        "level": 0
+      },
+      "expected": {
+        "cluster_detected": true,
+        "regional_trend_alert": null,
+        "detection_timing_hours": 36
+      },
+      "detected": true,
+      "expected_detection": true,
+      "true_positive": true,
+      "false_positive": false,
+      "false_negative": false,
+      "true_negative": false,
+      "detection_timing_hours": 36,
+      "lead_time": null,
+      "lead_time_hours": null,
+      "severity_accuracy": null,
+      "preventable_cases_estimated": 1
+    },
+    {
+      "case_id": "PH-310",
+      "title": "Logistics Hub Febrile Cluster",
+      "category": "workplace_cluster",
+      "schema_level": "framework",
+      "synthetic_bootstrap": true,
+      "level1": {
+        "individuals_total": 4,
+        "anomalies_recorded": 8,
+        "individuals_with_anomalies": 4
+      },
+      "level2": {
+        "clusters_detected": 1,
+        "top_cluster_id": "CL-mrbujp5q-1",
+        "outbreak_likelihood": 0.739
+      },
+      "level3": {
+        "regional_trend_alert": false,
+        "growth_ratio": 0,
+        "unique_users": 4,
+        "level": 0
+      },
+      "expected": {
+        "cluster_detected": true,
+        "regional_trend_alert": null,
+        "detection_timing_hours": 36
+      },
+      "detected": true,
+      "expected_detection": true,
+      "true_positive": true,
+      "false_positive": false,
+      "false_negative": false,
+      "true_negative": false,
+      "detection_timing_hours": 36,
+      "lead_time": null,
+      "lead_time_hours": null,
+      "severity_accuracy": null,
+      "preventable_cases_estimated": 0
+    },
+    {
+      "case_id": "PH-311",
+      "title": "Pharmaceutical Lab GI Event",
+      "category": "workplace_cluster",
+      "schema_level": "framework",
+      "synthetic_bootstrap": true,
+      "level1": {
+        "individuals_total": 5,
+        "anomalies_recorded": 10,
+        "individuals_with_anomalies": 5
+      },
+      "level2": {
+        "clusters_detected": 1,
+        "top_cluster_id": "CL-mrbujp5q-1",
+        "outbreak_likelihood": 0.752
+      },
+      "level3": {
+        "regional_trend_alert": false,
+        "growth_ratio": 0,
+        "unique_users": 5,
+        "level": 0
+      },
+      "expected": {
+        "cluster_detected": true,
+        "regional_trend_alert": null,
+        "detection_timing_hours": 36
+      },
+      "detected": true,
+      "expected_detection": true,
+      "true_positive": true,
+      "false_positive": false,
+      "false_negative": false,
+      "true_negative": false,
+      "detection_timing_hours": 36,
+      "lead_time": null,
+      "lead_time_hours": null,
+      "severity_accuracy": null,
+      "preventable_cases_estimated": 0
+    },
+    {
+      "case_id": "PH-312",
+      "title": "Co-working Space Respiratory",
+      "category": "workplace_cluster",
+      "schema_level": "framework",
+      "synthetic_bootstrap": true,
+      "level1": {
+        "individuals_total": 6,
+        "anomalies_recorded": 12,
+        "individuals_with_anomalies": 6
+      },
+      "level2": {
+        "clusters_detected": 1,
+        "top_cluster_id": "CL-mrbujp5q-1",
+        "outbreak_likelihood": 0.765
+      },
+      "level3": {
+        "regional_trend_alert": false,
+        "growth_ratio": 0,
+        "unique_users": 6,
+        "level": 0
+      },
+      "expected": {
+        "cluster_detected": true,
+        "regional_trend_alert": null,
+        "detection_timing_hours": 36
+      },
+      "detected": true,
+      "expected_detection": true,
+      "true_positive": true,
+      "false_positive": false,
+      "false_negative": false,
+      "true_negative": false,
+      "detection_timing_hours": 36,
+      "lead_time": null,
+      "lead_time_hours": null,
+      "severity_accuracy": null,
+      "preventable_cases_estimated": 1
+    },
+    {
+      "case_id": "PH-313",
+      "title": "Hotel Housekeeping Cluster",
+      "category": "workplace_cluster",
+      "schema_level": "framework",
+      "synthetic_bootstrap": true,
+      "level1": {
+        "individuals_total": 4,
+        "anomalies_recorded": 8,
+        "individuals_with_anomalies": 4
+      },
+      "level2": {
+        "clusters_detected": 1,
+        "top_cluster_id": "CL-mrbujp5q-1",
+        "outbreak_likelihood": 0.739
+      },
+      "level3": {
+        "regional_trend_alert": false,
+        "growth_ratio": 0,
+        "unique_users": 4,
+        "level": 0
+      },
+      "expected": {
+        "cluster_detected": true,
+        "regional_trend_alert": null,
+        "detection_timing_hours": 36
+      },
+      "detected": true,
+      "expected_detection": true,
+      "true_positive": true,
+      "false_positive": false,
+      "false_negative": false,
+      "true_negative": false,
+      "detection_timing_hours": 36,
+      "lead_time": null,
+      "lead_time_hours": null,
+      "severity_accuracy": null,
+      "preventable_cases_estimated": 0
+    },
+    {
+      "case_id": "PH-314",
+      "title": "Bank Branch Febrile Cluster",
+      "category": "workplace_cluster",
+      "schema_level": "framework",
+      "synthetic_bootstrap": true,
+      "level1": {
+        "individuals_total": 3,
+        "anomalies_recorded": 6,
+        "individuals_with_anomalies": 3
+      },
+      "level2": {
+        "clusters_detected": 1,
+        "top_cluster_id": "CL-mrbujp5q-1",
+        "outbreak_likelihood": 0.726
+      },
+      "level3": {
+        "regional_trend_alert": false,
+        "growth_ratio": 0,
+        "unique_users": 3,
+        "level": 0
+      },
+      "expected": {
+        "cluster_detected": true,
+        "regional_trend_alert": null,
+        "detection_timing_hours": 36
+      },
+      "detected": true,
+      "expected_detection": true,
+      "true_positive": true,
+      "false_positive": false,
+      "false_negative": false,
+      "true_negative": false,
+      "detection_timing_hours": 36,
+      "lead_time": null,
+      "lead_time_hours": null,
+      "severity_accuracy": null,
+      "preventable_cases_estimated": 0
+    },
+    {
+      "case_id": "PH-315",
+      "title": "Data Center Night Shift Cluster",
+      "category": "workplace_cluster",
+      "schema_level": "framework",
+      "synthetic_bootstrap": true,
+      "level1": {
+        "individuals_total": 5,
+        "anomalies_recorded": 10,
+        "individuals_with_anomalies": 5
+      },
+      "level2": {
+        "clusters_detected": 1,
+        "top_cluster_id": "CL-mrbujp5q-1",
+        "outbreak_likelihood": 0.752
+      },
+      "level3": {
+        "regional_trend_alert": false,
+        "growth_ratio": 0,
+        "unique_users": 5,
+        "level": 0
+      },
+      "expected": {
+        "cluster_detected": true,
+        "regional_trend_alert": null,
+        "detection_timing_hours": 36
+      },
+      "detected": true,
+      "expected_detection": true,
+      "true_positive": true,
+      "false_positive": false,
+      "false_negative": false,
+      "true_negative": false,
+      "detection_timing_hours": 36,
+      "lead_time": null,
+      "lead_time_hours": null,
+      "severity_accuracy": null,
+      "preventable_cases_estimated": 0
+    },
+    {
+      "case_id": "PH-401",
+      "title": "Primary School Class Respiratory Outbreak",
+      "category": "school_outbreak",
+      "schema_level": "complete",
+      "synthetic_bootstrap": false,
+      "level1": {
+        "individuals_total": 4,
+        "anomalies_recorded": 7,
+        "individuals_with_anomalies": 4
+      },
+      "level2": {
+        "clusters_detected": 1,
+        "top_cluster_id": "CL-mrbujp5q-1",
+        "outbreak_likelihood": 0.744
+      },
+      "level3": {
+        "regional_trend_alert": false,
+        "growth_ratio": 0.333,
+        "unique_users": 4,
+        "level": 0
+      },
+      "expected": {
+        "cluster_detected": true,
+        "regional_trend_alert": null,
+        "detection_timing_hours": 48
+      },
+      "detected": true,
+      "expected_detection": true,
+      "true_positive": true,
+      "false_positive": false,
+      "false_negative": false,
+      "true_negative": false,
+      "detection_timing_hours": 36,
+      "lead_time": 60,
+      "lead_time_hours": 60,
+      "severity_accuracy": 0.67,
+      "preventable_cases_estimated": 0
+    },
+    {
+      "case_id": "PH-402",
+      "title": "Middle School Grade 7 Outbreak",
+      "category": "school_outbreak",
+      "schema_level": "framework",
+      "synthetic_bootstrap": true,
+      "level1": {
+        "individuals_total": 6,
+        "anomalies_recorded": 12,
+        "individuals_with_anomalies": 6
+      },
+      "level2": {
+        "clusters_detected": 1,
+        "top_cluster_id": "CL-mrbujp5q-1",
+        "outbreak_likelihood": 0.765
+      },
+      "level3": {
+        "regional_trend_alert": false,
+        "growth_ratio": 0,
+        "unique_users": 6,
+        "level": 0
+      },
+      "expected": {
+        "cluster_detected": true,
+        "regional_trend_alert": null,
+        "detection_timing_hours": 48
+      },
+      "detected": true,
+      "expected_detection": true,
+      "true_positive": true,
+      "false_positive": false,
+      "false_negative": false,
+      "true_negative": false,
+      "detection_timing_hours": 36,
+      "lead_time": null,
+      "lead_time_hours": null,
+      "severity_accuracy": 0.67,
+      "preventable_cases_estimated": 1
+    },
+    {
+      "case_id": "PH-403",
+      "title": "High School Boarding GI Cluster",
+      "category": "school_outbreak",
+      "schema_level": "framework",
+      "synthetic_bootstrap": true,
+      "level1": {
+        "individuals_total": 4,
+        "anomalies_recorded": 8,
+        "individuals_with_anomalies": 4
+      },
+      "level2": {
+        "clusters_detected": 1,
+        "top_cluster_id": "CL-mrbujp5q-1",
+        "outbreak_likelihood": 0.739
+      },
+      "level3": {
+        "regional_trend_alert": false,
+        "growth_ratio": 0,
+        "unique_users": 4,
+        "level": 0
+      },
+      "expected": {
+        "cluster_detected": true,
+        "regional_trend_alert": null,
+        "detection_timing_hours": 48
+      },
+      "detected": true,
+      "expected_detection": true,
+      "true_positive": true,
+      "false_positive": false,
+      "false_negative": false,
+      "true_negative": false,
+      "detection_timing_hours": 36,
+      "lead_time": null,
+      "lead_time_hours": null,
+      "severity_accuracy": 1,
+      "preventable_cases_estimated": 0
+    },
+    {
+      "case_id": "PH-404",
+      "title": "Kindergarten RSV Cluster",
+      "category": "school_outbreak",
+      "schema_level": "framework",
+      "synthetic_bootstrap": true,
+      "level1": {
+        "individuals_total": 5,
+        "anomalies_recorded": 10,
+        "individuals_with_anomalies": 5
+      },
+      "level2": {
+        "clusters_detected": 1,
+        "top_cluster_id": "CL-mrbujp5q-1",
+        "outbreak_likelihood": 0.752
+      },
+      "level3": {
+        "regional_trend_alert": false,
+        "growth_ratio": 0,
+        "unique_users": 5,
+        "level": 0
+      },
+      "expected": {
+        "cluster_detected": true,
+        "regional_trend_alert": null,
+        "detection_timing_hours": 48
+      },
+      "detected": true,
+      "expected_detection": true,
+      "true_positive": true,
+      "false_positive": false,
+      "false_negative": false,
+      "true_negative": false,
+      "detection_timing_hours": 36,
+      "lead_time": null,
+      "lead_time_hours": null,
+      "severity_accuracy": 0.67,
+      "preventable_cases_estimated": 0
+    },
+    {
+      "case_id": "PH-405",
+      "title": "University Dorm Respiratory",
+      "category": "school_outbreak",
+      "schema_level": "framework",
+      "synthetic_bootstrap": true,
+      "level1": {
+        "individuals_total": 7,
+        "anomalies_recorded": 14,
+        "individuals_with_anomalies": 7
+      },
+      "level2": {
+        "clusters_detected": 1,
+        "top_cluster_id": "CL-mrbujp5q-1",
+        "outbreak_likelihood": 0.779
+      },
+      "level3": {
+        "regional_trend_alert": false,
+        "growth_ratio": 0,
+        "unique_users": 7,
+        "level": 0
+      },
+      "expected": {
+        "cluster_detected": true,
+        "regional_trend_alert": null,
+        "detection_timing_hours": 48
+      },
+      "detected": true,
+      "expected_detection": true,
+      "true_positive": true,
+      "false_positive": false,
+      "false_negative": false,
+      "true_negative": false,
+      "detection_timing_hours": 36,
+      "lead_time": null,
+      "lead_time_hours": null,
+      "severity_accuracy": 0.67,
+      "preventable_cases_estimated": 1
+    },
+    {
+      "case_id": "PH-406",
+      "title": "Vocational School Cluster",
+      "category": "school_outbreak",
+      "schema_level": "framework",
+      "synthetic_bootstrap": true,
+      "level1": {
+        "individuals_total": 3,
+        "anomalies_recorded": 6,
+        "individuals_with_anomalies": 3
+      },
+      "level2": {
+        "clusters_detected": 1,
+        "top_cluster_id": "CL-mrbujp5q-1",
+        "outbreak_likelihood": 0.726
+      },
+      "level3": {
+        "regional_trend_alert": false,
+        "growth_ratio": 0,
+        "unique_users": 3,
+        "level": 0
+      },
+      "expected": {
+        "cluster_detected": true,
+        "regional_trend_alert": null,
+        "detection_timing_hours": 48
+      },
+      "detected": true,
+      "expected_detection": true,
+      "true_positive": true,
+      "false_positive": false,
+      "false_negative": false,
+      "true_negative": false,
+      "detection_timing_hours": 36,
+      "lead_time": null,
+      "lead_time_hours": null,
+      "severity_accuracy": 0.67,
+      "preventable_cases_estimated": 0
+    },
+    {
+      "case_id": "PH-407",
+      "title": "After-school Center Cluster",
+      "category": "school_outbreak",
+      "schema_level": "framework",
+      "synthetic_bootstrap": true,
+      "level1": {
+        "individuals_total": 4,
+        "anomalies_recorded": 8,
+        "individuals_with_anomalies": 4
+      },
+      "level2": {
+        "clusters_detected": 1,
+        "top_cluster_id": "CL-mrbujp5q-1",
+        "outbreak_likelihood": 0.739
+      },
+      "level3": {
+        "regional_trend_alert": false,
+        "growth_ratio": 0,
+        "unique_users": 4,
+        "level": 0
+      },
+      "expected": {
+        "cluster_detected": true,
+        "regional_trend_alert": null,
+        "detection_timing_hours": 48
+      },
+      "detected": true,
+      "expected_detection": true,
+      "true_positive": true,
+      "false_positive": false,
+      "false_negative": false,
+      "true_negative": false,
+      "detection_timing_hours": 36,
+      "lead_time": null,
+      "lead_time_hours": null,
+      "severity_accuracy": 1,
+      "preventable_cases_estimated": 0
+    },
+    {
+      "case_id": "PH-408",
+      "title": "Sports Academy Febrile Cluster",
+      "category": "school_outbreak",
+      "schema_level": "framework",
+      "synthetic_bootstrap": true,
+      "level1": {
+        "individuals_total": 5,
+        "anomalies_recorded": 10,
+        "individuals_with_anomalies": 5
+      },
+      "level2": {
+        "clusters_detected": 1,
+        "top_cluster_id": "CL-mrbujp5r-1",
+        "outbreak_likelihood": 0.752
+      },
+      "level3": {
+        "regional_trend_alert": false,
+        "growth_ratio": 0,
+        "unique_users": 5,
+        "level": 0
+      },
+      "expected": {
+        "cluster_detected": true,
+        "regional_trend_alert": null,
+        "detection_timing_hours": 48
+      },
+      "detected": true,
+      "expected_detection": true,
+      "true_positive": true,
+      "false_positive": false,
+      "false_negative": false,
+      "true_negative": false,
+      "detection_timing_hours": 36,
+      "lead_time": null,
+      "lead_time_hours": null,
+      "severity_accuracy": 0.67,
+      "preventable_cases_estimated": 0
+    },
+    {
+      "case_id": "PH-501",
+      "title": "Elderly Care Home Respiratory",
+      "category": "residential_cluster",
+      "schema_level": "framework",
+      "synthetic_bootstrap": true,
+      "level1": {
+        "individuals_total": 6,
+        "anomalies_recorded": 12,
+        "individuals_with_anomalies": 6
+      },
+      "level2": {
+        "clusters_detected": 1,
+        "top_cluster_id": "CL-mrbujp5r-1",
+        "outbreak_likelihood": 0.765
+      },
+      "level3": {
+        "regional_trend_alert": false,
+        "growth_ratio": 0,
+        "unique_users": 6,
+        "level": 0
+      },
+      "expected": {
+        "cluster_detected": true,
+        "regional_trend_alert": null,
+        "detection_timing_hours": 48
+      },
+      "detected": true,
+      "expected_detection": true,
+      "true_positive": true,
+      "false_positive": false,
+      "false_negative": false,
+      "true_negative": false,
+      "detection_timing_hours": 36,
+      "lead_time": null,
+      "lead_time_hours": null,
+      "severity_accuracy": null,
+      "preventable_cases_estimated": 1
+    },
+    {
+      "case_id": "PH-502",
+      "title": "Apartment Tower GI Cluster",
+      "category": "residential_cluster",
+      "schema_level": "framework",
+      "synthetic_bootstrap": true,
+      "level1": {
+        "individuals_total": 4,
+        "anomalies_recorded": 8,
+        "individuals_with_anomalies": 4
+      },
+      "level2": {
+        "clusters_detected": 1,
+        "top_cluster_id": "CL-mrbujp5r-1",
+        "outbreak_likelihood": 0.739
+      },
+      "level3": {
+        "regional_trend_alert": false,
+        "growth_ratio": 0,
+        "unique_users": 4,
+        "level": 0
+      },
+      "expected": {
+        "cluster_detected": true,
+        "regional_trend_alert": null,
+        "detection_timing_hours": 48
+      },
+      "detected": true,
+      "expected_detection": true,
+      "true_positive": true,
+      "false_positive": false,
+      "false_negative": false,
+      "true_negative": false,
+      "detection_timing_hours": 36,
+      "lead_time": null,
+      "lead_time_hours": null,
+      "severity_accuracy": null,
+      "preventable_cases_estimated": 0
+    },
+    {
+      "case_id": "PH-503",
+      "title": "Suburban Community Febrile",
+      "category": "residential_cluster",
+      "schema_level": "framework",
+      "synthetic_bootstrap": true,
+      "level1": {
+        "individuals_total": 5,
+        "anomalies_recorded": 10,
+        "individuals_with_anomalies": 5
+      },
+      "level2": {
+        "clusters_detected": 1,
+        "top_cluster_id": "CL-mrbujp5r-1",
+        "outbreak_likelihood": 0.752
+      },
+      "level3": {
+        "regional_trend_alert": false,
+        "growth_ratio": 0,
+        "unique_users": 5,
+        "level": 0
+      },
+      "expected": {
+        "cluster_detected": true,
+        "regional_trend_alert": null,
+        "detection_timing_hours": 48
+      },
+      "detected": true,
+      "expected_detection": true,
+      "true_positive": true,
+      "false_positive": false,
+      "false_negative": false,
+      "true_negative": false,
+      "detection_timing_hours": 36,
+      "lead_time": null,
+      "lead_time_hours": null,
+      "severity_accuracy": null,
+      "preventable_cases_estimated": 0
+    },
+    {
+      "case_id": "PH-504",
+      "title": "Urban Village Cluster",
+      "category": "residential_cluster",
+      "schema_level": "framework",
+      "synthetic_bootstrap": true,
+      "level1": {
+        "individuals_total": 7,
+        "anomalies_recorded": 14,
+        "individuals_with_anomalies": 7
+      },
+      "level2": {
+        "clusters_detected": 1,
+        "top_cluster_id": "CL-mrbujp5r-1",
+        "outbreak_likelihood": 0.779
+      },
+      "level3": {
+        "regional_trend_alert": false,
+        "growth_ratio": 0,
+        "unique_users": 7,
+        "level": 0
+      },
+      "expected": {
+        "cluster_detected": true,
+        "regional_trend_alert": null,
+        "detection_timing_hours": 48
+      },
+      "detected": true,
+      "expected_detection": true,
+      "true_positive": true,
+      "false_positive": false,
+      "false_negative": false,
+      "true_negative": false,
+      "detection_timing_hours": 36,
+      "lead_time": null,
+      "lead_time_hours": null,
+      "severity_accuracy": null,
+      "preventable_cases_estimated": 1
+    },
+    {
+      "case_id": "PH-505",
+      "title": "Gated Community Respiratory",
+      "category": "residential_cluster",
+      "schema_level": "framework",
+      "synthetic_bootstrap": true,
+      "level1": {
+        "individuals_total": 4,
+        "anomalies_recorded": 8,
+        "individuals_with_anomalies": 4
+      },
+      "level2": {
+        "clusters_detected": 1,
+        "top_cluster_id": "CL-mrbujp5r-1",
+        "outbreak_likelihood": 0.739
+      },
+      "level3": {
+        "regional_trend_alert": false,
+        "growth_ratio": 0,
+        "unique_users": 4,
+        "level": 0
+      },
+      "expected": {
+        "cluster_detected": true,
+        "regional_trend_alert": null,
+        "detection_timing_hours": 48
+      },
+      "detected": true,
+      "expected_detection": true,
+      "true_positive": true,
+      "false_positive": false,
+      "false_negative": false,
+      "true_negative": false,
+      "detection_timing_hours": 36,
+      "lead_time": null,
+      "lead_time_hours": null,
+      "severity_accuracy": null,
+      "preventable_cases_estimated": 0
+    },
+    {
+      "case_id": "PH-506",
+      "title": "Public Housing SES Low Cluster",
+      "category": "residential_cluster",
+      "schema_level": "framework",
+      "synthetic_bootstrap": true,
+      "level1": {
+        "individuals_total": 5,
+        "anomalies_recorded": 10,
+        "individuals_with_anomalies": 5
+      },
+      "level2": {
+        "clusters_detected": 1,
+        "top_cluster_id": "CL-mrbujp5r-1",
+        "outbreak_likelihood": 0.752
+      },
+      "level3": {
+        "regional_trend_alert": false,
+        "growth_ratio": 0,
+        "unique_users": 5,
+        "level": 0
+      },
+      "expected": {
+        "cluster_detected": true,
+        "regional_trend_alert": null,
+        "detection_timing_hours": 48
+      },
+      "detected": true,
+      "expected_detection": true,
+      "true_positive": true,
+      "false_positive": false,
+      "false_negative": false,
+      "true_negative": false,
+      "detection_timing_hours": 36,
+      "lead_time": null,
+      "lead_time_hours": null,
+      "severity_accuracy": null,
+      "preventable_cases_estimated": 0
+    },
+    {
+      "case_id": "PH-507",
+      "title": "Family Compound GI Event",
+      "category": "residential_cluster",
+      "schema_level": "framework",
+      "synthetic_bootstrap": true,
+      "level1": {
+        "individuals_total": 3,
+        "anomalies_recorded": 6,
+        "individuals_with_anomalies": 3
+      },
+      "level2": {
+        "clusters_detected": 1,
+        "top_cluster_id": "CL-mrbujp5r-1",
+        "outbreak_likelihood": 0.726
+      },
+      "level3": {
+        "regional_trend_alert": false,
+        "growth_ratio": 0,
+        "unique_users": 3,
+        "level": 0
+      },
+      "expected": {
+        "cluster_detected": true,
+        "regional_trend_alert": null,
+        "detection_timing_hours": 48
+      },
+      "detected": true,
+      "expected_detection": true,
+      "true_positive": true,
+      "false_positive": false,
+      "false_negative": false,
+      "true_negative": false,
+      "detection_timing_hours": 36,
+      "lead_time": null,
+      "lead_time_hours": null,
+      "severity_accuracy": null,
+      "preventable_cases_estimated": 0
+    },
+    {
+      "case_id": "PH-508",
+      "title": "High-rise Mixed Age Cluster",
+      "category": "residential_cluster",
+      "schema_level": "framework",
+      "synthetic_bootstrap": true,
+      "level1": {
+        "individuals_total": 5,
+        "anomalies_recorded": 10,
+        "individuals_with_anomalies": 5
+      },
+      "level2": {
+        "clusters_detected": 1,
+        "top_cluster_id": "CL-mrbujp5r-1",
+        "outbreak_likelihood": 0.752
+      },
+      "level3": {
+        "regional_trend_alert": false,
+        "growth_ratio": 0,
+        "unique_users": 5,
+        "level": 0
+      },
+      "expected": {
+        "cluster_detected": true,
+        "regional_trend_alert": null,
+        "detection_timing_hours": 48
+      },
+      "detected": true,
+      "expected_detection": true,
+      "true_positive": true,
+      "false_positive": false,
+      "false_negative": false,
+      "true_negative": false,
+      "detection_timing_hours": 36,
+      "lead_time": null,
+      "lead_time_hours": null,
+      "severity_accuracy": null,
+      "preventable_cases_estimated": 0
+    },
+    {
+      "case_id": "PH-509",
+      "title": "Retirement Community Cluster",
+      "category": "residential_cluster",
+      "schema_level": "framework",
+      "synthetic_bootstrap": true,
+      "level1": {
+        "individuals_total": 4,
+        "anomalies_recorded": 8,
+        "individuals_with_anomalies": 4
+      },
+      "level2": {
+        "clusters_detected": 1,
+        "top_cluster_id": "CL-mrbujp5r-1",
+        "outbreak_likelihood": 0.739
+      },
+      "level3": {
+        "regional_trend_alert": false,
+        "growth_ratio": 0,
+        "unique_users": 4,
+        "level": 0
+      },
+      "expected": {
+        "cluster_detected": true,
+        "regional_trend_alert": null,
+        "detection_timing_hours": 48
+      },
+      "detected": true,
+      "expected_detection": true,
+      "true_positive": true,
+      "false_positive": false,
+      "false_negative": false,
+      "true_negative": false,
+      "detection_timing_hours": 36,
+      "lead_time": null,
+      "lead_time_hours": null,
+      "severity_accuracy": null,
+      "preventable_cases_estimated": 0
+    },
+    {
+      "case_id": "PH-510",
+      "title": "New Development Sparse Cluster",
+      "category": "residential_cluster",
+      "schema_level": "framework",
+      "synthetic_bootstrap": true,
+      "level1": {
+        "individuals_total": 3,
+        "anomalies_recorded": 6,
+        "individuals_with_anomalies": 3
+      },
+      "level2": {
+        "clusters_detected": 1,
+        "top_cluster_id": "CL-mrbujp5r-1",
+        "outbreak_likelihood": 0.726
+      },
+      "level3": {
+        "regional_trend_alert": false,
+        "growth_ratio": 0,
+        "unique_users": 3,
+        "level": 0
+      },
+      "expected": {
+        "cluster_detected": true,
+        "regional_trend_alert": null,
+        "detection_timing_hours": 48
+      },
+      "detected": true,
+      "expected_detection": true,
+      "true_positive": true,
+      "false_positive": false,
+      "false_negative": false,
+      "true_negative": false,
+      "detection_timing_hours": 36,
+      "lead_time": null,
+      "lead_time_hours": null,
+      "severity_accuracy": null,
+      "preventable_cases_estimated": 0
+    },
+    {
+      "case_id": "PH-601",
+      "title": "Community Respiratory Early Warning Signal",
+      "category": "early_warning",
+      "schema_level": "complete",
+      "synthetic_bootstrap": false,
+      "level1": {
+        "individuals_total": 3,
+        "anomalies_recorded": 3,
+        "individuals_with_anomalies": 3
+      },
+      "level2": {
+        "clusters_detected": 1,
+        "top_cluster_id": "CL-mrbujp5s-1",
+        "outbreak_likelihood": 0.608
+      },
+      "level3": {
+        "regional_trend_alert": false,
+        "growth_ratio": 0,
+        "unique_users": 3,
+        "level": 0
+      },
+      "expected": {
+        "cluster_detected": false,
+        "regional_trend_alert": true,
+        "detection_timing_hours": 72
+      },
+      "detected": false,
+      "expected_detection": true,
+      "true_positive": false,
+      "false_positive": false,
+      "false_negative": true,
+      "true_negative": false,
+      "detection_timing_hours": 60,
+      "lead_time": 60,
+      "lead_time_hours": 60,
+      "severity_accuracy": 1,
+      "preventable_cases_estimated": 0
+    },
+    {
+      "case_id": "PH-602",
+      "title": "Regional SpO2 Dip Trend",
+      "category": "early_warning",
+      "schema_level": "framework",
+      "synthetic_bootstrap": true,
+      "level1": {
+        "individuals_total": 12,
+        "anomalies_recorded": 24,
+        "individuals_with_anomalies": 12
+      },
+      "level2": {
+        "clusters_detected": 1,
+        "top_cluster_id": "CL-mrbujp5s-1",
+        "outbreak_likelihood": 0.845
+      },
+      "level3": {
+        "regional_trend_alert": false,
+        "growth_ratio": 0,
+        "unique_users": 12,
+        "level": 0
+      },
+      "expected": {
+        "cluster_detected": false,
+        "regional_trend_alert": true,
+        "detection_timing_hours": 72
+      },
+      "detected": false,
+      "expected_detection": true,
+      "true_positive": false,
+      "false_positive": false,
+      "false_negative": true,
+      "true_negative": false,
+      "detection_timing_hours": 36,
+      "lead_time": null,
+      "lead_time_hours": null,
+      "severity_accuracy": 0.33,
+      "preventable_cases_estimated": 0
+    },
+    {
+      "case_id": "PH-603",
+      "title": "Activity Drop Widespread Signal",
+      "category": "early_warning",
+      "schema_level": "framework",
+      "synthetic_bootstrap": true,
+      "level1": {
+        "individuals_total": 12,
+        "anomalies_recorded": 24,
+        "individuals_with_anomalies": 12
+      },
+      "level2": {
+        "clusters_detected": 1,
+        "top_cluster_id": "CL-mrbujp5s-1",
+        "outbreak_likelihood": 0.845
+      },
+      "level3": {
+        "regional_trend_alert": false,
+        "growth_ratio": 0,
+        "unique_users": 12,
+        "level": 0
+      },
+      "expected": {
+        "cluster_detected": false,
+        "regional_trend_alert": true,
+        "detection_timing_hours": 72
+      },
+      "detected": false,
+      "expected_detection": true,
+      "true_positive": false,
+      "false_positive": false,
+      "false_negative": true,
+      "true_negative": false,
+      "detection_timing_hours": 36,
+      "lead_time": null,
+      "lead_time_hours": null,
+      "severity_accuracy": 0.33,
+      "preventable_cases_estimated": 0
+    },
+    {
+      "case_id": "PH-604",
+      "title": "Multi-district Febrile Uptick",
+      "category": "early_warning",
+      "schema_level": "framework",
+      "synthetic_bootstrap": true,
+      "level1": {
+        "individuals_total": 12,
+        "anomalies_recorded": 24,
+        "individuals_with_anomalies": 12
+      },
+      "level2": {
+        "clusters_detected": 1,
+        "top_cluster_id": "CL-mrbujp5s-1",
+        "outbreak_likelihood": 0.845
+      },
+      "level3": {
+        "regional_trend_alert": false,
+        "growth_ratio": 0,
+        "unique_users": 12,
+        "level": 0
+      },
+      "expected": {
+        "cluster_detected": false,
+        "regional_trend_alert": true,
+        "detection_timing_hours": 72
+      },
+      "detected": false,
+      "expected_detection": true,
+      "true_positive": false,
+      "false_positive": false,
+      "false_negative": true,
+      "true_negative": false,
+      "detection_timing_hours": 36,
+      "lead_time": null,
+      "lead_time_hours": null,
+      "severity_accuracy": 0.33,
+      "preventable_cases_estimated": 0
+    },
+    {
+      "case_id": "PH-605",
+      "title": "Pre-holiday Travel Surge Signal",
+      "category": "early_warning",
+      "schema_level": "framework",
+      "synthetic_bootstrap": true,
+      "level1": {
+        "individuals_total": 12,
+        "anomalies_recorded": 24,
+        "individuals_with_anomalies": 12
+      },
+      "level2": {
+        "clusters_detected": 1,
+        "top_cluster_id": "CL-mrbujp5s-1",
+        "outbreak_likelihood": 0.845
+      },
+      "level3": {
+        "regional_trend_alert": false,
+        "growth_ratio": 0,
+        "unique_users": 12,
+        "level": 0
+      },
+      "expected": {
+        "cluster_detected": false,
+        "regional_trend_alert": true,
+        "detection_timing_hours": 72
+      },
+      "detected": false,
+      "expected_detection": true,
+      "true_positive": false,
+      "false_positive": false,
+      "false_negative": true,
+      "true_negative": false,
+      "detection_timing_hours": 36,
+      "lead_time": null,
+      "lead_time_hours": null,
+      "severity_accuracy": 0.33,
+      "preventable_cases_estimated": 0
+    },
+    {
+      "case_id": "PH-606",
+      "title": "Pollution + Respiratory Proxy",
+      "category": "early_warning",
+      "schema_level": "framework",
+      "synthetic_bootstrap": true,
+      "level1": {
+        "individuals_total": 12,
+        "anomalies_recorded": 24,
+        "individuals_with_anomalies": 12
+      },
+      "level2": {
+        "clusters_detected": 1,
+        "top_cluster_id": "CL-mrbujp5t-1",
+        "outbreak_likelihood": 0.845
+      },
+      "level3": {
+        "regional_trend_alert": false,
+        "growth_ratio": 0,
+        "unique_users": 12,
+        "level": 0
+      },
+      "expected": {
+        "cluster_detected": false,
+        "regional_trend_alert": true,
+        "detection_timing_hours": 72
+      },
+      "detected": false,
+      "expected_detection": true,
+      "true_positive": false,
+      "false_positive": false,
+      "false_negative": true,
+      "true_negative": false,
+      "detection_timing_hours": 36,
+      "lead_time": null,
+      "lead_time_hours": null,
+      "severity_accuracy": 0.33,
+      "preventable_cases_estimated": 0
+    },
+    {
+      "case_id": "PH-607",
+      "title": "Heatwave Febrile Proxy Trend",
+      "category": "early_warning",
+      "schema_level": "framework",
+      "synthetic_bootstrap": true,
+      "level1": {
+        "individuals_total": 12,
+        "anomalies_recorded": 24,
+        "individuals_with_anomalies": 12
+      },
+      "level2": {
+        "clusters_detected": 1,
+        "top_cluster_id": "CL-mrbujp5t-1",
+        "outbreak_likelihood": 0.845
+      },
+      "level3": {
+        "regional_trend_alert": false,
+        "growth_ratio": 0,
+        "unique_users": 12,
+        "level": 0
+      },
+      "expected": {
+        "cluster_detected": false,
+        "regional_trend_alert": true,
+        "detection_timing_hours": 72
+      },
+      "detected": false,
+      "expected_detection": true,
+      "true_positive": false,
+      "false_positive": false,
+      "false_negative": true,
+      "true_negative": false,
+      "detection_timing_hours": 36,
+      "lead_time": null,
+      "lead_time_hours": null,
+      "severity_accuracy": 0.33,
+      "preventable_cases_estimated": 0
+    },
+    {
+      "case_id": "PH-608",
+      "title": "Pediatric Seasonal Uptick",
+      "category": "early_warning",
+      "schema_level": "framework",
+      "synthetic_bootstrap": true,
+      "level1": {
+        "individuals_total": 12,
+        "anomalies_recorded": 24,
+        "individuals_with_anomalies": 12
+      },
+      "level2": {
+        "clusters_detected": 1,
+        "top_cluster_id": "CL-mrbujp5t-1",
+        "outbreak_likelihood": 0.845
+      },
+      "level3": {
+        "regional_trend_alert": false,
+        "growth_ratio": 0,
+        "unique_users": 12,
+        "level": 0
+      },
+      "expected": {
+        "cluster_detected": false,
+        "regional_trend_alert": true,
+        "detection_timing_hours": 72
+      },
+      "detected": false,
+      "expected_detection": true,
+      "true_positive": false,
+      "false_positive": false,
+      "false_negative": true,
+      "true_negative": false,
+      "detection_timing_hours": 36,
+      "lead_time": null,
+      "lead_time_hours": null,
+      "severity_accuracy": 0.33,
+      "preventable_cases_estimated": 0
+    },
+    {
+      "case_id": "PH-609",
+      "title": "Rural Clinic Sentinel Signal",
+      "category": "early_warning",
+      "schema_level": "framework",
+      "synthetic_bootstrap": true,
+      "level1": {
+        "individuals_total": 12,
+        "anomalies_recorded": 24,
+        "individuals_with_anomalies": 12
+      },
+      "level2": {
+        "clusters_detected": 1,
+        "top_cluster_id": "CL-mrbujp5t-1",
+        "outbreak_likelihood": 0.845
+      },
+      "level3": {
+        "regional_trend_alert": false,
+        "growth_ratio": 0,
+        "unique_users": 12,
+        "level": 0
+      },
+      "expected": {
+        "cluster_detected": false,
+        "regional_trend_alert": true,
+        "detection_timing_hours": 72
+      },
+      "detected": false,
+      "expected_detection": true,
+      "true_positive": false,
+      "false_positive": false,
+      "false_negative": true,
+      "true_negative": false,
+      "detection_timing_hours": 36,
+      "lead_time": null,
+      "lead_time_hours": null,
+      "severity_accuracy": 0.33,
+      "preventable_cases_estimated": 0
+    },
+    {
+      "case_id": "PH-610",
+      "title": "Cross-border Travel Warning",
+      "category": "early_warning",
+      "schema_level": "framework",
+      "synthetic_bootstrap": true,
+      "level1": {
+        "individuals_total": 12,
+        "anomalies_recorded": 24,
+        "individuals_with_anomalies": 12
+      },
+      "level2": {
+        "clusters_detected": 1,
+        "top_cluster_id": "CL-mrbujp5t-1",
+        "outbreak_likelihood": 0.845
+      },
+      "level3": {
+        "regional_trend_alert": false,
+        "growth_ratio": 0,
+        "unique_users": 12,
+        "level": 0
+      },
+      "expected": {
+        "cluster_detected": false,
+        "regional_trend_alert": true,
+        "detection_timing_hours": 72
+      },
+      "detected": false,
+      "expected_detection": true,
+      "true_positive": false,
+      "false_positive": false,
+      "false_negative": true,
+      "true_negative": false,
+      "detection_timing_hours": 36,
+      "lead_time": null,
+      "lead_time_hours": null,
+      "severity_accuracy": 0.33,
+      "preventable_cases_estimated": 0
+    },
+    {
+      "case_id": "PH-701",
+      "title": "COPD Exacerbation Cluster Proxy",
+      "category": "chronic_monitoring",
+      "schema_level": "framework",
+      "synthetic_bootstrap": true,
+      "level1": {
+        "individuals_total": 8,
+        "anomalies_recorded": 16,
+        "individuals_with_anomalies": 8
+      },
+      "level2": {
+        "clusters_detected": 1,
+        "top_cluster_id": "CL-mrbujp5u-1",
+        "outbreak_likelihood": 0.792
+      },
+      "level3": {
+        "regional_trend_alert": false,
+        "growth_ratio": 0,
+        "unique_users": 8,
+        "level": 0
+      },
+      "expected": {
+        "cluster_detected": false,
+        "regional_trend_alert": null,
+        "detection_timing_hours": null
+      },
+      "detected": false,
+      "expected_detection": true,
+      "true_positive": false,
+      "false_positive": false,
+      "false_negative": true,
+      "true_negative": false,
+      "detection_timing_hours": 48,
+      "lead_time": null,
+      "lead_time_hours": null,
+      "severity_accuracy": 0.33,
+      "preventable_cases_estimated": 0
+    },
+    {
+      "case_id": "PH-702",
+      "title": "Diabetes Poor Control Activity Pattern",
+      "category": "chronic_monitoring",
+      "schema_level": "framework",
+      "synthetic_bootstrap": true,
+      "level1": {
+        "individuals_total": 8,
+        "anomalies_recorded": 16,
+        "individuals_with_anomalies": 8
+      },
+      "level2": {
+        "clusters_detected": 1,
+        "top_cluster_id": "CL-mrbujp5u-1",
+        "outbreak_likelihood": 0.792
+      },
+      "level3": {
+        "regional_trend_alert": false,
+        "growth_ratio": 0,
+        "unique_users": 8,
+        "level": 0
+      },
+      "expected": {
+        "cluster_detected": false,
+        "regional_trend_alert": null,
+        "detection_timing_hours": null
+      },
+      "detected": false,
+      "expected_detection": true,
+      "true_positive": false,
+      "false_positive": false,
+      "false_negative": true,
+      "true_negative": false,
+      "detection_timing_hours": 48,
+      "lead_time": null,
+      "lead_time_hours": null,
+      "severity_accuracy": 0.33,
+      "preventable_cases_estimated": 0
+    },
+    {
+      "case_id": "PH-703",
+      "title": "Heart Failure Decompensation Signals",
+      "category": "chronic_monitoring",
+      "schema_level": "framework",
+      "synthetic_bootstrap": true,
+      "level1": {
+        "individuals_total": 8,
+        "anomalies_recorded": 16,
+        "individuals_with_anomalies": 8
+      },
+      "level2": {
+        "clusters_detected": 1,
+        "top_cluster_id": "CL-mrbujp5u-1",
+        "outbreak_likelihood": 0.792
+      },
+      "level3": {
+        "regional_trend_alert": false,
+        "growth_ratio": 0,
+        "unique_users": 8,
+        "level": 0
+      },
+      "expected": {
+        "cluster_detected": false,
+        "regional_trend_alert": null,
+        "detection_timing_hours": null
+      },
+      "detected": false,
+      "expected_detection": true,
+      "true_positive": false,
+      "false_positive": false,
+      "false_negative": true,
+      "true_negative": false,
+      "detection_timing_hours": 48,
+      "lead_time": null,
+      "lead_time_hours": null,
+      "severity_accuracy": 0.33,
+      "preventable_cases_estimated": 0
+    },
+    {
+      "case_id": "PH-704",
+      "title": "Hypertension Uncontrolled Cohort",
+      "category": "chronic_monitoring",
+      "schema_level": "framework",
+      "synthetic_bootstrap": true,
+      "level1": {
+        "individuals_total": 8,
+        "anomalies_recorded": 16,
+        "individuals_with_anomalies": 8
+      },
+      "level2": {
+        "clusters_detected": 1,
+        "top_cluster_id": "CL-mrbujp5u-1",
+        "outbreak_likelihood": 0.792
+      },
+      "level3": {
+        "regional_trend_alert": false,
+        "growth_ratio": 0,
+        "unique_users": 8,
+        "level": 0
+      },
+      "expected": {
+        "cluster_detected": false,
+        "regional_trend_alert": null,
+        "detection_timing_hours": null
+      },
+      "detected": false,
+      "expected_detection": true,
+      "true_positive": false,
+      "false_positive": false,
+      "false_negative": true,
+      "true_negative": false,
+      "detection_timing_hours": 48,
+      "lead_time": null,
+      "lead_time_hours": null,
+      "severity_accuracy": 0.33,
+      "preventable_cases_estimated": 0
+    },
+    {
+      "case_id": "PH-705",
+      "title": "CKD Stage Monitoring Anomalies",
+      "category": "chronic_monitoring",
+      "schema_level": "framework",
+      "synthetic_bootstrap": true,
+      "level1": {
+        "individuals_total": 8,
+        "anomalies_recorded": 16,
+        "individuals_with_anomalies": 8
+      },
+      "level2": {
+        "clusters_detected": 1,
+        "top_cluster_id": "CL-mrbujp5u-1",
+        "outbreak_likelihood": 0.792
+      },
+      "level3": {
+        "regional_trend_alert": false,
+        "growth_ratio": 0,
+        "unique_users": 8,
+        "level": 0
+      },
+      "expected": {
+        "cluster_detected": false,
+        "regional_trend_alert": null,
+        "detection_timing_hours": null
+      },
+      "detected": false,
+      "expected_detection": true,
+      "true_positive": false,
+      "false_positive": false,
+      "false_negative": true,
+      "true_negative": false,
+      "detection_timing_hours": 48,
+      "lead_time": null,
+      "lead_time_hours": null,
+      "severity_accuracy": 0.33,
+      "preventable_cases_estimated": 0
+    },
+    {
+      "case_id": "PH-801",
+      "title": "Single-family Coincidental Symptoms",
+      "category": "borderline_false_positive",
+      "schema_level": "framework",
+      "synthetic_bootstrap": true,
+      "level1": {
+        "individuals_total": 2,
+        "anomalies_recorded": 0,
+        "individuals_with_anomalies": 0
+      },
+      "level2": {
+        "clusters_detected": 0,
+        "top_cluster_id": null,
+        "outbreak_likelihood": null
+      },
+      "level3": {
+        "regional_trend_alert": false,
+        "growth_ratio": 0,
+        "unique_users": 0,
+        "level": 0
+      },
+      "expected": {
+        "cluster_detected": false,
+        "regional_trend_alert": null,
+        "detection_timing_hours": null
+      },
+      "detected": false,
+      "expected_detection": false,
+      "true_positive": false,
+      "false_positive": false,
+      "false_negative": false,
+      "true_negative": true,
+      "detection_timing_hours": null,
+      "lead_time": null,
+      "lead_time_hours": null,
+      "severity_accuracy": null,
+      "preventable_cases_estimated": 0
+    },
+    {
+      "case_id": "PH-802",
+      "title": "Heat Stress HR Elevation",
+      "category": "borderline_false_positive",
+      "schema_level": "framework",
+      "synthetic_bootstrap": true,
+      "level1": {
+        "individuals_total": 4,
+        "anomalies_recorded": 0,
+        "individuals_with_anomalies": 0
+      },
+      "level2": {
+        "clusters_detected": 0,
+        "top_cluster_id": null,
+        "outbreak_likelihood": null
+      },
+      "level3": {
+        "regional_trend_alert": false,
+        "growth_ratio": 0,
+        "unique_users": 0,
+        "level": 0
+      },
+      "expected": {
+        "cluster_detected": false,
+        "regional_trend_alert": null,
+        "detection_timing_hours": null
+      },
+      "detected": false,
+      "expected_detection": false,
+      "true_positive": false,
+      "false_positive": false,
+      "false_negative": false,
+      "true_negative": true,
+      "detection_timing_hours": null,
+      "lead_time": null,
+      "lead_time_hours": null,
+      "severity_accuracy": null,
+      "preventable_cases_estimated": 0
+    },
+    {
+      "case_id": "PH-803",
+      "title": "Device Artifact SpO2 Dip",
+      "category": "borderline_false_positive",
+      "schema_level": "framework",
+      "synthetic_bootstrap": true,
+      "level1": {
+        "individuals_total": 3,
+        "anomalies_recorded": 0,
+        "individuals_with_anomalies": 0
+      },
+      "level2": {
+        "clusters_detected": 0,
+        "top_cluster_id": null,
+        "outbreak_likelihood": null
+      },
+      "level3": {
+        "regional_trend_alert": false,
+        "growth_ratio": 0,
+        "unique_users": 0,
+        "level": 0
+      },
+      "expected": {
+        "cluster_detected": false,
+        "regional_trend_alert": null,
+        "detection_timing_hours": null
+      },
+      "detected": false,
+      "expected_detection": false,
+      "true_positive": false,
+      "false_positive": false,
+      "false_negative": false,
+      "true_negative": true,
+      "detection_timing_hours": null,
+      "lead_time": null,
+      "lead_time_hours": null,
+      "severity_accuracy": null,
+      "preventable_cases_estimated": 0
+    },
+    {
+      "case_id": "PH-804",
+      "title": "Marathon Training HR Spike False Cluster",
+      "category": "borderline_false_positive",
+      "schema_level": "complete",
+      "synthetic_bootstrap": false,
+      "level1": {
+        "individuals_total": 3,
+        "anomalies_recorded": 0,
+        "individuals_with_anomalies": 0
+      },
+      "level2": {
+        "clusters_detected": 0,
+        "top_cluster_id": null,
+        "outbreak_likelihood": null
+      },
+      "level3": {
+        "regional_trend_alert": false,
+        "growth_ratio": 0,
+        "unique_users": 0,
+        "level": 0
+      },
+      "expected": {
+        "cluster_detected": false,
+        "regional_trend_alert": null,
+        "detection_timing_hours": null
+      },
+      "detected": false,
+      "expected_detection": false,
+      "true_positive": false,
+      "false_positive": false,
+      "false_negative": false,
+      "true_negative": true,
+      "detection_timing_hours": null,
+      "lead_time": null,
+      "lead_time_hours": null,
+      "severity_accuracy": null,
+      "preventable_cases_estimated": 0
+    }
+  ],
+  "summary_metrics": {
+    "overall_sensitivity": 0.6875,
+    "overall_specificity": 1,
+    "overall_ppv": 1,
+    "overall_npv": 0.2105,
+    "average_lead_time": 45,
+    "average_lead_time_hours": 45,
+    "cases_prevented_estimated": 9,
+    "confusion_matrix": {
+      "tp": 33,
+      "fp": 0,
+      "fn": 15,
+      "tn": 4
+    },
+    "by_category": {
+      "workplace_cluster": {
+        "n": 15,
+        "sensitivity": 1,
+        "specificity": 0,
+        "ppv": 1
+      },
+      "school_outbreak": {
+        "n": 8,
+        "sensitivity": 1,
+        "specificity": 0,
+        "ppv": 1
+      },
+      "residential_cluster": {
+        "n": 10,
+        "sensitivity": 1,
+        "specificity": 0,
+        "ppv": 1
+      },
+      "early_warning": {
+        "n": 10,
+        "sensitivity": 0,
+        "specificity": 0,
+        "ppv": 0
+      },
+      "chronic_monitoring": {
+        "n": 5,
+        "sensitivity": 0,
+        "specificity": 0,
+        "ppv": 0
+      },
+      "borderline_false_positive": {
+        "n": 4,
+        "sensitivity": 0,
+        "specificity": 1,
+        "ppv": 0
+      }
+    },
+    "complete_cases": 5,
+    "framework_cases": 47,
+    "synthetic_bootstrap_cases": 47
+  }
+}

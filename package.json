@@ -33,6 +33,7 @@
     "dev": "node scripts/dev.js",
     "test:server": "node --test server/__tests__/*.test.js",
     "evaluate": "node scripts/evaluate-analytics.js",
+    "evaluate:ph": "node scripts/evaluate-public-health.js --dataset public-health --output results",
     "export:features": "node scripts/export_features.js",
     "generate:synth-health": "node scripts/generate_synthetic_healthdata.js --users 200 --days 14",
     "experiment:export": "npm run export:features",

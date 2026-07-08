@@ -137,4 +137,16 @@ export const geoApi = {
   getLocation: () => api.get('/geo/location'),
 };
 
+export const publicHealthApi = {
+  getMeta: () => api.get('/public-health/meta'),
+  getSummary: (params) => api.get('/public-health/summary', { params }),
+  getClusters: (params) => api.get('/public-health/clusters', { params }),
+  getDailyReport: (params) => api.get('/public-health/daily-report', { params }),
+  getInvestigation: (clusterId) => api.get(`/public-health/investigation/${clusterId}`),
+  getEquityAnalysis: (params) => api.get('/public-health/equity-analysis', { params }),
+  getEvaluation: () => api.get('/public-health/evaluation'),
+  runEvaluation: (timeWindow = 72) => api.post('/public-health/evaluation/run', { timeWindow }),
+  registerUser: (body) => api.post('/public-health/register-user', body),
+};
+
 export default api;

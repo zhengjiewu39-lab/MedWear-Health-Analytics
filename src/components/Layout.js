@@ -11,7 +11,7 @@ import {
   MonitorHeartOutlined, NotificationsActive, Biotech, LocalHospital,
   Assignment, Business, Gavel, Assessment, Hub, Science, Settings,
   Psychology, SmartToy, AutoAwesome, BugReport, TrendingUp, Bedtime,
-  SelfImprovement, PersonPin, MergeType, EmojiEvents, Devices,
+  SelfImprovement, PersonPin, MergeType, EmojiEvents, Devices, Coronavirus,
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import { useDataMode } from '../contexts/DataModeContext';
@@ -46,6 +46,8 @@ const ICONS = {
   '数据融合': MergeType,
   '健康目标': EmojiEvents,
   '我的设备': Devices,
+  '监测仪表盘': Coronavirus,
+  '公共卫生监测': Coronavirus,
 };
 
 function NavIcon({ name }) {

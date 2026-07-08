@@ -38,6 +38,7 @@ import DoctorReport from './pages/DoctorReport';
 import PlatformHub from './pages/PlatformHub';
 import DataImport from './pages/DataImport';
 import ResearchCenter from './pages/ResearchCenter';
+import PublicHealthDashboard from './pages/PublicHealthDashboard';
 
 const AppLoading = () => (
   <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
@@ -99,6 +100,7 @@ function AppRoutes() {
             <Route path="/ai/fusion" element={wrap(DataFusion, '数据融合')} />
             <Route path="/ai/goals" element={wrap(HealthGoals, '健康目标')} />
             <Route path="/research" element={wrap(ResearchCenter, '分析评价中心', false)} />
+            <Route path="/public-health" element={wrap(PublicHealthDashboard, '公共卫生监测', false)} />
             <Route path="/settings" element={wrap(SettingsPage, '系统设置', false)} />
           </Route>
         </Routes>

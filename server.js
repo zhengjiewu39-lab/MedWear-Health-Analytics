@@ -16,6 +16,7 @@ const { getProvider } = require('./server/data/provider');
 const { registerDataRoutes } = require('./server/routes/data');
 const { registerAdminRoutes } = require('./server/routes/admin');
 const researchRoutes = require('./server/routes/research');
+const publicHealthRoutes = require('./server/routes/publicHealth');
 const { geolocate } = require('./server/geo/location');
 const { findNearbyHospitals } = require('./server/geo/hospitals');
 const { mockData } = require('./server/mock/clinicalData');
@@ -41,15 +42,23 @@ app.use(cors({
   credentials: true,
 }));
 app.use(express.json({ limit: '10mb' }));
+
+const isProduction = process.env.NODE_ENV === 'production';
+const apiRateLimitMax = Number(
+  process.env.RATE_LIMIT_MAX || (isProduction ? 300 : 5000),
+);
+
 app.use('/api/', rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: Number(process.env.RATE_LIMIT_MAX || 300),
+  max: apiRateLimitMax,
   standardHeaders: true,
   legacyHeaders: false,
+  message: { success: false, message: '请求过于频繁，请稍后再试' },
+  skip: (req) => !isProduction && process.env.RATE_LIMIT_DEV === 'off',
 }));
 const authLimiter = rateLimit({
   windowMs: 60 * 1000,
-  max: 30,
+  max: isProduction ? 30 : 120,
   message: { success: false, message: '登录尝试过于频繁，请稍后再试' },
 });
 app.use(modeMiddleware);
@@ -92,9 +101,16 @@ app.get('/api/auth/me', (req, res) => {
 registerDataRoutes(app, resolveUser);
 registerAdminRoutes(app);
 app.use('/api/research', researchRoutes);
+app.use('/api/public-health', publicHealthRoutes);
 
 app.get('/api/health', (_, res) => {
-  res.json({ status: 'ok', service: 'MedWear API', version: '1.0', modes: ['demo', 'real'] });
+  res.json({
+    status: 'ok',
+    service: 'MedWear API',
+    version: '1.1',
+    modes: ['demo', 'real'],
+    features: ['clinical-analytics', 'research-benchmarks', 'public-health-surveillance'],
+  });
 });
 
 // ── Profile & Dashboard ──
