@@ -94,9 +94,9 @@ npm run evaluate       # → benchmarks/results/latest.json
 | `/screening` | Clinical screening with citations |
 | `/doctor-report` | Clinician report |
 | `/monitoring` | Real-time vitals |
-| `/ai/*` | Anomaly, prediction, sleep, digital twin |
-| `/ecg` | ECG visualization demo (synthetic) |
-| `/platform` | Integration API demo |
+| `/ai/anomaly` | Anomaly detection |
+| `/ai/predictive` | Predictive analytics |
+| `/methodology` | Methods documentation |
 
 ---
 

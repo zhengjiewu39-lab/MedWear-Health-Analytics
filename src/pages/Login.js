@@ -1,16 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Box, Typography, TextField, Button, Alert, Stack, Grid, Paper, Divider, alpha,
+  Box, Typography, TextField, Button, Alert, Stack, Paper, Divider, alpha,
 } from '@mui/material';
-import { MonitorHeart, Shield, Analytics, Speed } from '@mui/icons-material';
+import { MonitorHeart, Shield, Analytics, Speed, Translate } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
-
-const features = [
-  { icon: <Analytics />, title: '透明分析', desc: '可解释的健康评分与预警' },
-  { icon: <Shield />, title: '本地优先', desc: 'Apple Health 数据不上云' },
-  { icon: <Speed />, title: '管理高效', desc: '患者、设备、报告一站管理' },
-];
+import { useLang } from '../contexts/LanguageContext';
+import { getHomePath } from '../config/paperDemo';
 
 function Login() {
   const [username, setUsername] = useState('');
@@ -19,21 +15,28 @@ function Login() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { login } = useAuth();
+  const { t, lang, toggle: toggleLang } = useLang();
+
+  const features = [
+    { icon: <Analytics />, title: t('透明分析', 'Transparent analytics'), desc: t('可解释的健康评分与预警', 'Explainable health scores & alerts') },
+    { icon: <Shield />, title: t('本地优先', 'Local-first'), desc: t('Apple Health 数据不上云', 'Apple Health data stays on device') },
+    { icon: <Speed />, title: t('管理高效', 'Efficient ops'), desc: t('患者、设备、报告一站管理', 'Patients, devices & reports in one place') },
+  ];
 
   const handleLogin = async (u, p) => {
     try {
       setError('');
       setLoading(true);
-      const user = await login(u, p);
-      navigate(user?.role === 'admin' ? '/admin' : '/dashboard');
+      await login(u, p);
+      navigate(getHomePath());
     } catch (err) {
       const msg = err.response?.data?.message || err.message;
       if (err.response?.status === 429) {
-        setError('登录尝试过于频繁，请稍后再试');
+        setError(t('登录尝试过于频繁，请稍后再试', 'Too many login attempts, please try again later'));
       } else if (msg?.includes('Network Error') || !err.response) {
-        setError('无法连接 API，请确认已运行 npm run dev（端口 3001）');
+        setError(t('无法连接 API，请确认已运行 npm run dev（端口 3001）', 'Cannot reach API — please run npm run dev (port 3001)'));
       } else {
-        setError(msg || '登录失败');
+        setError(msg || t('登录失败', 'Login failed'));
       }
     } finally {
       setLoading(false);
@@ -65,10 +68,11 @@ function Login() {
           </Typography>
         </Stack>
         <Typography variant="h3" fontWeight={800} sx={{ maxWidth: 480, letterSpacing: '-0.03em', lineHeight: 1.15, mb: 2 }}>
-          医用可穿戴设备数据分析平台
+          {t('医用可穿戴设备数据分析平台', 'Medical Wearable Data Analytics Platform')}
         </Typography>
         <Typography variant="body1" sx={{ color: '#94a3b8', maxWidth: 440, mb: 4 }}>
-          面向管理员的临床运营控制台 — 患者监测、预警处置、报告导出与系统配置集中管理。
+          {t('面向管理员的临床运营控制台 — 患者监测、预警处置、报告导出与系统配置集中管理。',
+            'Clinical operations console for administrators — patient monitoring, alert triage, report export and system configuration in one place.')}
         </Typography>
         <Stack spacing={2} sx={{ maxWidth: 360 }}>
           {features.map((f) => (
@@ -87,9 +91,15 @@ function Login() {
 
       <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', p: 3 }}>
         <Paper elevation={0} sx={{ width: '100%', maxWidth: 420, p: 4, borderRadius: 3 }}>
-          <Typography variant="h5" fontWeight={800} sx={{ mb: 0.5 }}>登录</Typography>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
+            <Typography variant="h5" fontWeight={800}>{t('登录', 'Sign in')}</Typography>
+            <Button size="small" startIcon={<Translate />} onClick={toggleLang} sx={{ minWidth: 0 }}>
+              {lang === 'en' ? '中文' : 'EN'}
+            </Button>
+          </Box>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-            管理员登录后进入管理控制台
+            {t('使用管理员账号登录，默认进入临床早筛中心',
+              'Sign in with the administrator account — you will land on the clinical screening hub')}
           </Typography>
 
           {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
@@ -99,7 +109,7 @@ function Login() {
               margin="normal"
               required
               fullWidth
-              label="用户名"
+              label={t('用户名', 'Username')}
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               autoFocus
@@ -108,44 +118,29 @@ function Login() {
               margin="normal"
               required
               fullWidth
-              label="密码"
+              label={t('密码', 'Password')}
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
             <Button type="submit" fullWidth variant="contained" size="large" sx={{ mt: 3, py: 1.4 }} disabled={loading}>
-              {loading ? '登录中…' : '进入系统'}
+              {loading ? t('登录中…', 'Signing in…') : t('进入系统', 'Enter')}
             </Button>
           </Box>
 
           <Divider sx={{ my: 3 }}>
-            <Typography variant="caption" color="text.secondary">演示快捷登录</Typography>
+            <Typography variant="caption" color="text.secondary">{t('快捷登录', 'Quick sign-in')}</Typography>
           </Divider>
 
-          <Grid container spacing={1.5}>
-            <Grid item xs={6}>
-              <Button
-                fullWidth
-                variant="outlined"
-                disabled={loading}
-                onClick={() => handleLogin('admin', 'admin123')}
-                sx={{ py: 1.2 }}
-              >
-                管理员
-              </Button>
-            </Grid>
-            <Grid item xs={6}>
-              <Button
-                fullWidth
-                variant="outlined"
-                disabled={loading}
-                onClick={() => handleLogin('demo', 'demo123')}
-                sx={{ py: 1.2 }}
-              >
-                演示用户
-              </Button>
-            </Grid>
-          </Grid>
+          <Button
+            fullWidth
+            variant="outlined"
+            disabled={loading}
+            onClick={() => handleLogin('admin', 'admin123')}
+            sx={{ py: 1.2 }}
+          >
+            {t('管理员 (admin / admin123)', 'Administrator (admin / admin123)')}
+          </Button>
         </Paper>
       </Box>
     </Box>

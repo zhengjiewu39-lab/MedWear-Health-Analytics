@@ -3,7 +3,7 @@
  * 参考: WHO、AHA、中国成人体格标准
  * 模拟对象: 35岁男性, Apple Watch Series 9
  */
-const { getExtendedCategories, getDemoTrendData, getRecommendedExams } = require('../data/screeningCatalog');
+const { getExtendedCategories, getDemoTrendData, getRecommendedExams, getRecommendedExamsEn } = require('../data/screeningCatalog');
 const { getDemoFacilities } = require('../data/medicalFacilities');
 const { getDemoPredictions } = require('../data/predictionsCatalog');
 
@@ -179,8 +179,8 @@ const mockData = {
   },
 
   anomalies: [
-    { id: 1, type: 'HRV 短暂下降', confidence: 82, detectedAt: '2024-06-25 23:00', pattern: 'HRV 降至 38ms，低于个人基线 30%', aiModel: 'VitalGuard-v2', status: 'resolved', severity: 'low' },
-    { id: 2, type: '运动后心率恢复偏慢', confidence: 76, detectedAt: '2024-06-24 18:30', pattern: '运动后 5 分钟心率仍 > 100 bpm', aiModel: 'CardioNet-v3', status: 'monitoring', severity: 'medium' },
+    { id: 1, type: 'HRV 短暂下降', type_en: 'Transient HRV drop', confidence: 82, detectedAt: '2024-06-25 23:00', pattern: 'HRV 降至 38ms，低于个人基线 30%', pattern_en: 'HRV fell to 38 ms, 30% below personal baseline', aiModel: 'VitalGuard-v2', status: 'resolved', severity: 'low' },
+    { id: 2, type: '运动后心率恢复偏慢', type_en: 'Slow post-exercise heart rate recovery', confidence: 76, detectedAt: '2024-06-24 18:30', pattern: '运动后 5 分钟心率仍 > 100 bpm', pattern_en: 'Heart rate still > 100 bpm 5 minutes after exercise', aiModel: 'CardioNet-v3', status: 'monitoring', severity: 'medium' },
   ],
 
   predictions: getDemoPredictions(),
@@ -200,9 +200,9 @@ const mockData = {
   },
 
   fusionSources: [
-    { device: 'Apple Watch S9', metrics: ['心率', '血氧', 'HRV', '步数', '睡眠'], weight: 0.55, quality: 97 },
-    { device: 'iPhone 15 Pro', metrics: ['步数', '距离', '爬楼'], weight: 0.25, quality: 94 },
-    { device: 'Withings 体脂秤', metrics: ['体重', 'BMI', '体脂率'], weight: 0.20, quality: 96 },
+    { device: 'Apple Watch S9', metrics: ['心率', '血氧', 'HRV', '步数', '睡眠'], metrics_en: ['Heart rate', 'SpO₂', 'HRV', 'Steps', 'Sleep'], weight: 0.55, quality: 97 },
+    { device: 'iPhone 15 Pro', metrics: ['步数', '距离', '爬楼'], metrics_en: ['Steps', 'Distance', 'Floors climbed'], weight: 0.25, quality: 94 },
+    { device: 'Withings 体脂秤', metrics: ['体重', 'BMI', '体脂率'], metrics_en: ['Weight', 'BMI', 'Body-fat %'], weight: 0.20, quality: 96 },
   ],
 
   healthGoals: [
@@ -214,8 +214,8 @@ const mockData = {
   ],
 
   alerts: [
-    { id: 1, type: 'HRV 偏低', severity: 'low', message: 'HRV 52ms 略低于个人基线，建议充分休息', time: '2024-06-26 09:30', status: 'acknowledged', device: 'Apple Watch S9' },
-    { id: 2, type: '运动目标达成', severity: 'info', message: '今日运动 38 分钟，超过 WHO 建议的 30 分钟', time: '2024-06-26 18:45', status: 'resolved', device: 'Apple Watch S9' },
+    { id: 1, type: 'HRV 偏低', type_en: 'Low HRV', severity: 'low', message: 'HRV 52ms 略低于个人基线，建议充分休息', message_en: 'HRV 52 ms is slightly below personal baseline; adequate rest is advised', time: '2024-06-26 09:30', status: 'acknowledged', device: 'Apple Watch S9' },
+    { id: 2, type: '运动目标达成', type_en: 'Exercise goal achieved', severity: 'info', message: '今日运动 38 分钟，超过 WHO 建议的 30 分钟', message_en: "Today's exercise of 38 minutes exceeds the WHO-recommended 30 minutes", time: '2024-06-26 18:45', status: 'resolved', device: 'Apple Watch S9' },
   ],
 
   aiReport: {
@@ -247,26 +247,28 @@ const mockData = {
     overallRisk: 'low',
     overallScore: 18,
     summary: '基于 90 天可穿戴连续监测数据与临床参考指标，覆盖肿瘤、癌症专项、慢性病、心脑血管、常见小病及呼吸系统六大类筛查，当前整体风险偏低。建议关注血压趋势，并按年龄规律安排专项体检。',
+    summary_en: 'Based on 90 days of continuous wearable monitoring data and clinical reference indicators, covering six screening categories — tumor, cancer-specific, chronic disease, cardio-cerebrovascular, common ailments, and respiratory — overall risk is currently low. Monitoring of blood pressure trends and age-appropriate specialty checkups are advised.',
     dataCoverage: { days: 90, samples: 128400, devices: 3, quality: 96 },
     categories: getExtendedCategories(),
     biomarkers: [
-      { name: '静息心率', value: 64, unit: 'bpm', ref: '60-80', status: 'normal', source: 'Apple Watch' },
-      { name: '血氧饱和度', value: 98, unit: '%', ref: '95-100', status: 'normal', source: 'Apple Watch' },
-      { name: 'HRV (RMSSD)', value: 52, unit: 'ms', ref: '20-70', status: 'normal', source: 'Apple Watch' },
-      { name: '收缩压/舒张压', value: '118/76', unit: 'mmHg', ref: '90-120/60-80', status: 'normal', source: '手动录入' },
-      { name: '空腹血糖', value: 5.2, unit: 'mmol/L', ref: '3.9-6.1', status: 'normal', source: '体检记录' },
-      { name: 'BMI', value: 22.9, unit: '', ref: '18.5-24', status: 'normal', source: '体脂秤' },
-      { name: '30天活动量', value: 8432, unit: '步/日', ref: '≥8000', status: 'normal', source: '多设备融合' },
-      { name: '平均睡眠', value: 7.4, unit: '小时', ref: '7-9', status: 'normal', source: 'Apple Watch' },
+      { name: '静息心率', name_en: 'Resting heart rate', value: 64, unit: 'bpm', ref: '60-80', status: 'normal', source: 'Apple Watch', source_en: 'Apple Watch' },
+      { name: '血氧饱和度', name_en: 'Blood oxygen saturation', value: 98, unit: '%', ref: '95-100', status: 'normal', source: 'Apple Watch', source_en: 'Apple Watch' },
+      { name: 'HRV (RMSSD)', name_en: 'HRV (RMSSD)', value: 52, unit: 'ms', ref: '20-70', status: 'normal', source: 'Apple Watch', source_en: 'Apple Watch' },
+      { name: '收缩压/舒张压', name_en: 'Systolic/Diastolic pressure', value: '118/76', unit: 'mmHg', ref: '90-120/60-80', status: 'normal', source: '手动录入', source_en: 'Manual entry' },
+      { name: '空腹血糖', name_en: 'Fasting glucose', value: 5.2, unit: 'mmol/L', ref: '3.9-6.1', status: 'normal', source: '体检记录', source_en: 'Checkup record' },
+      { name: 'BMI', name_en: 'BMI', value: 22.9, unit: '', ref: '18.5-24', status: 'normal', source: '体脂秤', source_en: 'Body-fat scale' },
+      { name: '30天活动量', name_en: '30-day activity', value: 8432, unit: '步/日', ref: '≥8000', status: 'normal', source: '多设备融合', source_en: 'Multi-device fusion' },
+      { name: '平均睡眠', name_en: 'Average sleep', value: 7.4, unit: '小时', ref: '7-9', status: 'normal', source: 'Apple Watch', source_en: 'Apple Watch' },
     ],
     trendData: getDemoTrendData(),
     aiInsights: [
-      { type: 'warning', text: '近 30 天收缩压均值略超理想上限（122 mmHg），建议预约体检复查动态血压' },
-      { type: 'positive', text: '肿瘤与癌症专项间接指标均处于同龄低风险区间' },
-      { type: 'info', text: '常见小病预警：当前无活动骤降或血氧异常，感冒/流感风险低' },
-      { type: 'info', text: '可穿戴数据覆盖率 96%，足够支撑 AI 全品类筛查分析' },
+      { type: 'warning', text: '近 30 天收缩压均值略超理想上限（122 mmHg），建议预约体检复查动态血压', text_en: 'Mean systolic pressure over the past 30 days slightly exceeds the ideal upper limit (122 mmHg); booking a checkup for ambulatory blood pressure re-evaluation is advised' },
+      { type: 'positive', text: '肿瘤与癌症专项间接指标均处于同龄低风险区间', text_en: 'Indirect indicators for tumor and cancer-specific screening are all within the low-risk range for the same age group' },
+      { type: 'info', text: '常见小病预警：当前无活动骤降或血氧异常，感冒/流感风险低', text_en: 'Common ailment alert: no activity drop or SpO₂ abnormality at present; cold/flu risk is low' },
+      { type: 'info', text: '可穿戴数据覆盖率 96%，足够支撑 AI 全品类筛查分析', text_en: 'Wearable data coverage is 96%, sufficient to support AI screening analysis across all categories' },
     ],
     recommendedExams: getRecommendedExams(),
+    recommendedExams_en: getRecommendedExamsEn(),
   },
 
   hospitals: getDemoFacilities(),
@@ -335,36 +337,42 @@ function buildDoctorReport() {
     reportId: `MR-${Date.now().toString(36).toUpperCase()}`,
     generatedAt: new Date().toISOString(),
     reportType: '可穿戴融合临床筛查报告',
+    reportType_en: 'Wearable-Integrated Clinical Screening Report',
     patient: {
       ...PROFILE,
       id: 'P202406001',
       phone: '138****5678',
     },
     physicianSummary: scr.summary,
+    physicianSummary_en: scr.summary_en,
     overallRisk: scr.overallRisk,
     overallScore: scr.overallScore,
     vitalsSnapshot: [
-      { label: '静息心率', value: s.restingHR, unit: 'bpm', ref: '60-80', flag: 'normal' },
-      { label: '当前心率', value: s.heartRate, unit: 'bpm', ref: '60-100', flag: 'normal' },
-      { label: '血氧', value: s.spo2, unit: '%', ref: '≥95', flag: 'normal' },
-      { label: 'HRV', value: s.hrv, unit: 'ms', ref: '20-70', flag: 'normal' },
-      { label: '血压', value: '118/76', unit: 'mmHg', ref: '90-120/60-80', flag: 'normal' },
-      { label: '空腹血糖', value: 5.2, unit: 'mmol/L', ref: '3.9-6.1', flag: 'normal' },
-      { label: 'BMI', value: PROFILE.bmi, unit: '', ref: '18.5-24', flag: 'normal' },
-      { label: '睡眠（昨）', value: s.sleepHours, unit: 'h', ref: '7-9', flag: 'normal' },
+      { label: '静息心率', label_en: 'Resting HR', value: s.restingHR, unit: 'bpm', ref: '60-80', flag: 'normal' },
+      { label: '当前心率', label_en: 'Current HR', value: s.heartRate, unit: 'bpm', ref: '60-100', flag: 'normal' },
+      { label: '血氧', label_en: 'SpO₂', value: s.spo2, unit: '%', ref: '≥95', flag: 'normal' },
+      { label: 'HRV', label_en: 'HRV', value: s.hrv, unit: 'ms', ref: '20-70', flag: 'normal' },
+      { label: '血压', label_en: 'Blood pressure', value: '118/76', unit: 'mmHg', ref: '90-120/60-80', flag: 'normal' },
+      { label: '空腹血糖', label_en: 'Fasting glucose', value: 5.2, unit: 'mmol/L', ref: '3.9-6.1', flag: 'normal' },
+      { label: 'BMI', label_en: 'BMI', value: PROFILE.bmi, unit: '', ref: '18.5-24', flag: 'normal' },
+      { label: '睡眠（昨）', label_en: 'Sleep (last night)', value: s.sleepHours, unit: 'h', ref: '7-9', flag: 'normal' },
     ],
     weekTrend: mockData.dashboard.weekTrend,
     screeningHighlights: scr.categories.flatMap(c =>
       c.items.filter(i => i.level !== 'low').map(i => ({
         category: c.name,
+        category_en: c.name_en,
         name: i.name,
+        name_en: i.name_en,
         risk: i.risk,
         level: i.level,
         recommendation: i.recommendation,
+        recommendation_en: i.recommendation_en,
       }))
     ),
     screeningSummary: scr.categories.map(c => ({
       name: c.name,
+      name_en: c.name_en,
       riskLevel: c.riskLevel,
       score: c.score,
       topItems: c.items.slice(0, 2).map(i => `${i.name} ${i.risk}%`),
@@ -374,10 +382,16 @@ function buildDoctorReport() {
     alerts: mockData.alerts.slice(0, 3),
     dataSources: mockData.fusionSources,
     recommendedExams: scr.recommendedExams,
+    recommendedExams_en: scr.recommendedExams_en,
     clinicalNotes: [
       '本报告由 MedWear AI 融合 90 天可穿戴时序数据与临床参考标准自动生成',
       '肿瘤/慢病评估为风险分层模型，不能替代病理学或影像学诊断',
       '标红项建议线下体检进一步确认',
+    ],
+    clinicalNotes_en: [
+      'This report is auto-generated by MedWear AI, integrating 90 days of wearable time-series data with clinical reference standards',
+      'Tumor/chronic-disease assessments are risk-stratification models and cannot replace pathological or imaging diagnosis',
+      'Items flagged in red are advised for further in-person examination',
     ],
     qrCode: 'MEDWEAR-DEMO-REPORT',
   };
@@ -391,4 +405,15 @@ function getExamSlots(date) {
   });
 }
 
-module.exports = { mockData, getLiveVitals, aiChat, buildDoctorReport, getExamSlots, STANDARDS, PROFILE };
+module.exports = {
+  mockData,
+  getLiveVitals,
+  aiChat,
+  buildDoctorReport,
+  getExamSlots,
+  STANDARDS,
+  PROFILE,
+  todayVitalsTrend,
+  weekTrend,
+  monthHealthScore,
+};

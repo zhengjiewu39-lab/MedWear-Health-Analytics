@@ -4,6 +4,7 @@ const {
   buildRealScreeningCategories,
   buildRealTrendData,
   getRecommendedExams,
+  getRecommendedExamsEn,
 } = require('../data/screeningCatalog');
 
 function avg(arr) {
@@ -69,30 +70,34 @@ function detectAlerts(store, thresholds) {
   const hrAvg = avg(d.heartRate);
   if (hrAvg && hrAvg > hrMax) {
     alerts.push({
-      id: alerts.length + 1, patient, type: '心率偏高', severity: 'high',
+      id: alerts.length + 1, patient, type: '心率偏高', type_en: 'High heart rate', severity: 'high',
       message: `今日平均心率 ${Math.round(hrAvg)} bpm，超过阈值 ${hrMax} bpm`,
+      message_en: `Today's average heart rate ${Math.round(hrAvg)} bpm exceeds threshold ${hrMax} bpm`,
       time: day, status: 'pending', device: getPrimarySource(store),
     });
   }
   if (hrAvg && hrAvg < hrMin) {
     alerts.push({
-      id: alerts.length + 1, patient, type: '心率偏低', severity: 'medium',
+      id: alerts.length + 1, patient, type: '心率偏低', type_en: 'Low heart rate', severity: 'medium',
       message: `今日平均心率 ${Math.round(hrAvg)} bpm，低于阈值 ${hrMin} bpm`,
+      message_en: `Today's average heart rate ${Math.round(hrAvg)} bpm is below threshold ${hrMin} bpm`,
       time: day, status: 'pending', device: getPrimarySource(store),
     });
   }
   const spo2 = avg(d.spo2);
   if (spo2 && spo2 < spo2Min) {
     alerts.push({
-      id: alerts.length + 1, patient, type: '血氧偏低', severity: 'high',
+      id: alerts.length + 1, patient, type: '血氧偏低', type_en: 'Low blood oxygen', severity: 'high',
       message: `今日平均血氧 ${spo2.toFixed(1)}%，低于 ${spo2Min}%`,
+      message_en: `Today's average SpO₂ ${spo2.toFixed(1)}% is below ${spo2Min}%`,
       time: day, status: 'pending', device: getPrimarySource(store),
     });
   }
   if (d.steps > 0 && d.steps < 3000) {
     alerts.push({
-      id: alerts.length + 1, patient, type: '活动量不足', severity: 'low',
+      id: alerts.length + 1, patient, type: '活动量不足', type_en: 'Insufficient activity', severity: 'low',
       message: `今日步数 ${Math.round(d.steps)} 步，活动量偏低`,
+      message_en: `Today's steps ${Math.round(d.steps)}, activity is low`,
       time: day, status: 'pending', device: getPrimarySource(store),
     });
   }
@@ -121,9 +126,10 @@ function detectAnomalies(store) {
     const spikes = hrs.filter(h => h > mean + 2 * sd);
     if (spikes.length >= 3) {
       anomalies.push({
-        id: anomalies.length + 1, patient, type: '心率异常波动',
+        id: anomalies.length + 1, patient, type: '心率异常波动', type_en: 'Abnormal heart rate fluctuation',
         confidence: Math.min(95, Math.round(70 + spikes.length * 2)),
         detectedAt: day, pattern: `${spikes.length} 次心率超过个人基线+2σ (${Math.round(mean + 2 * sd)} bpm)`,
+        pattern_en: `${spikes.length} instances of heart rate exceeding personal baseline +2σ (${Math.round(mean + 2 * sd)} bpm)`,
         aiModel: '统计异常检测', status: 'new',
       });
     }
@@ -134,9 +140,10 @@ function detectAnomalies(store) {
     const low = spo2s.filter(s => s < 93);
     if (low.length >= 2) {
       anomalies.push({
-        id: anomalies.length + 1, patient, type: '血氧偏低事件',
+        id: anomalies.length + 1, patient, type: '血氧偏低事件', type_en: 'Low blood oxygen events',
         confidence: Math.round(75 + low.length * 3),
         detectedAt: day, pattern: `${low.length} 次血氧低于 93%`,
+        pattern_en: `${low.length} instances of SpO₂ below 93%`,
         aiModel: '统计异常检测', status: 'investigating',
       });
     }
@@ -327,6 +334,7 @@ function buildFusionSources(store) {
   return list.slice(0, 5).map((s, i) => ({
     device: s.name,
     metrics: inferMetrics(s.name),
+    metrics_en: inferMetricsEn(s.name),
     weight: +(s.count / total).toFixed(2),
     quality: Math.min(99, 85 + Math.floor(s.count / total * 14)),
     color: colors[i % colors.length],
@@ -338,6 +346,14 @@ function inferMetrics(sourceName) {
   if (/watch|手表/i.test(sourceName)) m.push('心率', '血氧', '步数', '睡眠', 'HRV');
   else if (/iphone|手机/i.test(sourceName)) m.push('步数', '距离');
   else m.push('健康数据');
+  return m;
+}
+
+function inferMetricsEn(sourceName) {
+  const m = [];
+  if (/watch|手表/i.test(sourceName)) m.push('Heart rate', 'SpO₂', 'Steps', 'Sleep', 'HRV');
+  else if (/iphone|手机/i.test(sourceName)) m.push('Steps', 'Distance');
+  else m.push('Health data');
   return m;
 }
 
@@ -699,11 +715,13 @@ function buildRealScreening(store) {
       aiVersion: 'MedWear-AI v3.0 · 真实模式',
       dataCoverage: { days: 0, samples: 0, devices: 0, quality: 0 },
       summary: '真实模式：请先导入 Apple Health 数据。导入后将基于您的真实心率、血氧、睡眠等计算筛查风险，不会使用任何模拟数据。',
+      summary_en: 'Real mode: please import Apple Health data first. Once imported, screening risk will be computed from your real heart rate, SpO₂, sleep, and more, with no simulated data used.',
       overallRisk: 'unknown',
       overallScore: 0,
       categories: [],
       biomarkers: [],
       recommendedExams: [],
+      recommendedExams_en: [],
     };
   }
   const stats = buildUiDashboardStats(store);
@@ -712,11 +730,11 @@ function buildRealScreening(store) {
   const overallScore = stats.healthScore || 0;
   const overallRisk = overallScore >= 80 ? 'low' : overallScore >= 60 ? 'moderate' : 'high';
   const biomarkers = [
-    { name: '静息心率', value: stats.restingHR, unit: 'bpm', source: 'Apple Health 真实', ref: '60-80', status: stats.restingHR > 85 ? 'watch' : 'normal' },
-    { name: '血氧饱和度', value: stats.spo2, unit: '%', source: 'Apple Health 真实', ref: '≥95', status: stats.spo2 && stats.spo2 < 95 ? 'watch' : 'normal' },
-    { name: 'HRV', value: stats.hrv, unit: 'ms', source: 'Apple Health 真实', ref: '20-70', status: 'normal' },
-    { name: '日均步数', value: stats.steps, unit: '步', source: 'Apple Health 真实', ref: '≥6000', status: stats.steps < 4000 ? 'watch' : 'normal' },
-    { name: '睡眠时长', value: stats.sleepHours, unit: 'h', source: 'Apple Health 真实', ref: '7-9', status: stats.sleepHours && stats.sleepHours < 6 ? 'watch' : 'normal' },
+    { name: '静息心率', name_en: 'Resting heart rate', value: stats.restingHR, unit: 'bpm', source: 'Apple Health 真实', source_en: 'Apple Health (real)', ref: '60-80', status: stats.restingHR > 85 ? 'watch' : 'normal' },
+    { name: '血氧饱和度', name_en: 'Blood oxygen saturation', value: stats.spo2, unit: '%', source: 'Apple Health 真实', source_en: 'Apple Health (real)', ref: '≥95', status: stats.spo2 && stats.spo2 < 95 ? 'watch' : 'normal' },
+    { name: 'HRV', name_en: 'HRV', value: stats.hrv, unit: 'ms', source: 'Apple Health 真实', source_en: 'Apple Health (real)', ref: '20-70', status: 'normal' },
+    { name: '日均步数', name_en: 'Daily steps', value: stats.steps, unit: '步', source: 'Apple Health 真实', source_en: 'Apple Health (real)', ref: '≥6000', status: stats.steps < 4000 ? 'watch' : 'normal' },
+    { name: '睡眠时长', name_en: 'Sleep duration', value: stats.sleepHours, unit: 'h', source: 'Apple Health 真实', source_en: 'Apple Health (real)', ref: '7-9', status: stats.sleepHours && stats.sleepHours < 6 ? 'watch' : 'normal' },
   ].filter(b => b.value != null);
   return {
     hasData: true,
@@ -730,18 +748,20 @@ function buildRealScreening(store) {
       quality: stats.dataQuality,
     },
     summary: `基于您 ${store.meta?.dayCount || 0} 天 Apple Health 真实数据的全品类 AI 筛查（肿瘤/癌症/慢病/心脑血管/常见小病/呼吸），非模拟数据。`,
+    summary_en: `Full-category AI screening based on your ${store.meta?.dayCount || 0} days of real Apple Health data (tumor / cancer / chronic disease / cardio-cerebrovascular / common ailments / respiratory), not simulated data.`,
     overallRisk,
     overallScore,
     biomarkers,
     categories: buildRealScreeningCategories(store, stats, anomalies),
     trendData: buildRealTrendData(store),
     aiInsights: [
-      { type: 'info', text: `已覆盖 6 大类 ${buildRealScreeningCategories(store, stats, anomalies).reduce((n, c) => n + c.items.length, 0)} 项筛查（含感冒/流感等常见小病预警）` },
-      { type: anomalies.length ? 'warning' : 'positive', text: anomalies.length ? `检测到 ${anomalies.length} 项统计异常，建议关注` : '当前无重大异常信号' },
+      { type: 'info', text: `已覆盖 6 大类 ${buildRealScreeningCategories(store, stats, anomalies).reduce((n, c) => n + c.items.length, 0)} 项筛查（含感冒/流感等常见小病预警）`, text_en: `Covers 6 categories and ${buildRealScreeningCategories(store, stats, anomalies).reduce((n, c) => n + c.items.length, 0)} screening items (including common ailment alerts such as cold/flu)` },
+      { type: anomalies.length ? 'warning' : 'positive', text: anomalies.length ? `检测到 ${anomalies.length} 项统计异常，建议关注` : '当前无重大异常信号', text_en: anomalies.length ? `Detected ${anomalies.length} statistical anomalies; attention advised` : 'No significant abnormal signals at present' },
     ],
     anomalies: anomalies.slice(0, 5),
     predictions: predictions.slice(0, 6),
     recommendedExams: getRecommendedExams(),
+    recommendedExams_en: getRecommendedExamsEn(),
   };
 }
 
@@ -762,6 +782,7 @@ function buildRealDoctorReport(store) {
     reportId: `MR-REAL-${Date.now().toString(36).toUpperCase()}`,
     generatedAt: new Date().toISOString(),
     reportType: 'Apple Health 真实数据 · 可穿戴临床报告',
+    reportType_en: 'Apple Health Real Data · Wearable Clinical Report',
     patient: {
       name: store.meta?.userLabel || 'Apple Health 用户',
       id: 'REAL-001',
@@ -770,24 +791,25 @@ function buildRealDoctorReport(store) {
       device: getPrimarySource(store),
     },
     physicianSummary: `【真实 Apple Health 数据】${buildAiSummary(store)}`,
+    physicianSummary_en: `[Real Apple Health data] ${screening.summary_en}`,
     overallRisk: screening.overallRisk,
     overallScore: screening.overallScore,
     vitalsSnapshot: [
-      { label: '静息心率', value: stats.restingHR, unit: 'bpm', ref: '60-80', flag: stats.restingHR > 85 || stats.restingHR < 50 ? 'watch' : 'normal' },
-      { label: '当前心率', value: stats.heartRate, unit: 'bpm', ref: '60-100', flag: 'normal' },
-      { label: '血氧', value: stats.spo2, unit: '%', ref: '≥95', flag: stats.spo2 && stats.spo2 < 95 ? 'watch' : 'normal' },
-      { label: 'HRV', value: stats.hrv, unit: 'ms', ref: '20-70', flag: stats.hrv && stats.hrv < 20 ? 'watch' : 'normal' },
-      { label: '睡眠（最近）', value: stats.sleepHours, unit: 'h', ref: '7-9', flag: stats.sleepHours && stats.sleepHours < 6 ? 'watch' : 'normal' },
-      { label: '步数（今日）', value: stats.steps, unit: '步', ref: '≥6000', flag: stats.steps < 4000 ? 'watch' : 'normal' },
+      { label: '静息心率', label_en: 'Resting HR', value: stats.restingHR, unit: 'bpm', ref: '60-80', flag: stats.restingHR > 85 || stats.restingHR < 50 ? 'watch' : 'normal' },
+      { label: '当前心率', label_en: 'Current HR', value: stats.heartRate, unit: 'bpm', ref: '60-100', flag: 'normal' },
+      { label: '血氧', label_en: 'SpO₂', value: stats.spo2, unit: '%', ref: '≥95', flag: stats.spo2 && stats.spo2 < 95 ? 'watch' : 'normal' },
+      { label: 'HRV', label_en: 'HRV', value: stats.hrv, unit: 'ms', ref: '20-70', flag: stats.hrv && stats.hrv < 20 ? 'watch' : 'normal' },
+      { label: '睡眠（最近）', label_en: 'Sleep (recent)', value: stats.sleepHours, unit: 'h', ref: '7-9', flag: stats.sleepHours && stats.sleepHours < 6 ? 'watch' : 'normal' },
+      { label: '步数（今日）', label_en: 'Steps (today)', value: stats.steps, unit: '步', ref: '≥6000', flag: stats.steps < 4000 ? 'watch' : 'normal' },
     ],
     weekTrend: buildWeekTrend(store),
     screeningHighlights: screening.categories.flatMap(c =>
       c.items.filter(i => i.level !== 'low').map(i => ({
-        category: c.name, name: i.name, risk: i.risk, level: i.level, recommendation: i.recommendation,
+        category: c.name, category_en: c.name_en, name: i.name, name_en: i.name_en, risk: i.risk, level: i.level, recommendation: i.recommendation, recommendation_en: i.recommendation_en,
       }))
     ),
     screeningSummary: screening.categories.map(c => ({
-      name: c.name, riskLevel: c.riskLevel, score: c.score,
+      name: c.name, name_en: c.name_en, riskLevel: c.riskLevel, score: c.score,
       topItems: c.items.map(i => `${i.name} ${i.risk}%`),
     })),
     biomarkers: screening.biomarkers,
@@ -795,10 +817,16 @@ function buildRealDoctorReport(store) {
     alerts: detectAlerts(store).slice(0, 3),
     dataSources: buildFusionSources(store),
     recommendedExams: screening.recommendedExams,
+    recommendedExams_en: screening.recommendedExams_en,
     clinicalNotes: [
       '本报告基于本地导入的 Apple Health 真实数据生成，不含任何模拟/demo 数据',
       '风险评估不能替代病理学或影像学诊断',
       '数据日期范围：' + (store.meta?.dateRange?.start || '?') + ' ~ ' + (store.meta?.dateRange?.end || '?'),
+    ],
+    clinicalNotes_en: [
+      'This report is generated from locally imported real Apple Health data and contains no simulated/demo data',
+      'Risk assessment cannot replace pathological or imaging diagnosis',
+      'Data date range: ' + (store.meta?.dateRange?.start || '?') + ' ~ ' + (store.meta?.dateRange?.end || '?'),
     ],
     qrCode: 'MEDWEAR-REAL-REPORT',
   };

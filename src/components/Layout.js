@@ -3,55 +3,46 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import {
   AppBar, Box, CssBaseline, Drawer, IconButton, List, ListItemIcon,
   ListItemText, Toolbar, Typography, Avatar, Menu, MenuItem, Divider,
-  Collapse, ListItemButton, Chip, Badge, Tooltip, alpha,
+  Collapse, ListItemButton, Chip, Tooltip, alpha,
 } from '@mui/material';
 import {
   Menu as MenuIcon, Logout, KeyboardArrowDown, KeyboardArrowUp,
-  CloudUpload, AdminPanelSettings, Dashboard, People, MonitorHeart,
-  MonitorHeartOutlined, NotificationsActive, Biotech, LocalHospital,
-  Assignment, Business, Gavel, Assessment, Hub, Science, Settings,
-  Psychology, SmartToy, AutoAwesome, BugReport, TrendingUp, Bedtime,
-  SelfImprovement, PersonPin, MergeType, EmojiEvents, Devices, Coronavirus,
+  CloudUpload, CompareArrows, Biotech, LocalHospital,
+  Assignment, Science, Settings,
+  BugReport, TrendingUp, Groups, MenuBook, Translate, Psychology, SmartToy,
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
+import { useLang } from '../contexts/LanguageContext';
+import { enLabel } from '../i18n/labels';
 import { useDataMode } from '../contexts/DataModeContext';
+import { useDemoPatient } from '../contexts/DemoPatientContext';
 import { useHealthData } from '../contexts/HealthDataContext';
 import { NAV_SECTIONS, getPageTitle } from '../config/navigation';
+import DemoPatientSelector from './DemoPatientSelector';
+import ContentContainer from './ContentContainer';
 
 const drawerWidth = 272;
 
 const ICONS = {
-  '管理控制台': AdminPanelSettings,
-  '健康总览': Dashboard,
-  '患者管理': People,
-  '实时监测': MonitorHeart,
-  'ECG 心电': MonitorHeartOutlined,
-  '预警中心': NotificationsActive,
   '临床筛查': Biotech,
-  '预约体检': LocalHospital,
-  '医生报告': Assignment,
-  '组织架构': Business,
-  '合规管理': Gavel,
-  '报告中心': Assessment,
-  '互联平台': Hub,
-  '分析评价': Science,
-  '系统设置': Settings,
-  'AI 健康助手': SmartToy,
-  'AI 健康报告': AutoAwesome,
   '异常检测': BugReport,
+  'AI 干预': Psychology,
+  'AI 临床助手': SmartToy,
   '预测分析': TrendingUp,
-  '睡眠分析': Bedtime,
-  '恢复与压力': SelfImprovement,
-  '数字孪生': PersonPin,
-  '数据融合': MergeType,
-  '健康目标': EmojiEvents,
-  '我的设备': Devices,
-  '监测仪表盘': Coronavirus,
-  '公共卫生监测': Coronavirus,
+  '医生报告': Assignment,
+  '预约体检': LocalHospital,
+  '研究评价': Science,
+  '研究评价中心': Science,
+  '结局对比': CompareArrows,
+  '方法学文档': MenuBook,
+  '患者队列': Groups,
+  '患者管理': Groups,
+  '系统设置': Settings,
+  '数据导入': CloudUpload,
 };
 
 function NavIcon({ name }) {
-  const Icon = ICONS[name] || Dashboard;
+  const Icon = ICONS[name] || Biotech;
   return <Icon fontSize="small" />;
 }
 
@@ -67,12 +58,15 @@ export function Layout({ children }) {
   const location = useLocation();
   const { user, logout, isAdmin } = useAuth();
   const { toggleMode, isDemo, isReal } = useDataMode();
+  const { current: demoPatient } = useDemoPatient();
   const { hasData } = useHealthData();
+  const { t, lang, toggle: toggleLang } = useLang();
 
-  const sections = useMemo(
-    () => NAV_SECTIONS.filter((section) => !section.adminOnly || isAdmin),
-    [isAdmin]
-  );
+  const tl = (zh) => t(zh, enLabel(zh));
+
+  const sections = useMemo(() => {
+    return NAV_SECTIONS.filter((section) => !section.adminOnly || isAdmin);
+  }, [isAdmin]);
 
   const isActive = (path) => location.pathname === path;
   const title = getPageTitle(location.pathname, isAdmin);
@@ -101,7 +95,7 @@ export function Layout({ children }) {
           <NavIcon name={item.text} />
         </ListItemIcon>
         <ListItemText
-          primary={item.text}
+          primary={tl(item.text)}
           primaryTypographyProps={{ fontSize: '0.875rem', fontWeight: isActive(item.path) ? 700 : 500 }}
         />
       </ListItemButton>
@@ -115,16 +109,23 @@ export function Layout({ children }) {
           MedWear
         </Typography>
         <Typography variant="caption" sx={{ color: '#94a3b8' }}>
-          医用可穿戴数据分析
+          {t('早筛与干预 · 可穿戴数据分析', 'Early Screening · Wearable Analytics')}
         </Typography>
         <Box sx={{ mt: 1.25, display: 'flex', gap: 0.75, flexWrap: 'wrap' }}>
           <Chip
-            label={isDemo ? '演示' : '真实'}
+            label={isDemo ? t('演示', 'Demo') : t('真实', 'Real')}
             size="small"
             sx={{ height: 22, fontSize: '0.65rem', bgcolor: alpha('#fff', 0.08), color: '#e2e8f0' }}
           />
           {isAdmin && (
-            <Chip label="管理员" size="small" color="secondary" sx={{ height: 22, fontSize: '0.65rem' }} />
+            <Chip label={t('管理员', 'Admin')} size="small" color="secondary" sx={{ height: 22, fontSize: '0.65rem' }} />
+          )}
+          {isDemo && demoPatient && (
+            <Chip
+              label={`${t('演示者', 'Demo')}: ${demoPatient.name} (${demoPatient.id})`}
+              size="small"
+              sx={{ height: 22, fontSize: '0.65rem', bgcolor: alpha('#fff', 0.08), color: '#e2e8f0' }}
+            />
           )}
         </Box>
       </Box>
@@ -146,8 +147,8 @@ export function Layout({ children }) {
               <CloudUpload fontSize="small" />
             </ListItemIcon>
             <ListItemText
-              primary="数据导入"
-              secondary={hasData ? '已导入' : '导入 Apple Health'}
+              primary={t('数据导入', 'Data Import')}
+              secondary={hasData ? t('已导入', 'Imported') : t('导入 Apple Health', 'Import Apple Health')}
               primaryTypographyProps={{ fontSize: '0.875rem', fontWeight: 700, color: '#f8fafc' }}
               secondaryTypographyProps={{ fontSize: '0.7rem', color: '#94a3b8' }}
             />
@@ -172,7 +173,7 @@ export function Layout({ children }) {
                     <Psychology fontSize="small" />
                   </ListItemIcon>
                   <ListItemText
-                    primary={section.label}
+                    primary={tl(section.label)}
                     primaryTypographyProps={{ fontSize: '0.75rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em' }}
                   />
                   {open ? <KeyboardArrowUp sx={{ color: '#64748b', fontSize: 18 }} /> : <KeyboardArrowDown sx={{ color: '#64748b', fontSize: 18 }} />}
@@ -195,7 +196,7 @@ export function Layout({ children }) {
                   fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em',
                 }}
               >
-                {section.label}
+                {tl(section.label)}
               </Typography>
               <List disablePadding>
                 {visibleItems.map(renderNavItem)}
@@ -207,7 +208,7 @@ export function Layout({ children }) {
 
       <Box sx={{ p: 2, borderTop: `1px solid ${alpha('#fff', 0.08)}` }}>
         <Typography variant="caption" sx={{ color: '#64748b' }}>
-          {user?.name || '用户'} · {user?.role === 'admin' ? '系统管理员' : '普通用户'}
+          {user?.name || t('用户', 'User')} · {user?.role === 'admin' ? t('系统管理员', 'Administrator') : t('普通用户', 'User')}
         </Typography>
       </Box>
     </Box>
@@ -233,12 +234,26 @@ export function Layout({ children }) {
             <MenuIcon />
           </IconButton>
           <Typography variant="h6" sx={{ flexGrow: 1, fontWeight: 700, fontSize: '1.05rem' }}>
-            {title}
+            {tl(title)}
           </Typography>
 
-          <Tooltip title="切换演示 / 真实数据模式">
+          <Tooltip title={t('切换语言 / Switch language', 'Switch language / 切换语言')}>
             <Chip
-              label={isDemo ? '演示模式' : '真实模式'}
+              label={lang === 'en' ? 'EN' : '中'}
+              size="small"
+              onClick={toggleLang}
+              icon={<Translate sx={{ fontSize: 16 }} />}
+              sx={{ cursor: 'pointer', fontWeight: 700, mr: 0.5 }}
+              color="primary"
+              variant="outlined"
+            />
+          </Tooltip>
+
+          {isDemo && <DemoPatientSelector />}
+
+          <Tooltip title={isDemo ? t('演示模式', 'Demo mode') : t('真实模式', 'Real mode')}>
+            <Chip
+              label={isDemo ? t('演示模式', 'Demo mode') : t('真实模式', 'Real mode')}
               size="small"
               variant="outlined"
               onClick={toggleMode}
@@ -248,20 +263,20 @@ export function Layout({ children }) {
           </Tooltip>
 
           {isAdmin && (
-            <Tooltip title="管理控制台">
-              <IconButton onClick={() => navigate('/admin')} sx={{ color: 'primary.main' }}>
-                <AdminPanelSettings />
+            <Tooltip title={t('AI 临床助手', 'Clinical AI')}>
+              <IconButton onClick={() => navigate('/ai/chat')} sx={{ color: 'secondary.main' }}>
+                <SmartToy />
               </IconButton>
             </Tooltip>
           )}
 
-          <Tooltip title="预警中心">
-            <IconButton onClick={() => navigate('/alerts')} sx={{ color: 'text.secondary' }}>
-              <Badge badgeContent={isAdmin ? 3 : 0} color="error">
-                <NotificationsActive />
-              </Badge>
-            </IconButton>
-          </Tooltip>
+          {isAdmin && (
+            <Tooltip title={t('结局对比', 'Outcome Comparison')}>
+              <IconButton onClick={() => navigate('/outcomes')} sx={{ color: 'primary.main' }}>
+                <CompareArrows />
+              </IconButton>
+            </Tooltip>
+          )}
 
           <IconButton onClick={(e) => setAnchorEl(e.currentTarget)}>
             <Avatar sx={{ width: 36, height: 36, bgcolor: isAdmin ? 'primary.main' : 'secondary.main', fontSize: 14 }}>
@@ -273,24 +288,30 @@ export function Layout({ children }) {
             <Box sx={{ px: 2, py: 1.5 }}>
               <Typography variant="subtitle2" fontWeight={700}>{user?.name}</Typography>
               <Typography variant="caption" color="text.secondary">
-                {user?.role === 'admin' ? '系统管理员' : '演示用户'}
+                {user?.role === 'admin' ? t('系统管理员', 'Administrator') : t('用户', 'User')}
               </Typography>
             </Box>
             <Divider />
             {isAdmin && (
-              <MenuItem onClick={() => { setAnchorEl(null); navigate('/admin'); }}>
-                <ListItemIcon><AdminPanelSettings fontSize="small" /></ListItemIcon>
-                <ListItemText>管理控制台</ListItemText>
+              <MenuItem onClick={() => { setAnchorEl(null); navigate('/ai/chat'); }}>
+                <ListItemIcon><SmartToy fontSize="small" /></ListItemIcon>
+                <ListItemText>{t('AI 临床助手', 'Clinical AI')}</ListItemText>
+              </MenuItem>
+            )}
+            {isAdmin && (
+              <MenuItem onClick={() => { setAnchorEl(null); navigate('/outcomes'); }}>
+                <ListItemIcon><CompareArrows fontSize="small" /></ListItemIcon>
+                <ListItemText>{t('结局对比', 'Outcome Comparison')}</ListItemText>
               </MenuItem>
             )}
             <MenuItem onClick={() => { setAnchorEl(null); navigate('/settings'); }}>
               <ListItemIcon><Settings fontSize="small" /></ListItemIcon>
-              <ListItemText>系统设置</ListItemText>
+              <ListItemText>{t('系统设置', 'Settings')}</ListItemText>
             </MenuItem>
             <Divider />
             <MenuItem onClick={() => { logout(); navigate('/login'); }}>
               <ListItemIcon><Logout fontSize="small" /></ListItemIcon>
-              <ListItemText>退出登录</ListItemText>
+              <ListItemText>{t('退出登录', 'Log out')}</ListItemText>
             </MenuItem>
           </Menu>
         </Toolbar>
@@ -330,7 +351,7 @@ export function Layout({ children }) {
           mt: '64px',
         }}
       >
-        {children}
+        <ContentContainer>{children}</ContentContainer>
       </Box>
     </Box>
   );

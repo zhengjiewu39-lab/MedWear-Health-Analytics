@@ -43,7 +43,7 @@ function audit(action, meta = {}) {
 }
 
 function auditMiddleware(req, res, next) {
-  const sensitive = ['/api/auth/login', '/api/platform', '/api/data', '/api/appointments'];
+  const sensitive = ['/api/auth/login', '/api/data', '/api/appointments'];
   const match = sensitive.some(p => req.path.startsWith(p));
   if (match && ['POST', 'PUT', 'DELETE'].includes(req.method)) {
     const originalJson = res.json.bind(res);

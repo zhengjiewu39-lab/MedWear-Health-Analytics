@@ -7,8 +7,10 @@ import { Business, People, LocalHospital } from '@mui/icons-material';
 import { organizationApi } from '../services/api';
 import PageHeader from '../components/PageHeader';
 import { ADMIN_DEPARTMENTS_FALLBACK, ADMIN_STAFF_FALLBACK } from '../data/adminFallback';
+import { useLang } from '../contexts/LanguageContext';
 
 function Organization() {
+  const { t } = useLang();
   const [departments, setDepartments] = useState([]);
   const [staff, setStaff] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -28,9 +30,9 @@ function Organization() {
   return (
     <Box>
       <PageHeader
-        title="组织架构"
-        subtitle="管理医院科室结构与医护人员，分配设备监测权限"
-        breadcrumbs={[{ label: '管理控制台', path: '/admin' }, { label: '组织架构' }]}
+        title={t('组织架构', 'Organization')}
+        subtitle={t('管理医院科室结构与医护人员，分配设备监测权限', 'Manage hospital department structure and medical staff, and assign device monitoring permissions')}
+        breadcrumbs={[{ label: t('管理控制台', 'Admin Console'), path: '/admin' }, { label: t('组织架构', 'Organization') }]}
       />
 
       <Grid container spacing={3} sx={{ mb: 3 }}>
@@ -43,8 +45,8 @@ function Organization() {
               </Box>
               <Typography variant="body2" color="text.secondary" gutterBottom>{dept.description}</Typography>
               <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
-                <Chip icon={<People />} label={`${dept.staffCount} 人`} size="small" />
-                <Chip label={`${dept.patientCount} 患者`} size="small" variant="outlined" />
+                <Chip icon={<People />} label={t(`${dept.staffCount} 人`, `${dept.staffCount} staff`)} size="small" />
+                <Chip label={t(`${dept.patientCount} 患者`, `${dept.patientCount} patients`)} size="small" variant="outlined" />
               </Box>
             </Paper>
           </Grid>
@@ -54,18 +56,18 @@ function Organization() {
       <Paper sx={{ p: 3 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
           <Business color="primary" />
-          <Typography variant="h6">医护人员</Typography>
+          <Typography variant="h6">{t('医护人员', 'Medical Staff')}</Typography>
         </Box>
         <TableContainer>
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell>姓名</TableCell>
-                <TableCell>科室</TableCell>
-                <TableCell>职位</TableCell>
-                <TableCell>角色</TableCell>
-                <TableCell>负责患者</TableCell>
-                <TableCell>状态</TableCell>
+                <TableCell>{t('姓名', 'Name')}</TableCell>
+                <TableCell>{t('科室', 'Department')}</TableCell>
+                <TableCell>{t('职位', 'Title')}</TableCell>
+                <TableCell>{t('角色', 'Role')}</TableCell>
+                <TableCell>{t('负责患者', 'Patients Managed')}</TableCell>
+                <TableCell>{t('状态', 'Status')}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -80,7 +82,7 @@ function Organization() {
                   <TableCell>{person.department}</TableCell>
                   <TableCell>{person.title}</TableCell>
                   <TableCell><Chip label={person.role} size="small" color={person.role === '主任' ? 'primary' : 'default'} /></TableCell>
-                  <TableCell>{person.patients} 人</TableCell>
+                  <TableCell>{person.patients} {t('人', '')}</TableCell>
                   <TableCell><Chip label={person.status} size="small" color={person.status === '在岗' ? 'success' : 'default'} /></TableCell>
                 </TableRow>
               ))}

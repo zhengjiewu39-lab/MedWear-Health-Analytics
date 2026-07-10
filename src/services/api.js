@@ -2,6 +2,7 @@ import axios from 'axios';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:3001/api';
 const MODE_KEY = 'medwear_mode';
+const DEMO_PATIENT_KEY = 'medwear_demo_patient';
 
 const api = axios.create({ baseURL: API_BASE_URL, headers: { 'Content-Type': 'application/json' } });
 
@@ -9,6 +10,9 @@ api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
   if (token) config.headers.Authorization = `Bearer ${token}`;
   config.headers['X-MedWear-Mode'] = localStorage.getItem(MODE_KEY) || 'demo';
+  if ((localStorage.getItem(MODE_KEY) || 'demo') === 'demo') {
+    config.headers['X-MedWear-Demo-Patient'] = localStorage.getItem(DEMO_PATIENT_KEY) || 'IV-0001';
+  }
   return config;
 });
 
@@ -51,23 +55,31 @@ export const deviceApi = { getAll: () => api.get('/devices') };
 export const alertApi = { getAll: () => api.get('/alerts') };
 
 export const aiApi = {
-  chat: (data) => api.post('/ai/chat', data),
   analyzeAnomaly: (data) => api.post('/ai/analyze-anomaly', data),
-  getReport: () => api.get('/ai/report'),
   getAnomalies: () => api.get('/anomalies'),
   getPredictions: () => api.get('/predictions'),
-  getSleepData: () => api.get('/sleep'),
-  getRecovery: () => api.get('/recovery'),
-  getDigitalTwin: () => api.get('/digital-twin'),
-  getFusionSources: () => api.get('/fusion/sources'),
-  getHealthGoals: () => api.get('/health-goals'),
   getAnalysis: () => api.get('/ai/analysis'),
   getResearch: () => api.get('/ai/research'),
+};
+
+export const chatApi = {
+  getStatus: () => api.get('/ai/chat/status'),
+  getContext: () => api.get('/ai/chat/context'),
+  send: (data) => api.post('/ai/chat', data),
+};
+
+export const interventionApi = {
+  getSummary: () => api.get('/ai/interventions/summary'),
+  getAll: (params) => api.get('/ai/interventions', { params }),
+  generate: () => api.post('/ai/interventions/generate'),
+  approve: (id, data) => api.post(`/ai/interventions/${id}/approve`, data),
+  reject: (id, data) => api.post(`/ai/interventions/${id}/reject`, data),
 };
 
 export const settingsApi = {
   get: () => api.get('/settings'),
   saveAi: (data) => api.post('/settings/ai', data),
+  getProviders: () => api.get('/settings').then((r) => r.data.aiProviders || []),
 };
 
 export const screeningApi = {
@@ -78,14 +90,6 @@ export const screeningApi = {
   getSlots: (date) => api.get('/appointments/slots', { params: { date } }),
   bookAppointment: (data) => api.post('/appointments', data),
   getDoctorReport: () => api.get('/doctor-report'),
-};
-
-export const platformApi = {
-  getStatus: () => api.get('/platform/status'),
-  getApiKeys: () => api.get('/platform/api-keys'),
-  testConnection: () => api.get('/platform/v1/analysis', {
-    headers: { 'X-API-Key': 'mw_demo_hospital_001' },
-  }),
 };
 
 export const securityApi = {
@@ -111,6 +115,11 @@ export const modeApi = {
   get: () => api.get('/mode'),
 };
 
+export const demoApi = {
+  listPatients: (params) => api.get('/demo/patients', { params }),
+  getPatient: (id) => api.get(`/demo/patients/${id}`),
+};
+
 export const researchApi = {
   getDataset: () => api.get('/research/dataset'),
   getResults: () => api.get('/research/results'),
@@ -121,7 +130,7 @@ export const researchApi = {
 };
 
 export const patientApi = {
-  getAll: () => api.get('/admin/patients'),
+  getAll: (params) => api.get('/admin/patients', { params }),
 };
 
 export const organizationApi = {
@@ -137,16 +146,15 @@ export const geoApi = {
   getLocation: () => api.get('/geo/location'),
 };
 
-export const publicHealthApi = {
-  getMeta: () => api.get('/public-health/meta'),
-  getSummary: (params) => api.get('/public-health/summary', { params }),
-  getClusters: (params) => api.get('/public-health/clusters', { params }),
-  getDailyReport: (params) => api.get('/public-health/daily-report', { params }),
-  getInvestigation: (clusterId) => api.get(`/public-health/investigation/${clusterId}`),
-  getEquityAnalysis: (params) => api.get('/public-health/equity-analysis', { params }),
-  getEvaluation: () => api.get('/public-health/evaluation'),
-  runEvaluation: (timeWindow = 72) => api.post('/public-health/evaluation/run', { timeWindow }),
-  registerUser: (body) => api.post('/public-health/register-user', body),
+export const methodologyApi = {
+  get: () => api.get('/methodology'),
+};
+
+export const outcomesApi = {
+  getSummary: () => api.get('/outcomes/summary'),
+  getFunnel: () => api.get('/outcomes/funnel'),
+  getSurvivalReference: () => api.get('/outcomes/survival-reference'),
+  getCohort: (params) => api.get('/outcomes/cohort', { params }),
 };
 
 export default api;

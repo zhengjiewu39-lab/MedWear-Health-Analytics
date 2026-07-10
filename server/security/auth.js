@@ -1,6 +1,9 @@
 const crypto = require('crypto');
 const { audit } = require('./audit');
 const { maskToken } = require('./crypto');
+const {
+  verifyPassword, hashPassword, isLoginLocked, recordLoginFailure, clearLoginFailures,
+} = require('./hardening');
 
 const IS_PROD = process.env.NODE_ENV === 'production';
 const ALLOW_DEMO = !IS_PROD || process.env.ALLOW_DEMO_AUTH === 'true';
@@ -17,14 +20,11 @@ function getUsers() {
     return JSON.parse(process.env.MEDWEAR_USERS_JSON);
   }
   if (!ALLOW_DEMO) return {};
+  const plain = process.env.MEDWEAR_ADMIN_PASSWORD || 'admin123';
   return {
     admin: {
-      password: process.env.MEDWEAR_ADMIN_PASSWORD || 'admin123',
-      user: { id: 1, username: 'admin', name: '管理员', role: 'admin' },
-    },
-    demo: {
-      password: process.env.MEDWEAR_DEMO_PASSWORD || 'demo123',
-      user: { id: 2, username: 'demo', name: '演示用户', role: 'user' },
+      password: process.env.MEDWEAR_ADMIN_PASSWORD_HASH || hashPassword(plain),
+      user: { id: 1, username: 'admin', name: '系统管理员', role: 'admin' },
     },
   };
 }
@@ -75,21 +75,11 @@ function isPublicPath(path) {
     '/api/health',
     '/api/auth/login',
     '/api/auth/logout',
-    '/api/platform/status',
   ].includes(path);
 }
 
 function authMiddleware(req, res, next) {
   if (!req.path.startsWith('/api/') || isPublicPath(req.path)) return next();
-
-  if (req.path.startsWith('/api/platform/v1')) {
-    const apiKey = req.headers['x-api-key'];
-    if (apiKey && validateApiKey(apiKey)) {
-      req.user = { username: 'platform', role: 'integration', apiKey: maskToken(apiKey) };
-      return next();
-    }
-    return res.status(401).json({ success: false, message: '无效 API Key' });
-  }
 
   const user = verifyToken(req.headers.authorization);
   if (!user) {
@@ -99,11 +89,18 @@ function authMiddleware(req, res, next) {
   return next();
 }
 
-function authenticate(username, password) {
+function authenticate(username, password, req) {
+  const ip = req?.ip || 'unknown';
+  if (isLoginLocked(ip)) {
+    audit('LOGIN_LOCKED', { user: username, ip, success: false });
+    return { locked: true };
+  }
   const account = getUsers()[username];
-  if (account && account.password === password) {
+  if (account && verifyPassword(password, account.password)) {
+    clearLoginFailures(ip);
     return { user: account.user, token: signToken(account.user) };
   }
+  recordLoginFailure(ip);
   return null;
 }
 

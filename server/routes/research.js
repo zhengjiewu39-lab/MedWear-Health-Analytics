@@ -1,40 +1,81 @@
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
-const { run } = require('../../scripts/evaluate-analytics');
-const core = require('../services/analyticsCore');
+const { getOutcomeSummary, getFunnel, getCohort } = require('../screening/outcomeModel');
 const { getAllReferences } = require('../ai/engine');
+const { run: runOutcomeEval } = require('../../scripts/evaluate-screening-outcomes');
 
 const router = express.Router();
+const DATASET_PATH = path.join(__dirname, '../../benchmarks/screening-outcome-dataset.json');
+const RESULTS_PATH = path.join(__dirname, '../../benchmarks/results/screening-outcomes-latest.json');
+
+function loadDatasetSummary() {
+  const summary = getOutcomeSummary();
+  const { patients } = getCohort();
+  let fileMeta = null;
+  if (fs.existsSync(DATASET_PATH)) {
+    try {
+      const raw = JSON.parse(fs.readFileSync(DATASET_PATH, 'utf8'));
+      fileMeta = raw.meta;
+    } catch { /* ignore */ }
+  }
+  return {
+    meta: fileMeta || summary.meta,
+    headline: summary.headline,
+    comparison: summary.comparison,
+    stageDistribution: summary.stageDistribution,
+    byCategory: summary.byCategory,
+    samplePatients: patients.slice(0, 40),
+    totalPatients: summary.meta.n,
+    license: 'CC-BY-4.0',
+    reproducible: 'npm run evaluate:outcomes',
+  };
+}
 
 router.get('/dataset', (_, res) => {
-  res.json(require('../../benchmarks/wearable-analytics-dataset.json'));
+  res.json(loadDatasetSummary());
 });
 
 router.get('/results', (_, res) => {
-  const p = path.join(__dirname, '../../benchmarks/results/latest.json');
-  if (!fs.existsSync(p)) {
-    return res.json({ message: 'No results yet. Run POST /research/evaluate first.', metrics: null });
+  if (fs.existsSync(RESULTS_PATH)) {
+    return res.json(JSON.parse(fs.readFileSync(RESULTS_PATH, 'utf8')));
   }
-  res.json(JSON.parse(fs.readFileSync(p, 'utf8')));
+  const summary = getOutcomeSummary();
+  return res.json({
+    message: 'No cached results. Run POST /research/evaluate first.',
+    dataset: summary.meta.name,
+    n: summary.meta.n,
+    comparison: summary.comparison,
+    headline: summary.headline,
+    metrics: null,
+  });
 });
 
 router.get('/methods', (_, res) => {
   res.json({
-    healthScore: {
-      formula: 'Weighted composite: steps(30%) + sleep(25%) + RHR(20%) + SpO2(15%) + HRV(10%)',
-      reference: 'docs/METHODS.md',
+    cohort: {
+      name: 'MedWear-Screening-Outcome-Cohort-v1',
+      n: 5000,
+      arms: ['intervention (screened)', 'usual_care (control)'],
+      seed: 'deterministic mulberry32',
+      reference: 'benchmarks/screening-outcome-dataset.json',
     },
-    alerts: {
-      rules: ['HR > threshold', 'HR < threshold', 'SpO2 < threshold', 'steps < 3000'],
-      reference: 'docs/METHODS.md#alerts',
+    headlineMetrics: [
+      'earlyDiagnosisRate (stage I/II)',
+      'treatmentRate (90-day initiation)',
+      'survival5y (simulated)',
+    ],
+    signals: {
+      proxy: ['restingHR', 'hrv', 'spo2', 'steps', 'sleepHours', 'systolicBP'],
+      method: 'Transparent rule engine + cohort simulation',
     },
-    anomalies: {
-      method: 'Personal baseline + 2σ on 14-day HR window; SpO2 < 93% repeated events',
-      reference: 'docs/METHODS.md#anomalies',
+    pathway: {
+      steps: 'screening → anomaly → prediction → AI intervention → report → exam → evaluation → outcomes',
     },
-    riskStratification: {
-      tiers: { low: 'score ≥ 80', moderate: '60–79', high: '< 60' },
+    reproducibility: {
+      generate: 'npm run generate:cohort',
+      evaluate: 'npm run evaluate:outcomes',
+      tests: 'npm run test:server',
     },
   });
 });
@@ -44,7 +85,8 @@ router.get('/references', (_, res) => {
 });
 
 router.post('/evaluate', (_, res) => {
-  res.json(run());
+  const results = runOutcomeEval();
+  res.json(results);
 });
 
 router.post('/analyze', (req, res) => {
@@ -52,9 +94,9 @@ router.post('/analyze', (req, res) => {
   if (!days || !Object.keys(days).length) {
     return res.status(400).json({ message: 'Provide days object with wearable metrics' });
   }
+  const core = require('../services/analyticsCore');
   const caseData = { id: 'live', days, targetDay: targetDay || Object.keys(days).sort().pop() };
   const result = core.evaluateCase(caseData, thresholds || {});
-  const store = core.buildStoreFromDays(days, caseData.targetDay);
   res.json({
     ...result,
     healthScoreFormula: 'steps(30%)+sleep(25%)+RHR(20%)+SpO2(15%)+HRV(10%)',

@@ -1,26 +1,39 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box, Typography, Paper, Grid, Tabs, Tab, Button, Chip, Alert, LinearProgress,
   Table, TableBody, TableCell, TableHead, TableRow, Card, CardContent,
   Accordion, AccordionSummary, AccordionDetails,
 } from '@mui/material';
 import {
-  Science, PlayArrow, Gavel, ExpandMore, Refresh,
-  Biotech, MenuBook, CheckCircle, Memory, Security, Timeline,
+  PlayArrow, Gavel, ExpandMore, Refresh,
+  Biotech, MenuBook, CheckCircle, Security, Timeline,
+  OpenInNew, CompareArrows, Groups, MonitorHeart,
 } from '@mui/icons-material';
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
 } from 'recharts';
+import ChartContainer from '../components/ChartContainer';
+import InterventionPathway from '../components/InterventionPathway';
+import PageHeader from '../components/PageHeader';
 import { researchApi } from '../services/api';
+import { PAPER_TITLE, PAPER_TITLE_EN } from '../config/paperDemo';
+import { useLang } from '../contexts/LanguageContext';
 
 function TabPanel({ value, index, children }) {
   return value === index ? <Box sx={{ pt: 2 }}>{children}</Box> : null;
 }
 
-const RISK_ZH = { low: '低', moderate: '中', high: '高', unknown: '—' };
-const RISK_COLOR = { low: 'success', moderate: 'warning', high: 'error' };
+const IV_COLOR = '#1565C0';
+const UC_COLOR = '#b45309';
+
+function pct(x) {
+  return x == null ? '—' : `${(x * 100).toFixed(1)}%`;
+}
 
 function ResearchCenter() {
+  const navigate = useNavigate();
+  const { t, isEn } = useLang();
   const [tab, setTab] = useState(0);
   const [results, setResults] = useState(null);
   const [dataset, setDataset] = useState(null);
@@ -33,23 +46,21 @@ function ResearchCenter() {
     setLoading(true);
     setApiError('');
     try {
-      const [res, ds, m] = await Promise.all([
+      const [res, ds, m] = await Promise.allSettled([
         researchApi.getResults(),
         researchApi.getDataset(),
         researchApi.getMethods(),
       ]);
-      setResults(res.data?.metrics ? res.data : null);
-      setDataset(ds.data);
-      setMethods(m.data);
-    } catch (e) {
-      console.error(e);
-      setApiError(e.response?.status === 404
-        ? '分析评价 API 未就绪，请在项目目录执行 npm run server 重启后端（端口 3001）'
-        : '无法连接 API，请确认后端已启动');
+      if (res.status === 'fulfilled') setResults(res.value.data);
+      if (ds.status === 'fulfilled') setDataset(ds.value.data);
+      if (m.status === 'fulfilled') setMethods(m.value.data);
+      if (ds.status !== 'fulfilled') {
+        setApiError(t('无法连接 API，请确认 npm run dev 已启动', 'Cannot reach API — ensure npm run dev is running'));
+      }
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -63,188 +74,192 @@ function ResearchCenter() {
     }
   };
 
-  const metricChart = results?.metrics ? [
-    { name: '告警 F1', value: +(results.metrics.alerts.f1 * 100).toFixed(1) },
-    { name: '异常检测', value: +(results.metrics.anomalyAccuracy * 100).toFixed(1) },
-    { name: '风险分层', value: +(results.metrics.riskAccuracy * 100).toFixed(1) },
-    { name: '评分达标', value: +(results.metrics.healthScoreInRangeRate * 100).toFixed(1) },
+  const headline = dataset?.headline || results?.headline;
+  const comparison = dataset?.comparison || results?.comparison;
+  const n = dataset?.meta?.n || dataset?.totalPatients || results?.n || 5000;
+
+  const chartData = comparison ? [
+    {
+      name: t('早诊率', 'Early dx'),
+      intervention: (comparison.earlyStageRate?.intervention ?? headline?.earlyDiagnosisRate?.intervention ?? 0) * 100,
+      control: (comparison.earlyStageRate?.control ?? headline?.earlyDiagnosisRate?.control ?? 0) * 100,
+    },
+    {
+      name: t('治疗率', 'Treatment'),
+      intervention: (comparison.treatmentInitiationRate?.intervention ?? headline?.treatmentRate?.intervention ?? 0) * 100,
+      control: (comparison.treatmentInitiationRate?.control ?? headline?.treatmentRate?.control ?? 0) * 100,
+    },
+    {
+      name: t('5年存活', '5y survival'),
+      intervention: (comparison.meanSurvival5y?.intervention ?? headline?.survival5y?.intervention ?? 0) * 100,
+      control: (comparison.meanSurvival5y?.control ?? headline?.survival5y?.control ?? 0) * 100,
+    },
   ] : [];
 
   if (loading) return <LinearProgress />;
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3, flexWrap: 'wrap', gap: 2 }}>
-        <Box>
-          <Typography variant="h5" fontWeight={700}>
-            <Science sx={{ mr: 1, verticalAlign: 'middle' }} />
-            分析评价中心
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            可穿戴数据分析引擎 · 公开基准评测 · 可解释方法 · 可复现实验
-          </Typography>
-        </Box>
-        <Box sx={{ display: 'flex', gap: 1 }}>
-          <Button startIcon={<Refresh />} onClick={load}>刷新</Button>
-          <Button variant="contained" startIcon={<PlayArrow />} onClick={runEval} disabled={evaluating}>
-            {evaluating ? '评测中...' : '运行基准测试'}
-          </Button>
-        </Box>
-      </Box>
+      <InterventionPathway />
 
-      {apiError && <Alert severity="warning" sx={{ mb: 2 }} onClose={() => setApiError('')}>{apiError}</Alert>}
+      <PageHeader
+        title={t('研究评价中心', 'Research & Evaluation Center')}
+        subtitle={isEn ? PAPER_TITLE_EN : PAPER_TITLE}
+        actions={<Button startIcon={<Refresh />} onClick={load}>{t('刷新', 'Refresh')}</Button>}
+        badge={<Chip size="small" color="primary" label={`n=${n}`} />}
+      />
 
-      <Grid container spacing={2} sx={{ mb: 3 }}>
+      <Alert severity="success" icon={<Biotech />} sx={{ mb: 2 }}>
+        <strong>MedWear-Screening-Outcome-Cohort-v1</strong>
+        {' — '}
+        {t(
+          `${n} 例合成队列（干预组 ${dataset?.meta?.nIntervention || n / 2} · 对照组 ${dataset?.meta?.nControl || n / 2}）· CC-BY-4.0 · 与结局对比页数据一致`,
+          `${n} synthetic patients (intervention ${dataset?.meta?.nIntervention || n / 2} · control ${dataset?.meta?.nControl || n / 2}) · CC-BY-4.0 · same data as Outcomes page`,
+        )}
+      </Alert>
+
+      <Grid container spacing={2} sx={{ mb: 2 }}>
         {[
-          { label: '基准样本', value: dataset?.cases?.length || 8, icon: <Biotech /> },
-          { label: '告警 F1', value: results?.metrics?.alerts?.f1?.toFixed(3) || '—', icon: <CheckCircle /> },
-          { label: '异常检测准确率', value: results?.metrics?.anomalyAccuracy ? `${(results.metrics.anomalyAccuracy * 100).toFixed(0)}%` : '—', icon: <Timeline /> },
-          { label: '分析引擎', value: results?.engine?.replace('MedWear-', '') || 'AnalyticsCore-v1', icon: <Memory /> },
-        ].map(s => (
-          <Grid item xs={6} md={3} key={s.label}>
-            <Card><CardContent sx={{ textAlign: 'center', py: 1.5 }}>
-              <Box sx={{ color: 'primary.main', mb: 0.5 }}>{s.icon}</Box>
-              <Typography variant="h5" fontWeight={700}>{s.value}</Typography>
-              <Typography variant="caption" color="text.secondary">{s.label}</Typography>
-            </CardContent></Card>
+          { label: t('基准样本', 'Cohort size'), value: n, icon: <Groups />, color: 'primary.main' },
+          { label: t('早诊率 Δ', 'Early dx Δ'), value: headline ? pct(headline.earlyDiagnosisRate?.delta) : '—', icon: <CheckCircle />, color: IV_COLOR },
+          { label: t('治疗率 Δ', 'Treatment Δ'), value: headline ? pct(headline.treatmentRate?.delta) : '—', icon: <MonitorHeart />, color: IV_COLOR },
+          { label: t('5年存活 Δ', '5y survival Δ'), value: headline ? pct(headline.survival5y?.delta) : '—', icon: <Timeline />, color: IV_COLOR },
+        ].map((item) => (
+          <Grid item xs={6} md={3} key={item.label}>
+            <Card sx={{ height: '100%' }}>
+              <CardContent sx={{ textAlign: 'center', py: 2 }}>
+                <Box sx={{ color: item.color, mb: 0.5 }}>{item.icon}</Box>
+                <Typography variant="h4" fontWeight={800}>{item.value}</Typography>
+                <Typography variant="caption" color="text.secondary">{item.label}</Typography>
+              </CardContent>
+            </Card>
           </Grid>
         ))}
       </Grid>
 
-      <Paper sx={{ mb: 3 }}>
-        <Tabs value={tab} onChange={(_, v) => setTab(v)} variant="scrollable" scrollButtons="auto">
-          <Tab label="平台能力" />
-          <Tab label="评测结果" />
-          <Tab label="分析方法" />
-          <Tab label="基准数据集" />
-          <Tab label="合规说明" />
+      <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
+        <Button variant="contained" startIcon={<PlayArrow />} onClick={runEval} disabled={evaluating}>
+          {evaluating ? t('评测中…', 'Evaluating…') : t('运行队列评测', 'Run cohort evaluation')}
+        </Button>
+        <Button variant="contained" color="success" startIcon={<CompareArrows />} onClick={() => navigate('/outcomes')}>
+          {t('查看结局对比', 'View outcome comparison')}
+        </Button>
+        <Button variant="outlined" startIcon={<MenuBook />} onClick={() => navigate('/methodology')}>
+          {t('方法学文档', 'Methodology')}
+        </Button>
+      </Box>
+
+      <Paper sx={{ overflow: 'hidden' }}>
+        <Tabs value={tab} onChange={(_, v) => setTab(v)} variant="scrollable" scrollButtons="auto" sx={{ borderBottom: 1, borderColor: 'divider', px: 1 }}>
+          <Tab label={t('核心指标', 'Headline metrics')} />
+          <Tab label={t('评测结果', 'Results')} />
+          <Tab label={t('分析方法', 'Methods')} />
+          <Tab label={t('队列样本', 'Cohort sample')} />
+          <Tab label={t('合规说明', 'Compliance')} />
         </Tabs>
-        <Box sx={{ p: 2 }}>
+        <Box sx={{ p: 2.5 }}>
           <TabPanel value={tab} index={0}>
-            <Typography variant="body1" paragraph color="text.secondary">
-              MedWear 将 Apple Health 可穿戴数据转化为可解释的健康洞察，覆盖监测、筛查、报告与预约的完整链路。
-            </Typography>
-            <Grid container spacing={2}>
-              {[
-                { icon: <Memory />, title: '双模式数据引擎', desc: '演示模式与 Apple Health 真实导入完全隔离，保证演示与实测互不干扰' },
-                { icon: <Timeline />, title: '透明分析算法', desc: '健康评分、阈值告警、个人基线 2σ 异常检测 — 公式公开、可审计' },
-                { icon: <Biotech />, title: '临床筛查工作流', desc: '多维度风险筛查、文献引用、体检预约与结构化医生报告' },
-                { icon: <Security />, title: '隐私优先架构', desc: '本地解析与存储、审计日志、加密健康保险库、匿名导出' },
-                { icon: <Science />, title: '公开基准评测', desc: 'CC-BY-4.0 合成数据集，一键复现 Alert / 异常 / 风险分层指标' },
-                { icon: <CheckCircle />, title: '工程化交付', desc: '单元测试、CI 流水线、Docker 部署，支持持续集成与版本追踪' },
-              ].map(c => (
-                <Grid item xs={12} md={6} key={c.title}>
-                  <Paper variant="outlined" sx={{ p: 2, height: '100%' }}>
-                    <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'flex-start' }}>
-                      <Box sx={{ color: 'primary.main', mt: 0.3 }}>{c.icon}</Box>
-                      <Box>
-                        <Typography fontWeight={600}>{c.title}</Typography>
-                        <Typography variant="body2" color="text.secondary">{c.desc}</Typography>
-                      </Box>
-                    </Box>
-                  </Paper>
-                </Grid>
-              ))}
-            </Grid>
+            {chartData.length > 0 ? (
+              <ChartContainer width="100%" height={280}>
+                <BarChart data={chartData} barGap={4}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis domain={[0, 100]} tickFormatter={(v) => `${v}%`} />
+                  <Tooltip formatter={(v) => `${Number(v).toFixed(1)}%`} />
+                  <Legend />
+                  <Bar dataKey="intervention" name={t('筛查组', 'Screened')} fill={IV_COLOR} radius={[6, 6, 0, 0]} />
+                  <Bar dataKey="control" name={t('对照组', 'Control')} fill={UC_COLOR} radius={[6, 6, 0, 0]} />
+                </BarChart>
+              </ChartContainer>
+            ) : (
+              <Alert severity="info">{t('运行评测以生成指标', 'Run evaluation to generate metrics')}</Alert>
+            )}
           </TabPanel>
 
           <TabPanel value={tab} index={1}>
-            {!results?.metrics ? (
-              <Alert severity="info" action={<Button onClick={runEval}>运行评测</Button>}>
-                暂无评测结果，点击「运行基准测试」生成报告
-              </Alert>
+            {results?.comparison || results?.headline ? (
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>{t('指标', 'Metric')}</TableCell>
+                    <TableCell>{t('筛查组', 'Screened')}</TableCell>
+                    <TableCell>{t('对照组', 'Control')}</TableCell>
+                    <TableCell>Δ</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {[
+                    ['earlyStageRate', t('早诊率 (I/II期)', 'Early stage (I/II)')],
+                    ['treatmentInitiationRate', t('90天治疗启动', '90-day treatment')],
+                    ['meanSurvival5y', t('模拟5年存活', 'Simulated 5y survival')],
+                  ].map(([key, label]) => {
+                    const c = results.comparison?.[key];
+                    if (!c) return null;
+                    return (
+                      <TableRow key={key}>
+                        <TableCell>{label}</TableCell>
+                        <TableCell>{pct(c.intervention)}</TableCell>
+                        <TableCell>{pct(c.control)}</TableCell>
+                        <TableCell><Chip size="small" color="success" label={`+${pct(c.delta)}`} /></TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
             ) : (
-              <>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                  {results.dataset} · n={results.n} · {new Date(results.evaluatedAt).toLocaleString()}
-                </Typography>
-                <ResponsiveContainer width="100%" height={240}>
-                  <BarChart data={metricChart}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-                    <YAxis domain={[0, 100]} tickFormatter={v => `${v}%`} />
-                    <Tooltip formatter={v => `${v}%`} />
-                    <Bar dataKey="value" fill="#1565C0" name="得分" />
-                  </BarChart>
-                </ResponsiveContainer>
-                <Table size="small" sx={{ mt: 2 }}>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>评测项</TableCell>
-                      <TableCell>Precision</TableCell>
-                      <TableCell>Recall</TableCell>
-                      <TableCell>F1 / Accuracy</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    <TableRow>
-                      <TableCell>告警检测</TableCell>
-                      <TableCell>{(results.metrics.alerts.precision * 100).toFixed(1)}%</TableCell>
-                      <TableCell>{(results.metrics.alerts.recall * 100).toFixed(1)}%</TableCell>
-                      <TableCell>{(results.metrics.alerts.f1 * 100).toFixed(1)}%</TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell>异常检测</TableCell>
-                      <TableCell colSpan={2}>—</TableCell>
-                      <TableCell>{(results.metrics.anomalyAccuracy * 100).toFixed(1)}%</TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell>风险分层</TableCell>
-                      <TableCell colSpan={2}>—</TableCell>
-                      <TableCell>{(results.metrics.riskAccuracy * 100).toFixed(1)}%</TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
-              </>
+              <Alert severity="info" action={<Button onClick={runEval}>{t('运行评测', 'Run eval')}</Button>}>
+                {t('暂无评测结果 — 点击运行队列评测', 'No results yet — run cohort evaluation')}
+              </Alert>
             )}
           </TabPanel>
 
           <TabPanel value={tab} index={2}>
             {methods && (
-              <>
-                <Alert severity="info" sx={{ mb: 2 }}>
-                  以下方法均为<strong>可解释规则与统计模型</strong>，非黑盒深度学习，便于临床与工程团队审查。
-                </Alert>
-                <Typography variant="subtitle1" fontWeight={600}>健康评分</Typography>
-                <Typography variant="body2" paragraph>{methods.healthScore?.formula}</Typography>
-                <Typography variant="subtitle1" fontWeight={600}>告警规则</Typography>
-                <Typography component="ul" variant="body2" sx={{ pl: 2, mb: 2 }}>
-                  {(methods.alerts?.rules || []).map(r => <li key={r}>{r}</li>)}
-                </Typography>
-                <Typography variant="subtitle1" fontWeight={600}>异常检测</Typography>
-                <Typography variant="body2" paragraph>{methods.anomalies?.method}</Typography>
-                <Typography variant="subtitle1" fontWeight={600}>风险分层</Typography>
-                <Typography variant="body2">
-                  低风险: {methods.riskStratification?.tiers?.low} ·
-                  中风险: {methods.riskStratification?.tiers?.moderate} ·
-                  高风险: {methods.riskStratification?.tiers?.high}
-                </Typography>
-              </>
+              <Grid container spacing={2}>
+                <Grid item xs={12} md={6}>
+                  <Typography variant="subtitle1" fontWeight={700}>{t('队列设计', 'Cohort design')}</Typography>
+                  <Typography variant="body2" paragraph>
+                    {methods.cohort?.name} · n={methods.cohort?.n}
+                  </Typography>
+                  <Typography variant="subtitle1" fontWeight={700}>{t('核心指标', 'Headline metrics')}</Typography>
+                  <Typography component="ul" variant="body2" sx={{ pl: 2 }}>
+                    {(methods.headlineMetrics || []).map((m) => <li key={m}>{m}</li>)}
+                  </Typography>
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <Typography variant="subtitle1" fontWeight={700}>{t('复现命令', 'Reproduction')}</Typography>
+                  <Typography component="pre" variant="body2" sx={{ bgcolor: 'grey.50', p: 2, borderRadius: 2, fontSize: '0.8rem' }}>
+                    {`npm run generate:cohort\nnpm run evaluate:outcomes\nnpm run test:server`}
+                  </Typography>
+                </Grid>
+              </Grid>
             )}
           </TabPanel>
 
           <TabPanel value={tab} index={3}>
-            <Alert severity="info" sx={{ mb: 2 }}>
-              {dataset?.description} · 许可 {dataset?.license}
-            </Alert>
             <Table size="small">
               <TableHead>
                 <TableRow>
                   <TableCell>ID</TableCell>
-                  <TableCell>场景</TableCell>
-                  <TableCell>预期告警</TableCell>
-                  <TableCell>异常</TableCell>
-                  <TableCell>风险</TableCell>
+                  <TableCell>{t('组别', 'Arm')}</TableCell>
+                  <TableCell>{t('病种', 'Category')}</TableCell>
+                  <TableCell>{t('风险', 'Risk')}</TableCell>
+                  <TableCell>{t('分期', 'Stage')}</TableCell>
+                  <TableCell>{t('治疗', 'Treated')}</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {(dataset?.cases || []).map(c => (
-                  <TableRow key={c.id} hover>
-                    <TableCell>{c.id}</TableCell>
-                    <TableCell>{c.label}</TableCell>
-                    <TableCell>{c.expected.alerts.length ? c.expected.alerts.join(', ') : '无'}</TableCell>
-                    <TableCell>{c.expected.anomaly ? '是' : '否'}</TableCell>
-                    <TableCell><Chip label={RISK_ZH[c.expected.riskLevel]} size="small" color={RISK_COLOR[c.expected.riskLevel]} /></TableCell>
+                {(dataset?.samplePatients || []).map((p) => (
+                  <TableRow key={p.id}>
+                    <TableCell>{p.id}</TableCell>
+                    <TableCell>
+                      <Chip size="small" label={p.arm === 'intervention' ? t('筛查组', 'Screened') : t('对照', 'Control')}
+                        color={p.arm === 'intervention' ? 'primary' : 'default'} variant="outlined" />
+                    </TableCell>
+                    <TableCell>{isEn ? p.categoryLabel_en : p.categoryLabel}</TableCell>
+                    <TableCell>{p.riskTier}</TableCell>
+                    <TableCell>{p.stageAtDiagnosis || '—'}</TableCell>
+                    <TableCell>{p.treatmentStarted ? t('是', 'Yes') : t('否', 'No')}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -253,33 +268,32 @@ function ResearchCenter() {
 
           <TabPanel value={tab} index={4}>
             <Accordion defaultExpanded>
-              <AccordionSummary expandIcon={<ExpandMore />}><Gavel sx={{ mr: 1 }} /> 使用边界</AccordionSummary>
+              <AccordionSummary expandIcon={<ExpandMore />}><Gavel sx={{ mr: 1 }} /> {t('使用边界', 'Usage boundaries')}</AccordionSummary>
               <AccordionDetails>
                 <Typography variant="body2" component="ul" sx={{ pl: 2 }}>
-                  <li>本系统为健康数据分析与决策辅助平台，<strong>非医疗器械</strong></li>
-                  <li>Apple Health 数据仅存本地，默认不上传云端</li>
-                  <li>ECG 页面为 UI 演示波形，非真实 Apple Watch 心电分析</li>
-                  <li>筛查与 AI 输出须结合专业医疗意见，不可替代临床诊断</li>
+                  <li>{t('合成队列仅用于方法学演示，非真实患者数据', 'Synthetic cohort for methodology demo only — not real patients')}</li>
+                  <li>{t('与结局对比页共享同一数据源 outcomeModel', 'Shares outcomeModel data source with Outcomes page')}</li>
                 </Typography>
               </AccordionDetails>
             </Accordion>
             <Accordion>
-              <AccordionSummary expandIcon={<ExpandMore />}><MenuBook sx={{ mr: 1 }} /> 开发者复现</AccordionSummary>
+              <AccordionSummary expandIcon={<ExpandMore />}><Security sx={{ mr: 1 }} /> {t('开放许可', 'Open license')}</AccordionSummary>
               <AccordionDetails>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                  完整方法学与评测协议见项目 docs/ 目录。
-                </Typography>
-                <Typography variant="body2" component="pre" sx={{ bgcolor: 'grey.100', p: 2, borderRadius: 1, fontSize: '0.8rem' }}>
-{`npm install
-npm run test:server
-npm run evaluate
-npm run dev`}
-                </Typography>
+                <Typography variant="body2">CC-BY-4.0 · {dataset?.meta?.seed ? `seed=${dataset.meta.seed}` : ''}</Typography>
               </AccordionDetails>
             </Accordion>
           </TabPanel>
         </Box>
       </Paper>
+
+      {apiError && <Alert severity="warning" sx={{ mt: 2 }}>{apiError}</Alert>}
+
+      <Alert severity="info" icon={<OpenInNew fontSize="small" />} sx={{ mt: 2 }}>
+        {t('论文核心', 'Thesis core')}:{' '}
+        <Button size="small" onClick={() => navigate('/outcomes')}>{t('结局对比', 'Outcomes')}</Button>
+        {' · '}
+        <Button size="small" onClick={() => navigate('/ai/intervention')}>{t('AI 干预', 'AI Intervention')}</Button>
+      </Alert>
     </Box>
   );
 }

@@ -1,0 +1,252 @@
+{
+  "dataset": "MedWear-Screening-Outcome-Cohort-v1",
+  "version": "1.0.0",
+  "evaluatedAt": "2026-07-10T08:21:06.985Z",
+  "engine": "MedWear-ScreeningOutcome-v1",
+  "n": 5000,
+  "comparison": {
+    "earlyStageRate": {
+      "intervention": 0.7765,
+      "control": 0.4153,
+      "delta": 0.3612
+    },
+    "treatmentInitiationRate": {
+      "intervention": 0.9176,
+      "control": 0.6895,
+      "delta": 0.2281
+    },
+    "medianDaysToTreatment": {
+      "intervention": 18,
+      "control": 41,
+      "delta": -23
+    },
+    "meanSurvival5y": {
+      "intervention": 0.6489411764705886,
+      "control": 0.4432701612903224,
+      "delta": 0.2057
+    },
+    "observedSurvival5yRate": {
+      "intervention": 0.702,
+      "control": 0.4556,
+      "delta": 0.2464
+    },
+    "chronicControlRate": {
+      "intervention": 0.6758,
+      "control": 0.3351,
+      "delta": 0.3407
+    }
+  },
+  "stageDistribution": {
+    "intervention": {
+      "I": 125,
+      "II": 73,
+      "III": 33,
+      "IV": 24
+    },
+    "usual_care": {
+      "I": 44,
+      "II": 59,
+      "III": 84,
+      "IV": 61
+    }
+  },
+  "byCategory": [
+    {
+      "category": "lung_cancer",
+      "label": "肺癌",
+      "label_en": "Lung cancer",
+      "malignant": true,
+      "chronic": false,
+      "intervention": {
+        "diagnosed": 125,
+        "earlyStageRate": 0.76,
+        "treatmentRate": 0.92,
+        "meanSurvival5y": 0.4925039999999997,
+        "controlRate": null
+      },
+      "control": {
+        "diagnosed": 119,
+        "earlyStageRate": 0.4454,
+        "treatmentRate": 0.7395,
+        "meanSurvival5y": 0.3182941176470588,
+        "controlRate": null
+      }
+    },
+    {
+      "category": "colorectal_cancer",
+      "label": "结直肠癌",
+      "label_en": "Colorectal cancer",
+      "malignant": true,
+      "chronic": false,
+      "intervention": {
+        "diagnosed": 96,
+        "earlyStageRate": 0.7604,
+        "treatmentRate": 0.9063,
+        "meanSurvival5y": 0.7648854166666655,
+        "controlRate": null
+      },
+      "control": {
+        "diagnosed": 87,
+        "earlyStageRate": 0.4253,
+        "treatmentRate": 0.6782,
+        "meanSurvival5y": 0.5377471264367812,
+        "controlRate": null
+      }
+    },
+    {
+      "category": "breast_cancer",
+      "label": "乳腺癌",
+      "label_en": "Breast cancer",
+      "malignant": true,
+      "chronic": false,
+      "intervention": {
+        "diagnosed": 34,
+        "earlyStageRate": 0.8824,
+        "treatmentRate": 0.9412,
+        "meanSurvival5y": 0.8967058823529408,
+        "controlRate": null
+      },
+      "control": {
+        "diagnosed": 42,
+        "earlyStageRate": 0.3095,
+        "treatmentRate": 0.5714,
+        "meanSurvival5y": 0.6016666666666663,
+        "controlRate": null
+      }
+    },
+    {
+      "category": "hypertension",
+      "label": "高血压",
+      "label_en": "Hypertension",
+      "malignant": false,
+      "chronic": true,
+      "intervention": {
+        "diagnosed": 218,
+        "earlyStageRate": null,
+        "treatmentRate": 0.9358,
+        "meanSurvival5y": null,
+        "controlRate": 0.7294
+      },
+      "control": {
+        "diagnosed": 223,
+        "earlyStageRate": null,
+        "treatmentRate": 0.6323,
+        "meanSurvival5y": null,
+        "controlRate": 0.3318
+      }
+    },
+    {
+      "category": "diabetes",
+      "label": "2 型糖尿病",
+      "label_en": "Type 2 diabetes",
+      "malignant": false,
+      "chronic": true,
+      "intervention": {
+        "diagnosed": 191,
+        "earlyStageRate": null,
+        "treatmentRate": 0.8901,
+        "meanSurvival5y": null,
+        "controlRate": 0.7277
+      },
+      "control": {
+        "diagnosed": 188,
+        "earlyStageRate": null,
+        "treatmentRate": 0.6862,
+        "meanSurvival5y": null,
+        "controlRate": 0.367
+      }
+    }
+  ],
+  "funnel": {
+    "arm": "intervention",
+    "total": 2500,
+    "steps": [
+      {
+        "key": "monitored",
+        "label": "持续可穿戴监测",
+        "label_en": "Continuous monitoring",
+        "count": 2500,
+        "rate": 1
+      },
+      {
+        "key": "anomaly_flagged",
+        "label": "异常信号标记",
+        "label_en": "Anomaly flagged",
+        "count": 1172,
+        "rate": 0.4688
+      },
+      {
+        "key": "risk_stratified",
+        "label": "风险分层（中/高）",
+        "label_en": "Risk-stratified (mod/high)",
+        "count": 1172,
+        "rate": 0.4688
+      },
+      {
+        "key": "exam_booked",
+        "label": "体检预约",
+        "label_en": "Exam booked",
+        "count": 1099,
+        "rate": 0.4396
+      },
+      {
+        "key": "exam_completed",
+        "label": "完成检查",
+        "label_en": "Exam completed",
+        "count": 1039,
+        "rate": 0.4156
+      },
+      {
+        "key": "diagnosed",
+        "label": "确诊（含分期）",
+        "label_en": "Diagnosed & staged",
+        "count": 664,
+        "rate": 0.2656
+      },
+      {
+        "key": "treatment_started",
+        "label": "启动治疗",
+        "label_en": "Treatment started",
+        "count": 608,
+        "rate": 0.2432
+      }
+    ]
+  },
+  "params": {
+    "stageDistribution": {
+      "intervention": {
+        "I": 0.46,
+        "II": 0.29,
+        "III": 0.18,
+        "IV": 0.07
+      },
+      "usual_care": {
+        "I": 0.17,
+        "II": 0.26,
+        "III": 0.31,
+        "IV": 0.26
+      }
+    },
+    "treatmentInitiationRate": {
+      "intervention": 0.92,
+      "usual_care": 0.67
+    },
+    "timeToTreatment": {
+      "intervention": {
+        "mean": 18,
+        "sd": 8,
+        "min": 3
+      },
+      "usual_care": {
+        "mean": 43,
+        "sd": 22,
+        "min": 7
+      }
+    },
+    "chronicControlRate": {
+      "intervention": 0.74,
+      "usual_care": 0.47
+    },
+    "untreatedSurvivalFactor": 0.55
+  }
+}

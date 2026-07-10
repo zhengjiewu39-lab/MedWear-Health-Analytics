@@ -3,6 +3,7 @@ import { Box, Typography, Button } from '@mui/material';
 import { AdminPanelSettings } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { getHomePath } from '../config/paperDemo';
 
 export function AdminGuard({ children }) {
   const { isAdmin } = useAuth();
@@ -16,7 +17,7 @@ export function AdminGuard({ children }) {
         <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
           请使用 admin 账号登录以访问此功能
         </Typography>
-        <Button variant="contained" onClick={() => navigate('/dashboard')}>返回健康总览</Button>
+        <Button variant="contained" onClick={() => navigate(getHomePath())}>返回首页</Button>
       </Box>
     );
   }

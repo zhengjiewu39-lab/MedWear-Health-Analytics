@@ -11,7 +11,7 @@ export function HealthDataProvider({ children }) {
 
   const refresh = useCallback(async () => {
     if (!isReal) {
-      setStatus({ hasData: false, meta: null, primarySource: null });
+      setStatus({ hasData: true, meta: null, primarySource: '演示患者数据' });
       setLoading(false);
       return;
     }
@@ -30,7 +30,11 @@ export function HealthDataProvider({ children }) {
   useEffect(() => {
     const handler = () => refresh();
     window.addEventListener('medwear-mode-change', handler);
-    return () => window.removeEventListener('medwear-mode-change', handler);
+    window.addEventListener('medwear-demo-patient-change', handler);
+    return () => {
+      window.removeEventListener('medwear-mode-change', handler);
+      window.removeEventListener('medwear-demo-patient-change', handler);
+    };
   }, [refresh]);
 
   return (

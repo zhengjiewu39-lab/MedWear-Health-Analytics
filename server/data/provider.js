@@ -1,23 +1,25 @@
-const fs = require('fs');
-const path = require('path');
 const {
-  mockData, getLiveVitals, buildDoctorReport, getExamSlots,
-} = require('../mock/clinicalData');
-const { enrichScreeningData, enhancedChat } = require('../ai/engine');
+  resolveDemoPatientId,
+  getDemoPatientData,
+  addDemoAppointment,
+  getLiveVitalsFor,
+  buildDoctorReportFor,
+  listDemoPatients,
+} = require('../mock/demoPatientRegistry');
+const { enrichScreeningData } = require('../ai/engine');
 const {
   getAllAnalytics,
   getEmptyAnalytics,
   buildRealScreening,
   buildRealDoctorReport,
 } = require('../health/analytics');
-const {
-  buildRealScreeningCategories,
-  buildRealTrendData,
-  getRecommendedExams,
-} = require('../data/screeningCatalog');
 const { hasData, getStore } = require('../health/store');
+const { STANDARDS } = require('../mock/clinicalData');
+const { getExamSlots } = require('../mock/clinicalData');
 
-const REAL_APPT_FILE = path.join(__dirname, '../../data/real-appointments.json');
+const REAL_APPT_FILE = require('path').join(__dirname, '../../data/real-appointments.json');
+const fs = require('fs');
+const path = require('path');
 
 const REAL_EXAM_PACKAGES = [
   { id: 'real-tumor', name: 'Apple Health 肿瘤早筛', category: 'tumor', price: 2680, duration: '半天', includesWearableReport: true, items: ['低剂量 CT', '肿瘤标志物', '甲状腺 B 超', 'MedWear 真实数据报告'] },
@@ -69,43 +71,67 @@ function buildRealHealthContext() {
   };
 }
 
-const demoProvider = {
-  mode: 'demo',
-  getProfile: () => ({ ...mockData.profile, dataMode: 'demo', dataImported: true }),
-  getStandards: () => mockData.standards,
-  getDashboardStats: () => ({ ...mockData.dashboard.stats, dataMode: 'demo', hasData: true }),
-  getVitalsTrend: () => mockData.dashboard.vitalsTrend,
-  getWeekTrend: () => mockData.dashboard.weekTrend,
-  getHeartRateZones: () => mockData.dashboard.heartRateZones,
-  getHealthScoreTrend: () => mockData.dashboard.healthScoreTrend,
-  getOrganScores: () => mockData.dashboard.organScores,
-  getAiInsights: () => mockData.dashboard.aiInsights,
-  getRecentAlerts: () => mockData.dashboard.recentAlerts,
-  getVitals: () => getLiveVitals(),
-  getDevices: () => mockData.devices,
-  getAlerts: () => mockData.alerts,
-  getAnomalies: () => mockData.anomalies,
-  getPredictions: () => mockData.predictions,
-  getSleep: () => ({ ...mockData.sleep, dataMode: 'demo' }),
-  getRecovery: () => ({ ...mockData.recovery, dataMode: 'demo' }),
-  getDigitalTwin: () => ({ ...mockData.digitalTwin, dataMode: 'demo' }),
-  getFusionSources: () => mockData.fusionSources,
-  getHealthGoals: () => mockData.healthGoals,
-  getAiReport: () => ({ ...mockData.aiReport, dataMode: 'demo' }),
-  getScreening: () => enrichScreeningData({ ...mockData.diseaseScreening, dataMode: 'demo' }),
-  getHospitals: () => mockData.hospitals,
-  getExamPackages: () => mockData.examPackages,
-  getAppointments: () => mockData.appointments,
-  addAppointment: (appt) => { mockData.appointments.unshift(appt); },
-  getDoctorReport: () => ({ ...buildDoctorReport(), dataMode: 'demo' }),
-  getHealthContext: () => ({
+function createDemoProvider(req) {
+  const pid = () => resolveDemoPatientId(req);
+  const data = () => getDemoPatientData(pid());
+
+  return {
     mode: 'demo',
-    hasData: true,
-    aiSummary: mockData.diseaseScreening.summary,
-    ...mockData.dashboard.stats,
-  }),
-  chat: (msg) => enhancedChat(msg),
-};
+    getPatientId: () => pid(),
+    getProfile: () => ({ ...data().profile, dataMode: 'demo', dataImported: true, hasData: true }),
+    getStandards: () => STANDARDS,
+    getDashboardStats: () => ({ ...data().dashboard.stats, dataMode: 'demo', hasData: true, patientId: pid() }),
+    getVitalsTrend: () => data().dashboard.vitalsTrend,
+    getWeekTrend: () => data().dashboard.weekTrend,
+    getHeartRateZones: () => data().dashboard.heartRateZones,
+    getHealthScoreTrend: () => data().dashboard.healthScoreTrend,
+    getOrganScores: () => data().dashboard.organScores,
+    getAiInsights: () => data().dashboard.aiInsights,
+    getRecentAlerts: () => data().dashboard.recentAlerts,
+    getVitals: () => getLiveVitalsFor(data()),
+    getDevices: () => data().devices,
+    getAlerts: () => data().alerts,
+    getAnomalies: () => data().anomalies,
+    getPredictions: () => data().predictions,
+    getSleep: () => ({ ...data().sleep, dataMode: 'demo' }),
+    getRecovery: () => ({ ...data().recovery, dataMode: 'demo' }),
+    getDigitalTwin: () => ({ ...data().digitalTwin, dataMode: 'demo' }),
+    getFusionSources: () => data().fusionSources,
+    getHealthGoals: () => data().healthGoals,
+    getAiReport: () => ({ ...data().aiReport, dataMode: 'demo' }),
+    getScreening: () => enrichScreeningData({ ...data().diseaseScreening, dataMode: 'demo', patientId: pid() }),
+    getHospitals: () => data().hospitals,
+    getExamPackages: () => data().examPackages,
+    getAppointments: () => data().appointments,
+    addAppointment: (appt) => addDemoAppointment(pid(), appt),
+    getDoctorReport: () => buildDoctorReportFor(data()),
+    getHealthContext: () => {
+      const d = data();
+      const s = d.dashboard.stats;
+      return {
+        mode: 'demo',
+        hasData: true,
+        patientId: pid(),
+        patientName: d.profile.name,
+        aiSummary: d.diseaseScreening.summary,
+        healthScore: s.healthScore,
+        heartRate: s.heartRate,
+        spo2: s.spo2,
+        hrv: s.hrv,
+        steps: s.steps,
+        sleepHours: s.sleepHours,
+        summary: {
+          patient: d.profile.name,
+          age: d.profile.age,
+          scenario: d.profile.scenario,
+          overallRisk: d.diseaseScreening.overallRisk,
+          overallScore: d.diseaseScreening.overallScore,
+        },
+      };
+    },
+    getRawDemoData: () => data(),
+  };
+}
 
 const realProvider = {
   mode: 'real',
@@ -135,7 +161,7 @@ const realProvider = {
       dateRange: store.meta?.dateRange,
     };
   },
-  getStandards: () => mockData.standards,
+  getStandards: () => STANDARDS,
   getDashboardStats: () => realAnalytics().dashboard.stats,
   getVitalsTrend: () => realAnalytics().dashboard.vitalsTrend,
   getWeekTrend: () => realAnalytics().dashboard.weekTrend,
@@ -172,25 +198,23 @@ const realProvider = {
   },
   getDoctorReport: () => (hasData() ? buildRealDoctorReport(getStore()) : { hasData: false, needsImport: true, mode: 'real' }),
   getHealthContext: () => buildRealHealthContext(),
-  chat: () => ({
-    reply: '真实模式请使用 OpenAI 大模型。请在设置中配置 API Key，并确保已导入 Apple Health 数据。',
-    isSimulated: false,
-    needsConfig: true,
-    model: 'MedWear-AI · 真实模式',
-  }),
 };
 
-function getProvider(mode) {
-  return mode === 'real' ? realProvider : demoProvider;
+function getProvider(mode, req) {
+  if (mode === 'real') return realProvider;
+  return createDemoProvider(req);
 }
 
 module.exports = {
   getProvider,
-  demoProvider,
+  createDemoProvider,
   realProvider,
   loadRealAppointments,
   saveRealAppointments,
   buildRealHealthContext,
   REAL_EXAM_PACKAGES,
   getExamSlots,
+  listDemoPatients,
+  resolveDemoPatientId,
+  getDemoPatientData,
 };
