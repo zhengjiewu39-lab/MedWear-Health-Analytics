@@ -6,7 +6,7 @@
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
     "@mui/icons-material": "^5.15.12",
-    "@mui/material": "^5.15.12",
+    "@mui/material": "^9.2.0",
     "adm-zip": "^0.5.16",
     "axios": "^1.9.0",
     "cors": "^2.8.5",
