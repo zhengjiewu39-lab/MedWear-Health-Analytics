@@ -7,7 +7,7 @@
     "@emotion/styled": "^11.14.0",
     "@mui/icons-material": "^5.15.12",
     "@mui/material": "^5.15.12",
-    "adm-zip": "^0.5.16",
+    "adm-zip": "^0.5.18",
     "axios": "^1.9.0",
     "cors": "^2.8.5",
     "dotenv": "^16.6.1",
