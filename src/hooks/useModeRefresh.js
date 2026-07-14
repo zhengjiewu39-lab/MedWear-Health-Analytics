@@ -13,6 +13,9 @@ export function useModeRefresh(callback, deps = []) {
 
   useEffect(() => {
     callback();
+    const onImport = () => callback();
+    window.addEventListener('medwear-health-import', onImport);
+    return () => window.removeEventListener('medwear-health-import', onImport);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [version, patientVersion, ...deps]);
 }

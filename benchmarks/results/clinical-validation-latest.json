@@ -1,0 +1,303 @@
+{
+  "engine": "MedWear-CohortValidator-v1",
+  "evaluatedAt": "2026-07-12T20:03:53.289Z",
+  "cohort": {
+    "n": 5000,
+    "seed": 20260709,
+    "name": "MedWear-Screening-Outcome-Cohort-v1"
+  },
+  "referenceSubsets": [
+    {
+      "id": "SEER",
+      "name": "SEER (US population registry)",
+      "name_zh": "SEER 美国人口癌症登记",
+      "version": "2016-2020 approximate",
+      "url": "https://seer.cancer.gov/statfacts/"
+    },
+    {
+      "id": "NLST",
+      "name": "NLST (lung CT screening trial)",
+      "name_zh": "NLST 国家肺癌筛查试验",
+      "version": "LDCT vs chest radiography",
+      "url": "https://www.cancer.gov/types/lung/research/nlst"
+    },
+    {
+      "id": "CHINA_NCCR",
+      "name": "China National Cancer Registry (NCCR subset)",
+      "name_zh": "中国肿瘤登记年报（汇总子集）",
+      "version": "2018-2022 urban screening program aggregates",
+      "url": "http://www.ncchina.org.cn/"
+    }
+  ],
+  "references": {
+    "SEER": {
+      "id": "SEER",
+      "cancers": [
+        "lung_nsclc",
+        "colorectal",
+        "breast"
+      ]
+    },
+    "NLST": {
+      "id": "NLST",
+      "focus": "lungScreening"
+    },
+    "CHINA_NCCR": {
+      "id": "CHINA_NCCR",
+      "programs": [
+        "lung_high_risk",
+        "colorectal_fecal",
+        "breast_mammography"
+      ]
+    }
+  },
+  "outcomeValidation": {
+    "earlyDiagnosisRate": {
+      "simulated": {
+        "intervention": 0.7765,
+        "control": 0.4153,
+        "delta": 0.3612
+      },
+      "reference": {
+        "NLST_stageShift": {
+          "earlyStageRateScreened": 0.57,
+          "earlyStageRateControl": 0.43
+        },
+        "CHINA_NCCR_lung": {
+          "withScreening": 0.52,
+          "without": 0.31
+        },
+        "SEER_usualCareMix": 0.28
+      },
+      "alignment": {
+        "interventionVsNlstScreened": false,
+        "controlVsNlstControl": true,
+        "directionCorrect": true
+      }
+    },
+    "treatmentInitiationDelay": {
+      "simulated": {
+        "interventionMedianDays": 18,
+        "controlMedianDays": 41,
+        "interventionRate90d": 0.9176,
+        "controlRate90d": 0.6895,
+        "deltaDays": -23
+      },
+      "reference": {
+        "SEER_usualCareMedianDays": 42,
+        "CHINA_NCCR_lung_screened": 22,
+        "CHINA_NCCR_lung_unscreened": 48
+      },
+      "alignment": {
+        "interventionFasterThanControl": true,
+        "interventionVsChinaScreened": true
+      }
+    },
+    "survival5yImprovement": {
+      "simulated": {
+        "intervention": 0.702,
+        "control": 0.4556,
+        "absoluteGain": 0.2464
+      },
+      "reference": {
+        "CHINA_NCCR_expectedGain": {
+          "lung": 0.18,
+          "colorectal": 0.22,
+          "breast": 0.15,
+          "notes": "Absolute 5-year survival gain proxy when diagnosed at early vs late stage (registry modeling)"
+        },
+        "SEER_stageSurvival": {
+          "lung_nsclc": {
+            "label": "Non-small cell lung cancer",
+            "label_zh": "非小细胞肺癌",
+            "survival5yByStage": {
+              "I": 0.63,
+              "II": 0.41,
+              "III": 0.26,
+              "IV": 0.08
+            },
+            "earlyStageShareAtDx": 0.28,
+            "notes": "Stage-specific 5-year relative survival; ~28% localized at diagnosis (usual care mix)"
+          },
+          "colorectal": {
+            "label": "Colorectal cancer",
+            "label_zh": "结直肠癌",
+            "survival5yByStage": {
+              "I": 0.91,
+              "II": 0.72,
+              "III": 0.72,
+              "IV": 0.15
+            },
+            "earlyStageShareAtDx": 0.39
+          },
+          "breast": {
+            "label": "Breast cancer (female)",
+            "label_zh": "乳腺癌（女性）",
+            "survival5yByStage": {
+              "I": 0.99,
+              "II": 0.86,
+              "III": 0.72,
+              "IV": 0.31
+            },
+            "earlyStageShareAtDx": 0.63
+          }
+        }
+      },
+      "alignment": {
+        "directionCorrect": true,
+        "gainWithinLiteratureRange": true
+      }
+    },
+    "byCategoryVsSeer": [
+      {
+        "category": "lung_cancer",
+        "label": "肺癌",
+        "label_en": "Lung cancer",
+        "simulatedEarlyStageRate": 0.76,
+        "referenceEarlyStageShare": 0.28,
+        "simulatedMeanSurvival5y": 0.4925039999999997,
+        "referenceMeanStageSurvival": 0.345,
+        "earlyStageDelta": 0.48
+      },
+      {
+        "category": "colorectal_cancer",
+        "label": "结直肠癌",
+        "label_en": "Colorectal cancer",
+        "simulatedEarlyStageRate": 0.7604,
+        "referenceEarlyStageShare": 0.39,
+        "simulatedMeanSurvival5y": 0.7648854166666655,
+        "referenceMeanStageSurvival": 0.625,
+        "earlyStageDelta": 0.3704
+      },
+      {
+        "category": "breast_cancer",
+        "label": "乳腺癌",
+        "label_en": "Breast cancer",
+        "simulatedEarlyStageRate": 0.8824,
+        "referenceEarlyStageShare": 0.63,
+        "simulatedMeanSurvival5y": 0.8967058823529408,
+        "referenceMeanStageSurvival": 0.72,
+        "earlyStageDelta": 0.2524
+      }
+    ]
+  },
+  "diagnosticValidation": {
+    "confusionMatrix": {
+      "tp": 257,
+      "fp": 915,
+      "tn": 1257,
+      "fn": 71,
+      "n": 2500
+    },
+    "metrics": {
+      "sensitivity": 0.7835,
+      "specificity": 0.5787,
+      "ppv": 0.2193,
+      "npv": 0.9465,
+      "accuracy": 0.6056,
+      "f1": 0.3427,
+      "auc": 0.7455
+    },
+    "roc": [
+      {
+        "threshold": 1.01,
+        "tpr": 0,
+        "fpr": 0
+      },
+      {
+        "threshold": 0.977,
+        "tpr": 0.003048780487804878,
+        "fpr": 0
+      },
+      {
+        "threshold": 0.966,
+        "tpr": 0.003048780487804878,
+        "fpr": 0.00046040515653775324
+      },
+      {
+        "threshold": 0.962,
+        "tpr": 0.003048780487804878,
+        "fpr": 0.0009208103130755065
+      },
+      {
+        "threshold": 0.961,
+        "tpr": 0.006097560975609756,
+        "fpr": 0.0009208103130755065
+      },
+      {
+        "threshold": 0.951,
+        "tpr": 0.009146341463414634,
+        "fpr": 0.0009208103130755065
+      },
+      {
+        "threshold": 0.948,
+        "tpr": 0.012195121951219513,
+        "fpr": 0.0009208103130755065
+      },
+      {
+        "threshold": 0.946,
+        "tpr": 0.01524390243902439,
+        "fpr": 0.0009208103130755065
+      },
+      {
+        "threshold": 0.937,
+        "tpr": 0.01524390243902439,
+        "fpr": 0.0013812154696132596
+      },
+      {
+        "threshold": 0.936,
+        "tpr": 0.018292682926829267,
+        "fpr": 0.001841620626151013
+      },
+      {
+        "threshold": 0.934,
+        "tpr": 0.021341463414634148,
+        "fpr": 0.001841620626151013
+      },
+      {
+        "threshold": 0.932,
+        "tpr": 0.021341463414634148,
+        "fpr": 0.0023020257826887663
+      }
+    ],
+    "referenceComparison": {
+      "NLST_lung": {
+        "sensitivity": 0.944,
+        "specificity": 0.734,
+        "ppv": 0.039,
+        "sensitivityDelta": -0.1605,
+        "specificityDelta": -0.1553,
+        "ppvDelta": 0.1803
+      },
+      "CHINA_NCCR_colorectal": {
+        "sensitivity": 0.79,
+        "specificity": 0.91,
+        "ppv": 0.05
+      },
+      "CHINA_NCCR_breast": {
+        "sensitivity": 0.87,
+        "specificity": 0.89,
+        "ppv": 0.04
+      }
+    },
+    "interpretation": {
+      "zh": "基于干预组可穿戴风险分层 vs 模拟金标准（恶性类别）的操作特征；与 NLST/CRC/乳腺筛查文献区间对照。",
+      "en": "Operating characteristics of wearable risk stratification vs simulated malignancy gold standard, benchmarked against NLST/CRC/breast screening literature."
+    }
+  },
+  "verdict": {
+    "passed": 4,
+    "total": 4,
+    "status": "aligned",
+    "status_zh": "与文献方向一致"
+  },
+  "headline": {
+    "earlyDiagnosisRate_iv": 0.7765,
+    "treatmentMedianDays_iv": 18,
+    "survival5yGain": 0.2057,
+    "sensitivity": 0.7835,
+    "specificity": 0.5787,
+    "ppv": 0.2193,
+    "auc": 0.7455
+  }
+}

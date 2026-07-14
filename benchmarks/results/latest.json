@@ -1,7 +1,7 @@
 {
   "dataset": "MedWear-Wearable-Analytics-Mini-v1",
   "version": "1.0.0",
-  "evaluatedAt": "2026-06-26T13:04:38.482Z",
+  "evaluatedAt": "2026-07-12T20:03:53.185Z",
   "n": 8,
   "engine": "MedWear-AnalyticsCore-v1",
   "metrics": {

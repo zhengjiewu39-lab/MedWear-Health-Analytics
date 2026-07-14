@@ -12,7 +12,10 @@ import AiGovernanceBanner from '../components/AiGovernanceBanner';
 import { aiApi } from '../services/api';
 import useModeRefresh from '../hooks/useModeRefresh';
 import { useDataMode } from '../contexts/DataModeContext';
+import { useHealthData } from '../contexts/HealthDataContext';
 import { useLang } from '../contexts/LanguageContext';
+import { CHART, AXIS, GRID, chartMargin } from '../config/chartTheme';
+import { ChartGradients, MedWearTooltip } from '../components/ChartTheme';
 
 const HORIZON_LABEL = { short: '短期', medium: '中期', long: '长期' };
 const HORIZON_LABEL_EN = { short: 'Short-term', medium: 'Mid-term', long: 'Long-term' };
@@ -21,8 +24,14 @@ const LEVEL_LABEL_EN = { low: 'Low risk', medium: 'Medium risk', high: 'High ris
 const LEVEL_COLOR = { low: 'success', medium: 'warning', high: 'error' };
 
 const CATEGORY_COLORS = {
-  training: '#1565C0', sleep: '#6A1B9A', cardio: '#C62828', metabolic: '#EF6C00',
-  infection: '#00838F', respiratory: '#0277BD', mental: '#7B1FA2', seasonal: '#2E7D32',
+  training: CHART.intervention,
+  sleep: CHART.series[2],
+  cardio: CHART.danger,
+  metabolic: CHART.warning,
+  infection: CHART.category.common,
+  respiratory: CHART.category.respiratory,
+  mental: CHART.series[3],
+  seasonal: CHART.positive,
 };
 
 function PredictiveAnalytics() {
@@ -32,6 +41,7 @@ function PredictiveAnalytics() {
   const [loading, setLoading] = useState(true);
   const [categoryTab, setCategoryTab] = useState('all');
   const { isReal } = useDataMode();
+  const { hasData, meta } = useHealthData();
 
   const load = () => {
     setLoading(true);
@@ -94,7 +104,14 @@ function PredictiveAnalytics() {
 
       {predictions.length === 0 ? (
         <Alert severity="info">
-          {isReal ? t('真实模式需先导入 Apple Health 数据后才会生成个性化预测。', 'Real-data mode requires importing Apple Health data first before personalized predictions are generated.') : t('暂无预测数据', 'No prediction data available')}
+          {isReal && !hasData
+            ? t('真实模式需先导入 Apple Health 数据后才会生成个性化预测。', 'Real-data mode requires importing Apple Health data first before personalized predictions are generated.')
+            : isReal && hasData
+              ? t(
+                  `已导入 ${meta?.parsedRecords?.toLocaleString() || '—'} 条记录（${meta?.dayCount || 0} 天）。若指标稳定，预测项可能较少；请查看「临床筛查」或「AI 干预」生成建议。`,
+                  `Imported ${meta?.parsedRecords?.toLocaleString() || '—'} records (${meta?.dayCount || 0} days). Fewer predictions if metrics are stable — check Clinical Screening or AI Intervention.`,
+                )
+              : t('暂无预测数据', 'No prediction data available')}
         </Alert>
       ) : (
         <>

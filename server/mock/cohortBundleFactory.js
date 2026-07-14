@@ -360,6 +360,8 @@ function buildPatientSpec(cohort) {
       riskScore: cohort.riskScore,
       malignant: cohort.malignant,
       chronic: cohort.chronic,
+      smoker: cohort.smoker,
+      familyHistory: cohort.familyHistory,
     },
     deviceIntegration: record.deviceIntegration,
   };

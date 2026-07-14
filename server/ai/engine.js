@@ -85,7 +85,7 @@ function analyzeCondition(name, risk, level) {
 function runFullAnalysis(patientData) {
   const data = patientData || mockData;
   const scr = data.diseaseScreening;
-  const d = data.dashboard.stats;
+  const d = data.dashboard?.stats || data.stats || mockData.dashboard.stats;
   const profile = data.profile || PROFILE;
 
   const conditions = scr.categories.flatMap(c =>

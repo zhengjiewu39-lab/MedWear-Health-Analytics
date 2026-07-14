@@ -1,4 +1,4 @@
-import { PATHWAY_STEPS, OUTCOMES_STEP } from './interventionPathway';
+import { PATHWAY_STEPS, OUTCOMES_STEP, THESIS_NAV_ITEMS } from './interventionPathway';
 
 export const NAV_SECTIONS = [
   {
@@ -9,10 +9,8 @@ export const NAV_SECTIONS = [
   {
     id: 'thesis',
     label: '论文核心',
-    items: [
-      { text: '结局对比', path: '/outcomes' },
-      { text: '方法学文档', path: '/methodology' },
-    ],
+    defaultOpen: true,
+    items: THESIS_NAV_ITEMS.map((s) => ({ text: s.text, path: s.path })),
   },
   {
     id: 'data',
@@ -38,6 +36,7 @@ export function getPageTitle(pathname, isAdmin) {
   const match = items.find((item) => item.path === pathname);
   if (match) return match.text;
   if (pathname === '/outcomes') return '结局对比';
+  if (pathname === '/research') return '研究评价';
   if (pathname === '/methodology') return '方法学文档';
   if (pathname === '/import') return '数据导入';
   return 'MedWear';
@@ -52,4 +51,4 @@ export const ADMIN_QUICK_ACTIONS = [
   { title: '系统设置', title_en: 'Settings', desc: '语言与安全配置', desc_en: 'Language & security', path: '/settings', color: '#64748b' },
 ];
 
-export { OUTCOMES_STEP, PATHWAY_STEPS };
+export { OUTCOMES_STEP, PATHWAY_STEPS, THESIS_NAV_ITEMS };

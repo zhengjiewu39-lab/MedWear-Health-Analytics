@@ -19,19 +19,21 @@ import useModeRefresh from '../hooks/useModeRefresh';
 import { EvidenceBadge, ReferenceDialog } from '../components/ResearchCitation';
 import { useLang } from '../contexts/LanguageContext';
 
-const riskColor = { low: '#2E7D32', moderate: '#EF6C00', high: '#C62828', unknown: '#757575' };
+import { CHART } from '../config/chartTheme';
+
+const riskColor = CHART.risk;
 const riskLabel = { low: '低风险', moderate: '中风险', high: '高风险', unknown: '待导入' };
 const riskLabelEn = { low: 'Low Risk', moderate: 'Moderate Risk', high: 'High Risk', unknown: 'Pending Import' };
 const riskChip = { low: 'success', moderate: 'warning', high: 'error', unknown: 'default' };
 const insightIcon = { positive: <CheckCircle color="success" />, warning: <Warning color="warning" />, info: <Info color="info" /> };
 
 const TREND_LINES = [
-  { key: 'tumor', name: '肿瘤', name_en: 'Tumor', color: '#1565C0' },
-  { key: 'cancer', name: '癌症', name_en: 'Cancer', color: '#6A1B9A' },
-  { key: 'chronic', name: '慢病', name_en: 'Chronic Disease', color: '#EF6C00' },
-  { key: 'cardio', name: '心脑血管', name_en: 'Cardio-Cerebrovascular', color: '#C62828' },
-  { key: 'common', name: '常见小病', name_en: 'Common Ailments', color: '#00838F' },
-  { key: 'respiratory', name: '呼吸系统', name_en: 'Respiratory', color: '#0277BD' },
+  { key: 'tumor', name: '肿瘤', name_en: 'Tumor', color: CHART.category.tumor },
+  { key: 'cancer', name: '癌症', name_en: 'Cancer', color: CHART.category.cancer },
+  { key: 'chronic', name: '慢病', name_en: 'Chronic Disease', color: CHART.category.chronic },
+  { key: 'cardio', name: '心脑血管', name_en: 'Cardio-Cerebrovascular', color: CHART.category.cardio },
+  { key: 'common', name: '常见小病', name_en: 'Common Ailments', color: CHART.category.common },
+  { key: 'respiratory', name: '呼吸系统', name_en: 'Respiratory', color: CHART.category.respiratory },
 ];
 
 function DiseaseScreening() {
@@ -104,7 +106,11 @@ function DiseaseScreening() {
           <Grid item xs={12} md={4}>
             <Box sx={{ textAlign: { md: 'right' } }}>
               <Typography variant="h2" fontWeight={800}>{data.overallScore}</Typography>
-              <Typography variant="body2">{t('综合风险指数（0-100，越低越好）', 'Overall Risk Index (0-100, lower is better)')}</Typography>
+              <Typography variant="body2">
+                {data.overallScoreType === 'health' || data.mode === 'real'
+                  ? t('健康评分（0-100，越高越好）', 'Health Score (0-100, higher is better)')
+                  : t('综合风险指数（0-100，越低越好）', 'Overall Risk Index (0-100, lower is better)')}
+              </Typography>
               <Chip label={t(`数据质量 ${data.dataCoverage?.quality || 0}%`, `Data Quality ${data.dataCoverage?.quality || 0}%`)} size="small" sx={{ mt: 1, bgcolor: 'rgba(255,255,255,0.2)', color: '#fff' }} />
             </Box>
           </Grid>
@@ -123,7 +129,14 @@ function DiseaseScreening() {
                   <Typography variant="subtitle2" fontWeight={600}>{pick(cat, 'name')}</Typography>
                   <Chip label={t(riskLabel[cat.riskLevel], riskLabelEn[cat.riskLevel])} size="small" color={riskChip[cat.riskLevel]} sx={{ height: 20, fontSize: '0.65rem' }} />
                 </Box>
-                <Typography variant="h5" fontWeight={700} color={riskColor[cat.riskLevel]}>{cat.score}</Typography>
+                <Typography variant="h5" fontWeight={700} color={riskColor[cat.riskLevel]}>
+                  {cat.healthScore ?? (data.overallScoreType === 'health' || data.mode === 'real' ? Math.max(55, 100 - (cat.score || 0)) : cat.score)}
+                </Typography>
+                <Typography variant="caption" color="text.secondary" display="block">
+                  {(data.overallScoreType === 'health' || data.mode === 'real')
+                    ? t('类别健康分', 'Category health score')
+                    : t('类别风险指数', 'Category risk index')}
+                </Typography>
                 <Typography variant="caption" color="text.secondary">{t(`${cat.items?.length || 0} 项`, `${cat.items?.length || 0} items`)}</Typography>
               </CardContent>
             </Card>

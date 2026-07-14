@@ -81,9 +81,25 @@ function buildItem(patientId, {
 function buildRealInterventionData() {
   if (!hasData()) return null;
   const { getAllAnalytics } = require('../health/analytics');
+  const { getStore } = require('../health/store');
   const a = getAllAnalytics();
   if (!a.hasData) return null;
+  const store = getStore();
+  const profile = {
+    name: store.meta?.userLabel || 'Apple Health 用户',
+    age: null,
+    gender: '—',
+    device: a.devices?.[0]?.name || 'Apple Watch',
+    dataMode: 'real',
+    dataImported: true,
+    hasData: true,
+    dayCount: store.meta?.dayCount,
+    dateRange: store.meta?.dateRange,
+  };
   return {
+    profile,
+    dashboard: a.dashboard,
+    stats: a.dashboard?.stats,
     diseaseScreening: a.screening,
     anomalies: a.anomalies || [],
     predictions: a.predictions || [],
@@ -119,6 +135,57 @@ function patientMetaFromData(data, pid) {
     riskTier: data.cohortMeta?.riskTier,
     healthScore: data.dashboard?.stats?.healthScore ?? data.stats?.healthScore,
   };
+}
+
+function addRealUserInterventions(pid, data, items) {
+  const profile = data.profile || {};
+  const stats = data.stats || data.dashboard?.stats || {};
+  const name = profile.name || 'Apple Health 用户';
+  const dayCount = profile.dayCount || 0;
+
+  if (dayCount > 0) {
+    items.push(buildItem(pid, {
+      source: 'profile',
+      sourceId: `${pid}-real-baseline`,
+      type: 'monitoring',
+      title: `${name} · Apple Health 真实数据监测`,
+      title_en: `${name} · Apple Health real-data monitoring`,
+      action: `基于 ${dayCount} 天真 wearable 数据，建议每周更新导出并复核异常/预测信号`,
+      action_en: `Based on ${dayCount} days of real wearable data — re-export weekly and review anomaly/prediction signals`,
+      rationale: `健康评分 ${stats.healthScore ?? '—'} · 步数 ${stats.steps ?? '—'} · 静息 HR ${stats.restingHR ?? '—'} bpm`,
+      rationale_en: `Health score ${stats.healthScore ?? '—'} · steps ${stats.steps ?? '—'} · resting HR ${stats.restingHR ?? '—'} bpm`,
+      aiModel: 'RealData-Context-v1',
+      confidence: Math.min(92, 70 + Math.min(dayCount, 14) * 1.5),
+      priority: stats.healthScore != null && stats.healthScore < 65 ? 'medium' : 'low',
+      horizon: '7天内',
+    }));
+  }
+
+  const scr = data.diseaseScreening;
+  if (scr?.categories) {
+    const topItems = scr.categories
+      .flatMap((c) => c.items.map((item) => ({ ...item, categoryName: c.name })))
+      .sort((a, b) => (b.risk || 0) - (a.risk || 0))
+      .slice(0, 3);
+    topItems.forEach((item) => {
+      if (items.some((x) => x.source === 'screening' && x.sourceId === item.name)) return;
+      items.push(buildItem(pid, {
+        source: 'screening',
+        sourceId: item.name,
+        type: /癌|肿瘤/.test(item.name) ? 'exam' : 'followup',
+        title: `${name} · ${item.name} · 真实数据筛查`,
+        title_en: `${name} · ${item.name_en || item.name} · real-data screening`,
+        action: item.recommendation,
+        action_en: item.recommendation_en || item.recommendation,
+        rationale: `真实 wearable 信号 · 风险 ${item.risk}% · ${item.categoryName || ''}`,
+        rationale_en: `Real wearable signals · risk ${item.risk}% · ${item.categoryName || ''}`,
+        aiModel: item.aiModel || 'MedWear-Real-Screen-v1',
+        confidence: (item.confidence ?? 0.8) * 100,
+        priority: priorityFrom(item.risk, item.level),
+        horizon: '30天内',
+      }));
+    });
+  }
 }
 
 function addPatientProfileInterventions(pid, data, items) {
@@ -223,7 +290,7 @@ function generateInterventions(opts = {}) {
 
   scr.categories.forEach((cat) => {
     cat.items
-      .filter((i) => i.level === 'moderate' || i.level === 'high')
+      .filter((i) => i.level === 'moderate' || i.level === 'high' || (pid === 'real' && (i.risk || 0) >= 18))
       .forEach((item) => {
         const type = /癌|肿瘤/.test(item.name) ? 'exam' : /高血压|糖尿病|血脂/.test(item.name) ? 'monitoring' : 'followup';
         items.push(buildItem(pid, {
@@ -290,7 +357,27 @@ function generateInterventions(opts = {}) {
       }));
     });
 
-  if (pid !== 'real') {
+  if (pid === 'real') {
+    addRealUserInterventions(pid, data, items);
+    if (items.length === 0) {
+      const stats = data.stats || data.dashboard?.stats || {};
+      items.push(buildItem(pid, {
+        source: 'profile',
+        sourceId: `${pid}-wellness`,
+        type: 'lifestyle',
+        title: `${data.profile?.name || 'Apple Health 用户'} · 健康维持与监测`,
+        title_en: `${data.profile?.name || 'Apple Health user'} · wellness maintenance`,
+        action: '维持当前良好习惯，每月导出 Apple Health 并复核筛查/预测信号',
+        action_en: 'Maintain current habits; re-export Apple Health monthly and review screening/prediction signals',
+        rationale: `健康评分 ${stats.healthScore ?? '—'} · 当前为低风险，建议持续监测`,
+        rationale_en: `Health score ${stats.healthScore ?? '—'} · low risk — continue monitoring`,
+        aiModel: 'MedWear-Real-Screen-v1',
+        confidence: 78,
+        priority: 'low',
+        horizon: '30天内',
+      }));
+    }
+  } else {
     addPatientProfileInterventions(pid, data, items);
   }
 
@@ -312,16 +399,18 @@ function ensureInterventions(patientId, demoData, realData) {
   if (pid === 'real' && !hasData()) {
     return { generated: 0, interventions: [], patientId: pid, needsImport: true };
   }
-  const fp = dataFingerprint(demoData || realData || (pid !== 'real' ? getDemoPatientData(pid) : null));
+  const raw = demoData || realData || (pid !== 'real' ? getDemoPatientData(pid) : buildRealInterventionData());
+  const fp = dataFingerprint(raw);
   const store = getPatientStore(pid);
   if (!store.items.length || (fp && store.fingerprint !== fp)) {
     return generateInterventions({ patientId, demoData, realData });
   }
+  const dataForMeta = demoData || realData || (pid !== 'real' ? getDemoPatientData(pid) : buildRealInterventionData());
   return {
     generated: store.items.length,
     interventions: store.items,
     patientId: pid,
-    patient: patientMetaFromData(demoData || (pid !== 'real' ? getDemoPatientData(pid) : null), pid),
+    patient: patientMetaFromData(dataForMeta, pid),
   };
 }
 

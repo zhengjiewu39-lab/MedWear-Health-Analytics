@@ -38,7 +38,8 @@ function saveStore(store) {
 }
 
 function hasData() {
-  return Boolean(loadStore().meta);
+  const store = loadStore();
+  return Boolean(store.meta && (store.meta.dayCount > 0 || Object.keys(store.daily || {}).length > 0));
 }
 
 function clearStore() {
@@ -63,17 +64,40 @@ function addSource(store, sourceName, productType) {
   store.sources[key].count += 1;
 }
 
+/** Parse Apple Health export.xml timestamps (e.g. "2024-01-15 08:00:00 +0800"). */
+function normalizeAppleDateString(isoStr) {
+  if (!isoStr) return null;
+  const s = String(isoStr).trim();
+  const m = s.match(/^(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}) ([+-]\d{4})$/);
+  if (m) {
+    const tz = m[3].replace(/([+-])(\d{2})(\d{2})/, '$1$2:$3');
+    return `${m[1]}T${m[2]}${tz}`;
+  }
+  if (/^\d{4}-\d{2}-\d{2} /.test(s)) return s.replace(' ', 'T');
+  return s;
+}
+
+function parseAppleDate(isoStr) {
+  const normalized = normalizeAppleDateString(isoStr);
+  if (!normalized) return null;
+  const d = new Date(normalized);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
 function dateKey(isoStr) {
   if (!isoStr) return null;
-  const d = new Date(isoStr.replace(' ', 'T').replace(/\+(\d{4})$/, '+$1:$2'));
-  if (Number.isNaN(d.getTime())) return null;
-  return d.toISOString().slice(0, 10);
+  const m = String(isoStr).trim().match(/^(\d{4}-\d{2}-\d{2})/);
+  if (m) return m[1];
+  const d = parseAppleDate(isoStr);
+  return d ? d.toISOString().slice(0, 10) : null;
 }
 
 function hourKey(isoStr) {
-  const d = new Date(isoStr.replace(' ', 'T').replace(/\+(\d{4})$/, '+$1:$2'));
-  if (Number.isNaN(d.getTime())) return null;
-  return d.getHours();
+  if (!isoStr) return null;
+  const m = String(isoStr).trim().match(/^\d{4}-\d{2}-\d{2} (\d{2}):/);
+  if (m) return parseInt(m[1], 10);
+  const d = parseAppleDate(isoStr);
+  return d ? d.getHours() : null;
 }
 
 function ensureDaily(store, day) {
@@ -118,9 +142,9 @@ function ingestRecord(store, record) {
   if (!day) return;
 
   const numVal = parseFloat(value);
-  const start = new Date(startDate.replace(' ', 'T').replace(/\+(\d{4})$/, '+$1:$2'));
-  const end = new Date(endDate.replace(' ', 'T').replace(/\+(\d{4})$/, '+$1:$2'));
-  const durationMin = Math.max(0, (end - start) / 60000);
+  const start = parseAppleDate(startDate);
+  const end = parseAppleDate(endDate);
+  const durationMin = start && end ? Math.max(0, (end - start) / 60000) : 0;
 
   const src = { sourceName, startDate, value: numVal };
 
@@ -201,4 +225,7 @@ module.exports = {
   ingestRecord,
   finalizeStore,
   dateKey,
+  hourKey,
+  parseAppleDate,
+  normalizeAppleDateString,
 };

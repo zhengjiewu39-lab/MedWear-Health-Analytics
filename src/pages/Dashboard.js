@@ -20,6 +20,7 @@ import { useLang } from '../contexts/LanguageContext';
 import { ActivityRing, ScoreRing } from '../components/charts/VitalGauge';
 import PageHeader from '../components/PageHeader';
 import { STANDARDS } from '../constants/clinicalStandards';
+import { CHART, GRID } from '../config/chartTheme';
 
 const insightIcon = { positive: <CheckCircle color="success" />, warning: <Warning color="warning" />, info: <Info color="info" /> };
 
@@ -56,6 +57,8 @@ function Dashboard() {
       setHealthTrend(h.data);
       setHrZones(z.data);
       setInsights(i.data);
+    }).catch(() => {
+      setStats(null);
     }).finally(() => setLoading(false));
   };
 
@@ -160,9 +163,9 @@ function Dashboard() {
                 <YAxis yAxisId="spo2" orientation="right" domain={[93, 100]} tick={{ fontSize: 11 }} />
                 <Tooltip contentStyle={{ borderRadius: 8 }} />
                 <Legend />
-                <Area yAxisId="hr" type="monotone" dataKey="heartRate" name={t('心率(bpm)', 'Heart Rate (bpm)')} stroke="#E53935" fill="rgba(229,57,53,0.1)" strokeWidth={2} />
-                <Line yAxisId="spo2" type="monotone" dataKey="bloodOxygen" name={t('血氧(%)', 'SpO₂ (%)')} stroke="#00838F" strokeWidth={2} dot={false} />
-                <Line yAxisId="hr" type="monotone" dataKey="hrv" name={t('HRV(ms)', 'HRV (ms)')} stroke="#6A1B9A" strokeWidth={1.5} dot={false} strokeDasharray="4 2" />
+                <Area yAxisId="hr" type="monotone" dataKey="heartRate" name={t('心率(bpm)', 'Heart Rate (bpm)')} stroke={CHART.danger} fill={`${CHART.danger}18`} strokeWidth={2} />
+                <Line yAxisId="spo2" type="monotone" dataKey="bloodOxygen" name={t('血氧(%)', 'SpO₂ (%)')} stroke={CHART.accent} strokeWidth={2} dot={false} />
+                <Line yAxisId="hr" type="monotone" dataKey="hrv" name={t('HRV(ms)', 'HRV (ms)')} stroke={CHART.series[2]} strokeWidth={1.5} dot={false} strokeDasharray="4 2" />
               </ComposedChart>
             </ChartContainer>
             <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
@@ -180,7 +183,7 @@ function Dashboard() {
                 <PolarGrid stroke="#e0e0e0" />
                 <PolarAngleAxis dataKey="subject" tick={{ fontSize: 12 }} />
                 <PolarRadiusAxis domain={[0, 100]} tick={false} />
-                <Radar name={t('健康指数', 'Health Index')} dataKey="score" stroke="#1565C0" fill="#1565C0" fillOpacity={0.25} strokeWidth={2} />
+                <Radar name={t('健康指数', 'Health Index')} dataKey="score" stroke={CHART.intervention} fill={CHART.intervention} fillOpacity={0.22} strokeWidth={2} />
               </RadarChart>
             </ChartContainer>
           </Paper>
@@ -200,8 +203,8 @@ function Dashboard() {
                 <YAxis yAxisId="right" orientation="right" domain={[0, 100]} tick={{ fontSize: 11 }} />
                 <Tooltip contentStyle={{ borderRadius: 8 }} />
                 <Legend />
-                <Bar yAxisId="left" dataKey="steps" name={t('步数', 'Steps')} fill="#1565C0" radius={[4, 4, 0, 0]} opacity={0.8} />
-                <Line yAxisId="right" type="monotone" dataKey="score" name={t('健康分', 'Health Score')} stroke="#2E7D32" strokeWidth={2.5} dot={{ r: 4 }} />
+                <Bar yAxisId="left" dataKey="steps" name={t('步数', 'Steps')} fill={CHART.intervention} radius={[6, 6, 0, 0]} opacity={0.85} />
+                <Line yAxisId="right" type="monotone" dataKey="score" name={t('健康分', 'Health Score')} stroke={CHART.positive} strokeWidth={2.5} dot={{ r: 4, fill: CHART.positive }} />
               </BarChart>
             </ChartContainer>
           </Paper>
@@ -250,9 +253,9 @@ function Dashboard() {
                 <YAxis domain={[60, 100]} />
                 <Tooltip contentStyle={{ borderRadius: 8 }} />
                 <Legend />
-                <Area type="monotone" dataKey="score" name={t('综合评分', 'Overall Score')} stroke="#1565C0" fill="rgba(21,101,192,0.15)" strokeWidth={2} />
-                <Area type="monotone" dataKey="cardio" name={t('心血管', 'Cardiovascular')} stroke="#E53935" fill="rgba(229,57,53,0.05)" strokeWidth={1.5} />
-                <Area type="monotone" dataKey="sleep" name={t('睡眠', 'Sleep')} stroke="#6A1B9A" fill="rgba(106,27,154,0.05)" strokeWidth={1.5} />
+                <Area type="monotone" dataKey="score" name={t('综合评分', 'Overall Score')} stroke={CHART.intervention} fill={`${CHART.intervention}22`} strokeWidth={2} />
+                <Area type="monotone" dataKey="cardio" name={t('心血管', 'Cardiovascular')} stroke={CHART.danger} fill={`${CHART.danger}0d`} strokeWidth={1.5} />
+                <Area type="monotone" dataKey="sleep" name={t('睡眠', 'Sleep')} stroke={CHART.series[2]} fill={`${CHART.series[2]}0d`} strokeWidth={1.5} />
               </AreaChart>
             </ChartContainer>
           </Paper>

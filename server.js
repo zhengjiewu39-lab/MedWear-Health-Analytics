@@ -23,15 +23,21 @@ const {
   generateInterventions, getInterventions, getApprovedInterventions,
   getSummary, approveIntervention, rejectIntervention,
   ensureInterventions, buildRealInterventionData,
+  resetStore,
 } = require('./server/ai/interventionService');
 const {
   getOutcomeSummary, getFunnel, getSurvivalReference, getCohort,
 } = require('./server/screening/outcomeModel');
-const { geolocate } = require('./server/geo/location');
+const { geolocate, withSearchCoords } = require('./server/geo/location');
 const {
   findNearbyHospitalsLive, rememberFacilities, recallFacilities,
 } = require('./server/geo/hospitals');
-const { listDemoPatients, getDemoPatientData, getDemoPatientSummary, searchDemoPatients } = require('./server/mock/demoPatientRegistry');
+const { getPatientOutcomeComparison } = require('./server/screening/patientOutcomeProjection');
+const { resolveCohortDemoId } = require('./server/mock/cohortBundleFactory');
+const {
+  getProfile, saveProfile, composeDoctorReport, reportToHtml,
+} = require('./server/reports/doctorReportService');
+const { getDemoPatientData, getDemoPatientSummary, searchDemoPatients } = require('./server/mock/demoPatientRegistry');
 const { hasData } = require('./server/health/store');
 
 const app = express();
@@ -272,9 +278,18 @@ app.get('/api/ai/interventions', (req, res) => {
 app.post('/api/ai/interventions/generate', (req, res) => {
   const scope = interventionScope(req);
   if (!guardInterventionImport(req, res, scope)) return;
-  const result = generateInterventions(scope);
-  audit('AI_INTERVENTION_GENERATE', { user: resolveUser(req)?.username, detail: `${result.generated} items · ${scope.patientId}` });
-  res.json(result);
+  resetStore(scope.patientId);
+  try {
+    const result = generateInterventions(scope);
+    audit('AI_INTERVENTION_GENERATE', { user: resolveUser(req)?.username, detail: `${result.generated} items · ${scope.patientId}` });
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: err.message || '生成干预建议失败',
+      message_en: err.message || 'Failed to generate interventions',
+    });
+  }
 });
 app.post('/api/ai/interventions/:id/approve', (req, res) => {
   const scope = interventionScope(req);
@@ -395,20 +410,29 @@ app.get('/api/geo/location', async (req, res) => {
 });
 
 app.get('/api/hospitals', async (req, res) => {
-  if (isRealMode(req)) {
-    const location = await geolocate(req);
-    const radiusKm = Math.min(Number(req.query.radius) || 40, 200);
-    const type = req.query.type && req.query.type !== 'all' ? req.query.type : null;
+  let location = await geolocate(req);
+  location = withSearchCoords(location);
+  const radiusKm = Math.min(Number(req.query.radius) || 40, 200);
+  const type = req.query.type && req.query.type !== 'all' ? req.query.type : null;
+  const useLiveSearch = isRealMode(req)
+    || !/china|中国/i.test(String(location.country || ''));
+
+  if (useLiveSearch) {
     const { facilities, source } = await findNearbyHospitalsLive(location, { radiusKm, type });
     rememberFacilities(location.ip, facilities);
     return res.json({
-      mode: 'real', location, hospitals: facilities, dataSource: source,
+      mode: isRealMode(req) ? 'real' : 'demo',
+      location,
+      hospitals: facilities,
+      dataSource: source,
     });
   }
+
   return res.json({
     mode: 'demo',
-    location: { city: '北京', region: '北京', source: 'demo' },
+    location,
     hospitals: provider(req).getHospitals(),
+    dataSource: 'demo-catalog',
   });
 });
 
@@ -426,7 +450,7 @@ app.post('/api/appointments', async (req, res) => {
   } = req.body;
   let hospital;
   if (isRealMode(req)) {
-    const loc = await geolocate(req);
+    let loc = withSearchCoords(await geolocate(req));
     let hospitals = recallFacilities(loc.ip);
     if (!hospitals) {
       ({ facilities: hospitals } = await findNearbyHospitalsLive(loc));
@@ -463,14 +487,14 @@ app.post('/api/appointments', async (req, res) => {
   audit('APPOINTMENT_CREATE', { user: resolveUser(req)?.username, detail: `${req.dataMode}:${pkg.name}` });
   res.json({ success: true, appointment });
 });
-app.get('/api/doctor-report', (req, res) => {
-  const report = provider(req).getDoctorReport();
-  if (report?.needsImport) return res.json(report);
+app.get('/api/doctor-report', async (req, res) => {
+  const base = provider(req).getDoctorReport();
+  if (base?.needsImport) return res.json(base);
   const patientId = isRealMode(req) ? 'real' : req.demoPatientId;
   const approved = getApprovedInterventions(patientId);
   const summary = getSummary(patientId);
-  res.json({
-    ...report,
+  const withInterventions = {
+    ...base,
     aiInterventions: approved,
     aiGovernance: summary.governance,
     physicianAuthority: {
@@ -483,7 +507,67 @@ app.get('/api/doctor-report', (req, res) => {
         ? `${approved.length} AI-approved intervention(s) included (physician may modify or add)`
         : 'No approved AI interventions yet — review in AI Intervention Hub first',
     },
+  };
+  const report = await composeDoctorReport(withInterventions, patientId);
+  res.json(report);
+});
+
+app.get('/api/doctor-report/profile', (req, res) => {
+  const patientId = isRealMode(req) ? 'real' : req.demoPatientId;
+  res.json({ patientId, profile: getProfile(patientId) });
+});
+
+app.put('/api/doctor-report/profile', (req, res) => {
+  const patientId = isRealMode(req) ? 'real' : req.demoPatientId;
+  const { name, gender, gender_en, age, height, weight, phone } = req.body || {};
+  const profile = saveProfile(patientId, {
+    ...(name != null && { name: String(name).trim() }),
+    ...(gender != null && { gender: String(gender).trim() }),
+    ...(gender_en != null && { gender_en: String(gender_en).trim() }),
+    ...(age != null && age !== '' && { age: Number(age) }),
+    ...(height != null && height !== '' && { height: Number(height) }),
+    ...(weight != null && weight !== '' && { weight: Number(weight) }),
+    ...(phone != null && { phone: String(phone).trim() }),
   });
+  audit('DOCTOR_REPORT_PROFILE', { user: resolveUser(req)?.username, detail: patientId });
+  res.json({ success: true, patientId, profile });
+});
+
+app.post('/api/doctor-report/generate', async (req, res) => {
+  const base = provider(req).getDoctorReport();
+  if (base?.needsImport) return res.status(403).json(base);
+  const patientId = isRealMode(req) ? 'real' : req.demoPatientId;
+  const approved = getApprovedInterventions(patientId);
+  const summary = getSummary(patientId);
+  const { profile, useAi = true } = req.body || {};
+  try {
+    const report = await composeDoctorReport({
+      ...base,
+      aiInterventions: approved,
+      aiGovernance: summary.governance,
+    }, patientId, { profile, regenerate: true, useAi: Boolean(useAi) });
+    audit('DOCTOR_REPORT_GENERATE', { user: resolveUser(req)?.username, detail: `${patientId} · ai=${useAi}` });
+    res.json(report);
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+app.get('/api/doctor-report/export', async (req, res) => {
+  const base = provider(req).getDoctorReport();
+  if (base?.needsImport) return res.status(403).json(base);
+  const patientId = isRealMode(req) ? 'real' : req.demoPatientId;
+  const approved = getApprovedInterventions(patientId);
+  const report = await composeDoctorReport({ ...base, aiInterventions: approved }, patientId);
+  const format = req.query.format || 'json';
+  if (format === 'html') {
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="medwear-report-${report.reportId}.html"`);
+    return res.send(reportToHtml(report));
+  }
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
+  res.setHeader('Content-Disposition', `attachment; filename="medwear-report-${report.reportId}.json"`);
+  res.json(report);
 });
 
 // ── Screening-outcome cohort (screened vs unscreened) ──
@@ -498,6 +582,35 @@ app.get('/api/outcomes/cohort', (req, res) => {
     patients = patients.filter((p) => p.arm === arm);
   }
   res.json({ total: patients.length, patients: patients.slice(0, limit) });
+});
+app.get('/api/outcomes/patient-comparison', (req, res) => {
+  if (isRealMode(req)) {
+    const { hasData, getStore } = require('./server/health/store');
+    const { buildUiDashboardStats } = require('./server/health/analytics');
+    if (!hasData()) {
+      return res.status(403).json({
+        needsImport: true,
+        message: '真实模式：请先导入 Apple Health 数据后再查看个体结局对比',
+        message_en: 'Real mode: import Apple Health data before viewing individual outcome comparison',
+      });
+    }
+    const store = getStore();
+    const stats = buildUiDashboardStats(store);
+    const demoProfile = getProfile('real');
+    return res.json(getPatientOutcomeComparison('REAL-001', {
+      mode: 'real',
+      realProfile: {
+        name: demoProfile.name || store.meta?.userLabel || 'Apple Health 用户',
+        age: demoProfile.age,
+        healthScore: stats.healthScore,
+        category: stats.healthScore >= 80 ? 'healthy' : undefined,
+      },
+    }));
+  }
+  const patientId = resolveCohortDemoId(req.demoPatientId);
+  const result = getPatientOutcomeComparison(patientId);
+  if (result.error) return res.status(404).json(result);
+  return res.json(result);
 });
 
 // ── Settings & AI Config ──

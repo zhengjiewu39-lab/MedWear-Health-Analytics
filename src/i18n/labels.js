@@ -11,6 +11,7 @@ export const NAV_EN = {
   '信号与预测': 'Signals & Prediction',
   '队列与结局': 'Cohort & Outcomes',
   '研究评价': 'Research & Evaluation',
+  '临床验证': 'Clinical Validation',
   '系统': 'System',
   '临床筛查': 'Clinical Screening',
   '临床筛查中心': 'Clinical Screening',

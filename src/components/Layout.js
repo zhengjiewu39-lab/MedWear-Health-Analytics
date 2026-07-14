@@ -9,7 +9,7 @@ import {
   Menu as MenuIcon, Logout, KeyboardArrowDown, KeyboardArrowUp,
   CloudUpload, CompareArrows, Biotech, LocalHospital,
   Assignment, Science, Settings,
-  BugReport, TrendingUp, Groups, MenuBook, Translate, Psychology, SmartToy,
+  BugReport, TrendingUp, Groups, MenuBook, Translate, Psychology, SmartToy, Gavel,
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import { useLang } from '../contexts/LanguageContext';
@@ -33,6 +33,7 @@ const ICONS = {
   '预约体检': LocalHospital,
   '研究评价': Science,
   '研究评价中心': Science,
+  '临床验证': Gavel,
   '结局对比': CompareArrows,
   '方法学文档': MenuBook,
   '患者队列': Groups,
@@ -68,7 +69,11 @@ export function Layout({ children }) {
     return NAV_SECTIONS.filter((section) => !section.adminOnly || isAdmin);
   }, [isAdmin]);
 
-  const isActive = (path) => location.pathname === path;
+  const isActive = (path) => {
+    const base = path.split('#')[0];
+    if (path.includes('#')) return location.pathname === base && location.hash === path.slice(path.indexOf('#'));
+    return location.pathname === base && !location.hash;
+  };
   const title = getPageTitle(location.pathname, isAdmin);
 
   const renderNavItem = (item) => {

@@ -49,13 +49,16 @@ function AIIntervention() {
       ]);
       setSummary(s.data);
       setItems(list.data?.interventions || list.data || []);
-    } catch {
+    } catch (err) {
       setSummary(null);
       setItems([]);
-      setError(t(
-        '无法连接 AI 干预 API（404）。请重启后端：在项目目录运行 npm run dev',
-        'Cannot reach AI intervention API (404). Restart the backend with npm run dev',
-      ));
+      const needsImport = err.response?.data?.needsImport;
+      setError(needsImport
+        ? t('请先导入 Apple Health 数据（数据导入页）后再使用 AI 干预', 'Import Apple Health data first (Data Import page) before using AI interventions')
+        : t(
+          '无法连接 AI 干预 API。请重启后端：npm run dev',
+          'Cannot reach AI intervention API. Restart the backend: npm run dev',
+        ));
     } finally {
       setLoading(false);
     }
@@ -67,10 +70,18 @@ function AIIntervention() {
     setActing(true);
     setError('');
     try {
-      await interventionApi.generate();
+      const res = await interventionApi.generate();
+      if (res.data?.generated === 0 && res.data?.needsImport) {
+        setError(t('请先导入 Apple Health 数据（数据导入页）后再使用 AI 干预', 'Import Apple Health data first (Data Import page) before using AI interventions'));
+        return;
+      }
       await load();
-    } catch {
-      setError(t('生成干预建议失败，请确认后端已重启', 'Failed to generate interventions — ensure the backend is running'));
+    } catch (err) {
+      const needsImport = err.response?.data?.needsImport;
+      const msg = err.response?.data?.message || err.response?.data?.message_en;
+      setError(needsImport
+        ? t('请先导入 Apple Health 数据（数据导入页）后再使用 AI 干预', 'Import Apple Health data first (Data Import page) before using AI interventions')
+        : msg || t('生成干预建议失败，请确认后端已重启', 'Failed to generate interventions — ensure the backend is running'));
     } finally {
       setActing(false);
     }
@@ -106,10 +117,15 @@ function AIIntervention() {
       <AiGovernanceBanner />
       {summary?.patient?.name && (
         <Alert severity="info" sx={{ mb: 2 }} variant="outlined">
-          {t(
-            `当前演示者：${summary.patient.name}（${summary.patient.id}）· ${summary.patient.scenario || ''} · 以下干预建议均基于该患者筛查/异常/预测信号生成`,
-            `Active participant: ${summary.patient.name} (${summary.patient.id}) · ${summary.patient.scenario_en || summary.patient.scenario || ''} · interventions are generated from this patient’s signals only`,
-          )}
+          {summary.patient.id === 'real'
+            ? t(
+              `当前用户：${summary.patient.name} · Apple Health 真实数据 · 健康评分 ${summary.patient.healthScore ?? '—'}`,
+              `Current user: ${summary.patient.name} · Apple Health real data · health score ${summary.patient.healthScore ?? '—'}`,
+            )
+            : t(
+              `当前演示者：${summary.patient.name}（${summary.patient.id}）· ${summary.patient.scenario || ''} · 以下干预建议均基于该患者筛查/异常/预测信号生成`,
+              `Active participant: ${summary.patient.name} (${summary.patient.id}) · ${summary.patient.scenario_en || summary.patient.scenario || ''} · interventions are generated from this patient’s signals only`,
+            )}
         </Alert>
       )}
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}

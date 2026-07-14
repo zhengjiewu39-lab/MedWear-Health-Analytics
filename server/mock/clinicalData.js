@@ -379,6 +379,7 @@ function buildDoctorReport() {
     })),
     biomarkers: scr.biomarkers,
     anomalies: mockData.anomalies,
+    predictions: mockData.predictions.slice(0, 8),
     alerts: mockData.alerts.slice(0, 3),
     dataSources: mockData.fusionSources,
     recommendedExams: scr.recommendedExams,

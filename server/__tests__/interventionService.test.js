@@ -33,6 +33,31 @@ describe('AI intervention service', () => {
     assert.ok(!a.interventions.some((it) => it.title.includes(otherNameInA) && it.source === 'cohort'));
   });
 
+  test('real mode with imported data generates interventions without crash', () => {
+    resetStore('real');
+    const realData = {
+      profile: { name: '测试用户', dayCount: 5, hasData: true },
+      stats: { healthScore: 72, steps: 4200, restingHR: 78, spo2: 97 },
+      dashboard: { stats: { healthScore: 72, steps: 4200, restingHR: 78, spo2: 97, heartRate: 75, hrv: 42, sleepHours: 6.5 } },
+      diseaseScreening: {
+        overallScore: 72,
+        overallRisk: 'moderate',
+        summary: 'test',
+        dataCoverage: { quality: 85 },
+        categories: [{
+          name: '慢病',
+          items: [{ name: '高血压', risk: 22, level: 'low', recommendation: '测血压' }],
+        }],
+      },
+      anomalies: [],
+      predictions: [{ id: 1, risk: '活动不足', probability: 35, level: 'medium', timeframe: '30天', recommendation: '多走路', factors: ['步数低'], model: 'MedWear-Predict-v2' }],
+    };
+    const result = generateInterventions({ patientId: 'real', realData });
+    assert.ok(result.generated >= 1, 'should generate at least one intervention');
+    assert.equal(result.patientId, 'real');
+    assert.equal(result.patient.name, '测试用户');
+  });
+
   test('generates interventions from AI signals', () => {
     const summary = getSummary();
     assert.ok(summary.total >= 5);

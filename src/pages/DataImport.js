@@ -44,6 +44,7 @@ function DataImport() {
         setUploading(false);
         if (res.data.status === 'done') {
           setSuccess(t('数据导入成功！所有页面现已使用您的真实健康数据。', 'Data imported successfully! All pages now use your real health data.'));
+          window.dispatchEvent(new CustomEvent('medwear-health-import'));
           refreshStatus();
         } else {
           setError(res.data.message);
@@ -55,16 +56,26 @@ function DataImport() {
   const handleUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    const sizeMb = file.size / (1024 * 1024);
+    if (sizeMb > 512) {
+      setError(t(
+        `文件约 ${sizeMb.toFixed(0)} MB，超过默认上限。请将 zip 放入项目 health-import 文件夹后点击「扫描导入」，或在 .env 增大 HEALTH_IMPORT_MAX_MB`,
+        `File is ~${sizeMb.toFixed(0)} MB. Place the zip in health-import/ and use Scan, or raise HEALTH_IMPORT_MAX_MB in .env`,
+      ));
+      e.target.value = '';
+      return;
+    }
     setError('');
     setSuccess('');
     setUploading(true);
-    setProgress({ status: 'processing', message: t('上传中…', 'Uploading…'), percent: 5 });
+    setProgress({ status: 'processing', message: t(`上传中… (${sizeMb.toFixed(1)} MB)`, `Uploading… (${sizeMb.toFixed(1)} MB)`), percent: 5 });
     try {
       await dataApi.importFile(file);
       pollProgress();
     } catch (err) {
       setUploading(false);
-      setError(err.response?.data?.message || t('导入失败', 'Import failed'));
+      const msg = err.response?.data?.message || err.message;
+      setError(msg || t('导入失败', 'Import failed'));
     }
     e.target.value = '';
   };
@@ -76,6 +87,7 @@ function DataImport() {
     try {
       const res = await dataApi.scanFolder();
       setSuccess(t(`已从 health-import 文件夹导入: ${res.data.file}`, `Imported from health-import folder: ${res.data.file}`));
+      window.dispatchEvent(new CustomEvent('medwear-health-import'));
       refreshStatus();
     } catch (err) {
       setError(err.response?.data?.message || t('扫描导入失败', 'Folder scan import failed'));

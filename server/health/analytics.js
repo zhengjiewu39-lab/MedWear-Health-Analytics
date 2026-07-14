@@ -155,10 +155,57 @@ function detectAnomalies(store) {
 function buildPredictions(store) {
   const predictions = [];
   const days = lastNDays(store, 30);
-  if (days.length < 3) return predictions;
+  const stats = buildUiDashboardStats(store);
   const patient = store.meta?.userLabel || '我';
   let id = 1;
   const add = (p) => predictions.push({ id: id++, dataSource: 'real', model: 'MedWear-Predict-v2', ...p });
+
+  if (days.length < 1) return predictions;
+
+  const addBaselineFromStats = () => {
+    const score = stats.healthScore || 0;
+    if (score > 0 && score < 80) {
+      add({
+        category: 'training', categoryLabel: CATEGORY_META.training?.label || '综合健康',
+        patient, risk: '综合健康评分偏低', probability: Math.min(65, Math.round(100 - score)),
+        timeframe: '7天内', horizon: 'short', level: score < 60 ? 'medium' : 'low',
+        factors: [`健康评分 ${score} 分`, `${store.meta?.dayCount || days.length} 天真实数据`],
+        recommendation: '建议改善睡眠与活动量，必要时咨询全科医生',
+      });
+    }
+    if (stats.restingHR && stats.restingHR > 80) {
+      add({
+        category: 'cardio', categoryLabel: CATEGORY_META.cardio?.label || '心血管',
+        patient, risk: '静息心率偏高', probability: Math.min(55, Math.round((stats.restingHR - 70) * 3)),
+        timeframe: '14天内', horizon: 'medium', level: stats.restingHR > 90 ? 'medium' : 'low',
+        factors: [`静息心率 ${stats.restingHR} bpm`],
+        recommendation: '建议关注压力与睡眠，必要时测量血压',
+      });
+    }
+    if (stats.steps != null && stats.steps < 5000) {
+      add({
+        category: 'metabolic', categoryLabel: CATEGORY_META.metabolic?.label || '代谢',
+        patient, risk: '活动量不足', probability: Math.min(50, Math.round((5000 - stats.steps) / 100)),
+        timeframe: '30天内', horizon: 'long', level: stats.steps < 3000 ? 'medium' : 'low',
+        factors: [`日均步数 ${stats.steps}`],
+        recommendation: '建议逐步增加每日步行至 6000 步以上',
+      });
+    }
+    if (stats.sleepHours && stats.sleepHours < 7) {
+      add({
+        category: 'sleep', categoryLabel: CATEGORY_META.sleep?.label || '睡眠健康',
+        patient, risk: '睡眠时长不足', probability: Math.min(50, Math.round((7 - stats.sleepHours) * 10)),
+        timeframe: '7天内', horizon: 'short', level: stats.sleepHours < 6 ? 'medium' : 'low',
+        factors: [`睡眠 ${stats.sleepHours} 小时`],
+        recommendation: '建议固定作息时间，减少睡前屏幕使用',
+      });
+    }
+  };
+
+  if (days.length < 3) {
+    addBaselineFromStats();
+    return predictions;
+  }
 
   const rhrTrend = days.map(d => store.daily[d].restingHeartRate || avg(store.daily[d].heartRate)).filter(Boolean);
   if (rhrTrend.length >= 5) {
@@ -241,6 +288,8 @@ function buildPredictions(store) {
       });
     }
   }
+
+  if (!predictions.length) addBaselineFromStats();
 
   return predictions;
 }
@@ -727,8 +776,11 @@ function buildRealScreening(store) {
   const stats = buildUiDashboardStats(store);
   const anomalies = detectAnomalies(store);
   const predictions = buildPredictions(store);
-  const overallScore = stats.healthScore || 0;
-  const overallRisk = overallScore >= 80 ? 'low' : overallScore >= 60 ? 'moderate' : 'high';
+  const dayCount = store.meta?.dayCount || Object.keys(store.daily || {}).length;
+  const overallScore = stats.healthScore ?? 0;
+  const overallRisk = !dayCount || stats.healthScore == null
+    ? 'unknown'
+    : overallScore >= 80 ? 'low' : overallScore >= 60 ? 'moderate' : 'high';
   const biomarkers = [
     { name: '静息心率', name_en: 'Resting heart rate', value: stats.restingHR, unit: 'bpm', source: 'Apple Health 真实', source_en: 'Apple Health (real)', ref: '60-80', status: stats.restingHR > 85 ? 'watch' : 'normal' },
     { name: '血氧饱和度', name_en: 'Blood oxygen saturation', value: stats.spo2, unit: '%', source: 'Apple Health 真实', source_en: 'Apple Health (real)', ref: '≥95', status: stats.spo2 && stats.spo2 < 95 ? 'watch' : 'normal' },
@@ -751,6 +803,7 @@ function buildRealScreening(store) {
     summary_en: `Full-category AI screening based on your ${store.meta?.dayCount || 0} days of real Apple Health data (tumor / cancer / chronic disease / cardio-cerebrovascular / common ailments / respiratory), not simulated data.`,
     overallRisk,
     overallScore,
+    overallScoreType: 'health',
     biomarkers,
     categories: buildRealScreeningCategories(store, stats, anomalies),
     trendData: buildRealTrendData(store),
@@ -809,11 +862,15 @@ function buildRealDoctorReport(store) {
       }))
     ),
     screeningSummary: screening.categories.map(c => ({
-      name: c.name, name_en: c.name_en, riskLevel: c.riskLevel, score: c.score,
+      name: c.name, name_en: c.name_en, riskLevel: c.riskLevel,
+      score: c.score, healthScore: c.healthScore ?? Math.max(55, 100 - (c.score || 0)),
       topItems: c.items.map(i => `${i.name} ${i.risk}%`),
     })),
+    overallScoreType: screening.overallScoreType || 'health',
+    dataCoverage: screening.dataCoverage,
     biomarkers: screening.biomarkers,
     anomalies: detectAnomalies(store),
+    predictions: buildPredictions(store).slice(0, 8),
     alerts: detectAlerts(store).slice(0, 3),
     dataSources: buildFusionSources(store),
     recommendedExams: screening.recommendedExams,

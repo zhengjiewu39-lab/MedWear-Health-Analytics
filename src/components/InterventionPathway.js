@@ -26,7 +26,7 @@ function InterventionPathway({ compact = false }) {
       <Stack direction="row" spacing={1} sx={{ mb: 2, flexWrap: 'wrap', alignItems: 'center' }}>
         <Chip
           size="small"
-          label={t(`步骤 ${current?.step || '—'}/8`, `Step ${current?.step || '—'}/8`)}
+          label={t(`步骤 ${current?.step || '—'}/7`, `Step ${current?.step || '—'}/7`)}
           color="primary"
           variant="outlined"
         />
@@ -47,7 +47,7 @@ function InterventionPathway({ compact = false }) {
         mb: 3,
         border: '1px solid',
         borderColor: 'divider',
-        bgcolor: alpha('#1565C0', 0.03),
+        bgcolor: alpha('#4f46e5', 0.04),
       }}
     >
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5, flexWrap: 'wrap', gap: 1 }}>

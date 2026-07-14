@@ -31,9 +31,11 @@ export function HealthDataProvider({ children }) {
     const handler = () => refresh();
     window.addEventListener('medwear-mode-change', handler);
     window.addEventListener('medwear-demo-patient-change', handler);
+    window.addEventListener('medwear-health-import', handler);
     return () => {
       window.removeEventListener('medwear-mode-change', handler);
       window.removeEventListener('medwear-demo-patient-change', handler);
+      window.removeEventListener('medwear-health-import', handler);
     };
   }, [refresh]);
 

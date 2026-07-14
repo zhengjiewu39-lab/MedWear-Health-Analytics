@@ -2,6 +2,8 @@
   "editor.formatOnSave": true,
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "editor.tabSize": 2,
+  "npm.autoDetect": "off",
+  "npm.packageManager": "npm",
   "files.exclude": {
     "node_modules": true,
     "build": true

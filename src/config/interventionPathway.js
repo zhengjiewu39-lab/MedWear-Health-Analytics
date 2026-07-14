@@ -1,6 +1,6 @@
 /**
  * Thesis intervention pathway — AI-oriented with human-in-the-loop control.
- * 临床筛查 → 异常检测 → 预测分析 → AI干预 → 医生报告 → 预约体检 → 研究评价 → 结局对比
+ * 临床筛查 → … → 预约体检 → 结局对比（研究评价/方法学见侧栏「论文核心」）
  */
 
 export const PATHWAY_STEPS = [
@@ -11,7 +11,13 @@ export const PATHWAY_STEPS = [
   { id: 'ai-chat', text: 'AI 临床助手', text_en: 'Clinical AI', path: '/ai/chat', step: 4.5, actor: 'physician' },
   { id: 'doctor-report', text: '医生报告', text_en: 'Doctor Report', path: '/doctor-report', step: 5, actor: 'physician' },
   { id: 'appointments', text: '预约体检', text_en: 'Exam Booking', path: '/appointments', step: 6, actor: 'physician' },
-  { id: 'research', text: '研究评价', text_en: 'Research & Evaluation', path: '/research', step: 7, actor: 'admin' },
+];
+
+/** 论文核心导航（侧栏）— 结局对比 / 研究评价 / 方法学 */
+export const THESIS_NAV_ITEMS = [
+  { text: '结局对比', text_en: 'Outcome Comparison', path: '/outcomes' },
+  { text: '研究评价', text_en: 'Research & Evaluation', path: '/research' },
+  { text: '方法学文档', text_en: 'Methodology', path: '/methodology' },
 ];
 
 export const OUTCOMES_STEP = {
@@ -19,7 +25,7 @@ export const OUTCOMES_STEP = {
   text: '结局对比',
   text_en: 'Outcome Comparison',
   path: '/outcomes',
-  step: 8,
+  step: 7,
   actor: 'admin',
 };
 

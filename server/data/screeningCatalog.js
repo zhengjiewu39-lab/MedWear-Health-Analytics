@@ -145,10 +145,13 @@ function buildRealScreeningCategories(store, stats, anomalies) {
 
   const recentActivityDrop = day && d && d.steps < 3000;
 
+  const catHealth = (riskScore) => Math.max(55, Math.min(99, 100 - riskScore));
+
   return [
     {
       id: 'tumor', name: '肿瘤早期风险', name_en: 'Early Tumor Risk', riskLevel: 'low',
       score: Math.min(40, 10 + (anomalies.length * 3)),
+      healthScore: catHealth(Math.min(40, 10 + (anomalies.length * 3))),
       description: '基于真实 Apple Health 心率、血氧、活动量评估肿瘤相关间接风险。',
       description_en: 'Assesses tumor-related indirect risk based on real Apple Health heart rate, SpO₂, and activity.',
       items: [
@@ -159,6 +162,7 @@ function buildRealScreeningCategories(store, stats, anomalies) {
     {
       id: 'cancer', name: '癌症专项筛查', name_en: 'Cancer-Specific Screening', riskLevel: 'low',
       score: Math.min(35, 12 + (lowActivity ? 8 : 0)),
+      healthScore: catHealth(Math.min(35, 12 + (lowActivity ? 8 : 0))),
       description: '结合真实行为数据的高发癌种风险初筛（需影像/病理确诊）。',
       description_en: 'Initial screening for high-incidence cancers using real behavior data (requires imaging/pathology for diagnosis).',
       items: [
@@ -170,6 +174,7 @@ function buildRealScreeningCategories(store, stats, anomalies) {
       id: 'chronic', name: '慢性病风险', name_en: 'Chronic Disease Risk',
       riskLevel: hrElevated || lowActivity ? 'moderate' : 'low',
       score: Math.min(50, (hrElevated ? 30 : 15) + (lowActivity ? 10 : 0)),
+      healthScore: catHealth(Math.min(50, (hrElevated ? 30 : 15) + (lowActivity ? 10 : 0))),
       description: '真实 wearable 数据驱动的慢病趋势分析。',
       description_en: 'Chronic disease trend analysis driven by real wearable data.',
       items: [
@@ -181,6 +186,7 @@ function buildRealScreeningCategories(store, stats, anomalies) {
     {
       id: 'cardio', name: '心脑血管事件', name_en: 'Cardio-Cerebrovascular Events', riskLevel: hrElevated || lowHrv ? 'moderate' : 'low',
       score: Math.min(45, 14 + (lowHrv ? 15 : 0)),
+      healthScore: catHealth(Math.min(45, 14 + (lowHrv ? 15 : 0))),
       description: '真实 HRV、静息心率评估心血管事件风险。',
       description_en: 'Assesses cardiovascular event risk using real HRV and resting heart rate.',
       items: [
@@ -192,6 +198,7 @@ function buildRealScreeningCategories(store, stats, anomalies) {
       id: 'common', name: '常见小病 · 早期预警', name_en: 'Common Ailments · Early Warning',
       riskLevel: recentActivityDrop ? 'moderate' : 'low',
       score: Math.min(45, 18 + (recentActivityDrop ? 15 : 0)),
+      healthScore: catHealth(Math.min(45, 18 + (recentActivityDrop ? 15 : 0))),
       description: '活动骤降、HRV 波动等提示感冒、流感等急性病倾向（非诊断）。',
       description_en: 'Activity drops and HRV fluctuations suggest tendency toward colds, flu, and other acute illnesses (not a diagnosis).',
       items: [
@@ -204,6 +211,7 @@ function buildRealScreeningCategories(store, stats, anomalies) {
     {
       id: 'respiratory', name: '呼吸系统筛查', name_en: 'Respiratory Screening', riskLevel: lowSpo2 ? 'moderate' : 'low',
       score: Math.min(40, 16 + (lowSpo2 ? 18 : 0)),
+      healthScore: catHealth(Math.min(40, 16 + (lowSpo2 ? 18 : 0))),
       description: '真实血氧与活动耐量评估呼吸系统风险。',
       description_en: 'Assesses respiratory risk using real SpO₂ and exercise tolerance.',
       items: [

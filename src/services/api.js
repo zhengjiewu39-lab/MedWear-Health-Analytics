@@ -1,6 +1,8 @@
 import axios from 'axios';
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:3001/api';
+/** Dev: CRA proxy → :3001; prod: set REACT_APP_API_BASE_URL or fall back to :3001 */
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL
+  || (process.env.NODE_ENV === 'production' ? 'http://localhost:3001/api' : '/api');
 const MODE_KEY = 'medwear_mode';
 const DEMO_PATIENT_KEY = 'medwear_demo_patient';
 
@@ -19,6 +21,9 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (res) => res,
   (error) => {
+    if (!error.response && error.code === 'ERR_NETWORK') {
+      error.message = '无法连接 MedWear API（端口 3001）。请在项目目录运行 npm run dev 或 npm run server';
+    }
     const isLogin = error.config?.url?.includes('/auth/login');
     if (error.response?.status === 401 && !isLogin) {
       localStorage.removeItem('token');
@@ -90,6 +95,13 @@ export const screeningApi = {
   getSlots: (date) => api.get('/appointments/slots', { params: { date } }),
   bookAppointment: (data) => api.post('/appointments', data),
   getDoctorReport: () => api.get('/doctor-report'),
+  getDoctorReportProfile: () => api.get('/doctor-report/profile'),
+  saveDoctorReportProfile: (data) => api.put('/doctor-report/profile', data),
+  generateDoctorReport: (data) => api.post('/doctor-report/generate', data),
+  exportDoctorReport: (format = 'json') => api.get('/doctor-report/export', {
+    params: { format },
+    responseType: format === 'html' ? 'blob' : 'json',
+  }),
 };
 
 export const securityApi = {
@@ -105,7 +117,12 @@ export const dataApi = {
   importFile: (file) => {
     const form = new FormData();
     form.append('file', file);
-    return api.post('/data/import', form, { headers: { 'Content-Type': 'multipart/form-data' } });
+    return api.post('/data/import', form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 600000,
+      maxContentLength: Infinity,
+      maxBodyLength: Infinity,
+    });
   },
   scanFolder: () => api.post('/data/import/scan'),
   clearData: () => api.delete('/data/clear'),
@@ -124,6 +141,9 @@ export const researchApi = {
   getDataset: () => api.get('/research/dataset'),
   getResults: () => api.get('/research/results'),
   runEvaluation: () => api.post('/research/evaluate'),
+  runValidation: () => api.post('/research/validate'),
+  getValidation: () => api.get('/research/validate'),
+  getClinicalReferences: () => api.get('/research/references/clinical'),
   getMethods: () => api.get('/research/methods'),
   getReferences: () => api.get('/research/references'),
   analyze: (data) => api.post('/research/analyze', data),
@@ -155,6 +175,7 @@ export const outcomesApi = {
   getFunnel: () => api.get('/outcomes/funnel'),
   getSurvivalReference: () => api.get('/outcomes/survival-reference'),
   getCohort: (params) => api.get('/outcomes/cohort', { params }),
+  getPatientComparison: () => api.get('/outcomes/patient-comparison'),
 };
 
 export default api;

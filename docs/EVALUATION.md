@@ -91,3 +91,40 @@ exam completed → diagnosed & staged → treatment started (intervention arm).
 
 > All outcomes are simulated from published parameters, not observed prospective
 > results. Dashboard: `/outcomes` (requires login).
+
+## Clinical Cohort Validation (SEER / NLST / China NCCR)
+
+External validation against published registry and trial subsets (not full
+patient-level dumps).
+
+**Module:** `server/screening/cohortValidator.js`  
+**References:** `server/screening/clinicalReferenceData.js`
+
+```bash
+npm run validate:cohort   # → benchmarks/results/clinical-validation-latest.json
+```
+
+### Validated outcomes
+
+| Domain | Metrics |
+|--------|---------|
+| Early diagnosis | Stage I/II rate vs NLST stage-shift & China NCCR lung pilots |
+| Treatment delay | Median dx→treatment vs SEER / NCCR benchmarks |
+| 5-year survival | Intervention gain vs registry-modeled early-dx benefit |
+
+### Diagnostic operating characteristics
+
+| Metric | Definition |
+|--------|------------|
+| Sensitivity | TP / (TP + FN) — wearable risk flag vs simulated malignancy |
+| Specificity | TN / (TN + FP) |
+| PPV | TP / (TP + FP) |
+| AUC | ROC area under curve from riskScore thresholds (intervention arm) |
+
+### API
+
+```bash
+curl http://localhost:3001/api/research/references/clinical
+curl -X POST http://localhost:3001/api/research/validate
+curl http://localhost:3001/api/research/validate
+```
