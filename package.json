@@ -16,7 +16,7 @@
     "helmet": "^8.2.0",
     "multer": "^2.0.0",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0",
+    "react-dom": "^19.2.7",
     "react-router-dom": "^6.22.3",
     "recharts": "^2.12.2",
     "sax": "^1.4.1",
