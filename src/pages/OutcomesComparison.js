@@ -43,48 +43,29 @@ function relPct(x) {
   return x == null ? '—' : `+${(x * 100).toFixed(1)}%`;
 }
 
-function HeroThesisCard({ title, iv, uc, absDelta, relImprove, color }) {
+function HeroThesisCard({ title, iv, uc, absDelta, relImprove, color, isEn }) {
   return (
     <Card sx={{ height: '100%', borderTop: 4, borderColor: color, bgcolor: `${color}08` }}>
       <CardContent>
         <Typography variant="overline" color="text.secondary" fontWeight={700}>{title}</Typography>
         <Grid container spacing={1} sx={{ mt: 0.5 }}>
           <Grid item xs={6}>
-            <Typography variant="caption" color="text.secondary">筛查组</Typography>
+            <Typography variant="caption" color="text.secondary">{isEn ? 'Screened arm' : '筛查组'}</Typography>
             <Typography variant="h4" fontWeight={800} sx={{ color: IV }}>{pct(iv)}</Typography>
           </Grid>
           <Grid item xs={6}>
-            <Typography variant="caption" color="text.secondary">对照组</Typography>
+            <Typography variant="caption" color="text.secondary">{isEn ? 'Control arm' : '对照组'}</Typography>
             <Typography variant="h4" fontWeight={800} sx={{ color: UC }}>{pct(uc)}</Typography>
           </Grid>
         </Grid>
         <Box sx={{ mt: 1.5, display: 'flex', gap: 0.75, flexWrap: 'wrap' }}>
           <Chip size="small" color="success" label={`Δ ${pct(absDelta)}`} sx={{ fontWeight: 700 }} />
-          <Chip size="small" variant="outlined" label={`相对提升 ${relPct(relImprove)}`} sx={{ fontWeight: 700 }} />
-        </Box>
-      </CardContent>
-    </Card>
-  );
-}
-
-function HeroThesisCardEn({ title, iv, uc, absDelta, relImprove, color }) {
-  return (
-    <Card sx={{ height: '100%', borderTop: 4, borderColor: color, bgcolor: `${color}08` }}>
-      <CardContent>
-        <Typography variant="overline" color="text.secondary" fontWeight={700}>{title}</Typography>
-        <Grid container spacing={1} sx={{ mt: 0.5 }}>
-          <Grid item xs={6}>
-            <Typography variant="caption" color="text.secondary">Screened</Typography>
-            <Typography variant="h4" fontWeight={800} sx={{ color: IV }}>{pct(iv)}</Typography>
-          </Grid>
-          <Grid item xs={6}>
-            <Typography variant="caption" color="text.secondary">Control</Typography>
-            <Typography variant="h4" fontWeight={800} sx={{ color: UC }}>{pct(uc)}</Typography>
-          </Grid>
-        </Grid>
-        <Box sx={{ mt: 1.5, display: 'flex', gap: 0.75, flexWrap: 'wrap' }}>
-          <Chip size="small" color="success" label={`Δ ${pct(absDelta)}`} sx={{ fontWeight: 700 }} />
-          <Chip size="small" variant="outlined" label={`Relative +${relImprove != null ? (relImprove * 100).toFixed(1) : '—'}%`} sx={{ fontWeight: 700 }} />
+          <Chip
+            size="small"
+            variant="outlined"
+            label={isEn ? `Relative gain ${relPct(relImprove)}` : `相对提升 ${relPct(relImprove)}`}
+            sx={{ fontWeight: 700 }}
+          />
         </Box>
       </CardContent>
     </Card>
@@ -460,25 +441,37 @@ function OutcomesComparison() {
           </Alert>
           <Grid container spacing={2} sx={{ mb: 3 }}>
             <Grid item xs={12} md={4}>
-              {isEn ? (
-                <HeroThesisCardEn title={hl.earlyDiagnosisRate.label_en} iv={hl.earlyDiagnosisRate.intervention} uc={hl.earlyDiagnosisRate.control} absDelta={hl.earlyDiagnosisRate.absoluteDelta} relImprove={hl.earlyDiagnosisRate.relativeImprovement} color={CHART.positive} />
-              ) : (
-                <HeroThesisCard title={hl.earlyDiagnosisRate.label} iv={hl.earlyDiagnosisRate.intervention} uc={hl.earlyDiagnosisRate.control} absDelta={hl.earlyDiagnosisRate.absoluteDelta} relImprove={hl.earlyDiagnosisRate.relativeImprovement} color={CHART.positive} />
-              )}
+              <HeroThesisCard
+                title={isEn ? hl.earlyDiagnosisRate.label_en : hl.earlyDiagnosisRate.label}
+                iv={hl.earlyDiagnosisRate.intervention}
+                uc={hl.earlyDiagnosisRate.control}
+                absDelta={hl.earlyDiagnosisRate.absoluteDelta}
+                relImprove={hl.earlyDiagnosisRate.relativeImprovement}
+                color={CHART.positive}
+                isEn={isEn}
+              />
             </Grid>
             <Grid item xs={12} md={4}>
-              {isEn ? (
-                <HeroThesisCardEn title={hl.treatmentRate.label_en} iv={hl.treatmentRate.intervention} uc={hl.treatmentRate.control} absDelta={hl.treatmentRate.absoluteDelta} relImprove={hl.treatmentRate.relativeImprovement} color={IV} />
-              ) : (
-                <HeroThesisCard title={hl.treatmentRate.label} iv={hl.treatmentRate.intervention} uc={hl.treatmentRate.control} absDelta={hl.treatmentRate.absoluteDelta} relImprove={hl.treatmentRate.relativeImprovement} color={IV} />
-              )}
+              <HeroThesisCard
+                title={isEn ? hl.treatmentRate.label_en : hl.treatmentRate.label}
+                iv={hl.treatmentRate.intervention}
+                uc={hl.treatmentRate.control}
+                absDelta={hl.treatmentRate.absoluteDelta}
+                relImprove={hl.treatmentRate.relativeImprovement}
+                color={IV}
+                isEn={isEn}
+              />
             </Grid>
             <Grid item xs={12} md={4}>
-              {isEn ? (
-                <HeroThesisCardEn title={hl.survival5y.label_en} iv={hl.survival5y.intervention} uc={hl.survival5y.control} absDelta={hl.survival5y.absoluteDelta} relImprove={hl.survival5y.relativeImprovement} color={CHART.accent} />
-              ) : (
-                <HeroThesisCard title={hl.survival5y.label} iv={hl.survival5y.intervention} uc={hl.survival5y.control} absDelta={hl.survival5y.absoluteDelta} relImprove={hl.survival5y.relativeImprovement} color={CHART.accent} />
-              )}
+              <HeroThesisCard
+                title={isEn ? hl.survival5y.label_en : hl.survival5y.label}
+                iv={hl.survival5y.intervention}
+                uc={hl.survival5y.control}
+                absDelta={hl.survival5y.absoluteDelta}
+                relImprove={hl.survival5y.relativeImprovement}
+                color={CHART.accent}
+                isEn={isEn}
+              />
             </Grid>
           </Grid>
           <Paper sx={{ p: 2, mb: 3, borderRadius: 3 }}>

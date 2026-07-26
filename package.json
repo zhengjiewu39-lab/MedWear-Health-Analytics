@@ -2,6 +2,9 @@
   "name": "medwear-health-analytics",
   "version": "0.1.0",
   "private": true,
+  "main": "electron/main.js",
+  "description": "MedWear Health Analytics — 人机协同慢病与肿瘤早筛研究平台",
+  "author": "MedWear Research",
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
@@ -31,7 +34,15 @@
     "free-ports": "node scripts/free-ports.js",
     "stop": "node scripts/free-ports.js",
     "dev": "node scripts/dev.js",
-    "test:server": "node --test server/__tests__/*.test.js",
+    "app": "node scripts/start-app.js",
+    "app:fresh": "npm run build && node scripts/start-app.js",
+    "start:prod": "NODE_ENV=production node server.js",
+    "pack:zip": "node scripts/pack-zip.js",
+    "desktop:dev": "electron .",
+    "desktop:build": "npm run build && electron-builder",
+    "desktop:mac": "npm run build && CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --mac",
+    "desktop:win": "npm run build && electron-builder --win",
+    "test:ai": "node scripts/test-ai.js",
     "evaluate": "node scripts/evaluate-analytics.js",
     "generate:cohort": "node scripts/generate-screening-cohort.js",
     "evaluate:outcomes": "node scripts/evaluate-screening-outcomes.js",
@@ -63,6 +74,60 @@
   },
   "devDependencies": {
     "concurrently": "^8.2.2",
+    "electron": "^33.2.1",
+    "electron-builder": "^25.1.8",
     "react-scripts": "^5.0.1"
+  },
+  "build": {
+    "extends": null,
+    "appId": "com.medwear.health.analytics",
+    "productName": "MedWear Health Analytics",
+    "copyright": "Copyright © 2026 MedWear Research",
+    "asar": true,
+    "directories": {
+      "output": "release",
+      "buildResources": "electron"
+    },
+    "files": [
+      "build/**/*",
+      "electron/**/*",
+      "server.js",
+      "server/**/*",
+      "!server/__tests__/**",
+      "scripts/evaluate-screening-outcomes.js",
+      "scripts/validate-clinical-cohort.js",
+      "benchmarks/screening-outcome-dataset.json",
+      "benchmarks/wearable-analytics-dataset.json",
+      "docs/METHODS.md",
+      "docs/EVALUATION.md",
+      "package.json"
+    ],
+    "extraMetadata": {
+      "main": "electron/main.js"
+    },
+    "afterPack": "scripts/after-pack-mac.js",
+    "mac": {
+      "category": "public.app-category.medical",
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "artifactName": "MedWear-${version}-${os}.${ext}"
+    },
+    "dmg": {
+      "title": "MedWear Health Analytics ${version}"
+    },
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "artifactName": "MedWear-${version}-Setup.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "shortcutName": "MedWear Health Analytics"
+    }
   }
 }

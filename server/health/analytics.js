@@ -129,8 +129,10 @@ function detectAnomalies(store) {
         id: anomalies.length + 1, patient, type: '心率异常波动', type_en: 'Abnormal heart rate fluctuation',
         confidence: Math.min(95, Math.round(70 + spikes.length * 2)),
         detectedAt: day, pattern: `${spikes.length} 次心率超过个人基线+2σ (${Math.round(mean + 2 * sd)} bpm)`,
-        pattern_en: `${spikes.length} instances of heart rate exceeding personal baseline +2σ (${Math.round(mean + 2 * sd)} bpm)`,
-        aiModel: '统计异常检测', status: 'new',
+        pattern_en: `${spikes.length} HR readings above personal baseline +2σ (${Math.round(mean + 2 * sd)} bpm)`,
+        aiModel: '统计异常检测', aiModel_en: 'Statistical anomaly detection',
+        severity: spikes.length >= 5 ? 'high' : 'medium',
+        status: 'new',
       });
     }
   });
@@ -143,8 +145,10 @@ function detectAnomalies(store) {
         id: anomalies.length + 1, patient, type: '血氧偏低事件', type_en: 'Low blood oxygen events',
         confidence: Math.round(75 + low.length * 3),
         detectedAt: day, pattern: `${low.length} 次血氧低于 93%`,
-        pattern_en: `${low.length} instances of SpO₂ below 93%`,
-        aiModel: '统计异常检测', status: 'investigating',
+        pattern_en: `${low.length} SpO₂ readings below 93%`,
+        aiModel: '统计异常检测', aiModel_en: 'Statistical anomaly detection',
+        severity: low.length >= 4 ? 'high' : 'medium',
+        status: 'investigating',
       });
     }
   });
@@ -159,6 +163,10 @@ function buildPredictions(store) {
   const patient = store.meta?.userLabel || '我';
   let id = 1;
   const add = (p) => predictions.push({ id: id++, dataSource: 'real', model: 'MedWear-Predict-v2', ...p });
+  const cat = (key) => {
+    const m = CATEGORY_META[key] || {};
+    return { category: key, categoryLabel: m.label || key, categoryLabel_en: m.label_en || m.label };
+  };
 
   if (days.length < 1) return predictions;
 
@@ -166,38 +174,50 @@ function buildPredictions(store) {
     const score = stats.healthScore || 0;
     if (score > 0 && score < 80) {
       add({
-        category: 'training', categoryLabel: CATEGORY_META.training?.label || '综合健康',
-        patient, risk: '综合健康评分偏低', probability: Math.min(65, Math.round(100 - score)),
-        timeframe: '7天内', horizon: 'short', level: score < 60 ? 'medium' : 'low',
+        ...cat('training'),
+        patient, risk: '综合健康评分偏低', risk_en: 'Low composite health score',
+        probability: Math.min(65, Math.round(100 - score)),
+        timeframe: '7天内', timeframe_en: 'Within 7 days', horizon: 'short', level: score < 60 ? 'medium' : 'low',
         factors: [`健康评分 ${score} 分`, `${store.meta?.dayCount || days.length} 天真实数据`],
+        factors_en: [`Health score ${score}`, `${store.meta?.dayCount || days.length} days of real data`],
         recommendation: '建议改善睡眠与活动量，必要时咨询全科医生',
+        recommendation_en: 'Improve sleep and activity; see a GP if needed',
       });
     }
     if (stats.restingHR && stats.restingHR > 80) {
       add({
-        category: 'cardio', categoryLabel: CATEGORY_META.cardio?.label || '心血管',
-        patient, risk: '静息心率偏高', probability: Math.min(55, Math.round((stats.restingHR - 70) * 3)),
-        timeframe: '14天内', horizon: 'medium', level: stats.restingHR > 90 ? 'medium' : 'low',
+        ...cat('cardio'),
+        patient, risk: '静息心率偏高', risk_en: 'Elevated resting heart rate',
+        probability: Math.min(55, Math.round((stats.restingHR - 70) * 3)),
+        timeframe: '14天内', timeframe_en: 'Within 14 days', horizon: 'medium', level: stats.restingHR > 90 ? 'medium' : 'low',
         factors: [`静息心率 ${stats.restingHR} bpm`],
+        factors_en: [`Resting HR ${stats.restingHR} bpm`],
         recommendation: '建议关注压力与睡眠，必要时测量血压',
+        recommendation_en: 'Manage stress and sleep; measure BP if concerned',
       });
     }
     if (stats.steps != null && stats.steps < 5000) {
       add({
-        category: 'metabolic', categoryLabel: CATEGORY_META.metabolic?.label || '代谢',
-        patient, risk: '活动量不足', probability: Math.min(50, Math.round((5000 - stats.steps) / 100)),
-        timeframe: '30天内', horizon: 'long', level: stats.steps < 3000 ? 'medium' : 'low',
+        ...cat('metabolic'),
+        patient, risk: '活动量不足', risk_en: 'Insufficient activity',
+        probability: Math.min(50, Math.round((5000 - stats.steps) / 100)),
+        timeframe: '30天内', timeframe_en: 'Within 30 days', horizon: 'long', level: stats.steps < 3000 ? 'medium' : 'low',
         factors: [`日均步数 ${stats.steps}`],
+        factors_en: [`Average daily steps ${stats.steps}`],
         recommendation: '建议逐步增加每日步行至 6000 步以上',
+        recommendation_en: 'Gradually increase daily steps toward 6,000+',
       });
     }
     if (stats.sleepHours && stats.sleepHours < 7) {
       add({
-        category: 'sleep', categoryLabel: CATEGORY_META.sleep?.label || '睡眠健康',
-        patient, risk: '睡眠时长不足', probability: Math.min(50, Math.round((7 - stats.sleepHours) * 10)),
-        timeframe: '7天内', horizon: 'short', level: stats.sleepHours < 6 ? 'medium' : 'low',
+        ...cat('sleep'),
+        patient, risk: '睡眠时长不足', risk_en: 'Insufficient sleep duration',
+        probability: Math.min(50, Math.round((7 - stats.sleepHours) * 10)),
+        timeframe: '7天内', timeframe_en: 'Within 7 days', horizon: 'short', level: stats.sleepHours < 6 ? 'medium' : 'low',
         factors: [`睡眠 ${stats.sleepHours} 小时`],
+        factors_en: [`Sleep ${stats.sleepHours} h`],
         recommendation: '建议固定作息时间，减少睡前屏幕使用',
+        recommendation_en: 'Keep a regular schedule; reduce pre-bed screen time',
       });
     }
   };
@@ -213,11 +233,14 @@ function buildPredictions(store) {
     const earlier = avg(rhrTrend.slice(0, 7));
     if (recent && earlier && recent > earlier + 5) {
       add({
-        category: 'cardio', categoryLabel: CATEGORY_META.cardio?.label || '心血管',
-        patient, risk: '静息心率上升趋势', probability: Math.min(75, Math.round((recent - earlier) * 5)),
-        timeframe: '14天内', horizon: 'medium', level: 'medium',
+        ...cat('cardio'),
+        patient, risk: '静息心率上升趋势', risk_en: 'Rising resting heart rate trend',
+        probability: Math.min(75, Math.round((recent - earlier) * 5)),
+        timeframe: '14天内', timeframe_en: 'Within 14 days', horizon: 'medium', level: 'medium',
         factors: [`静息心率从 ${Math.round(earlier)} 升至 ${Math.round(recent)} bpm`],
+        factors_en: [`RHR rose from ${Math.round(earlier)} to ${Math.round(recent)} bpm`],
         recommendation: '建议关注压力、睡眠与运动恢复，必要时咨询医生',
+        recommendation_en: 'Address stress, sleep and recovery; consult a clinician if needed',
       });
     }
   }
@@ -228,11 +251,14 @@ function buildPredictions(store) {
     const earlierHrv = avg(hrvAll.slice(0, Math.floor(hrvAll.length / 2)));
     if (recentHrv && earlierHrv && recentHrv < earlierHrv * 0.85) {
       add({
-        category: 'mental', categoryLabel: CATEGORY_META.mental?.label || '心理/压力',
-        patient, risk: 'HRV 下降趋势（压力/疲劳）', probability: Math.min(70, Math.round((1 - recentHrv / earlierHrv) * 100)),
-        timeframe: '7天内', horizon: 'short', level: 'medium',
+        ...cat('mental'),
+        patient, risk: 'HRV 下降趋势（压力/疲劳）', risk_en: 'Declining HRV (stress/fatigue)',
+        probability: Math.min(70, Math.round((1 - recentHrv / earlierHrv) * 100)),
+        timeframe: '7天内', timeframe_en: 'Within 7 days', horizon: 'short', level: 'medium',
         factors: [`HRV 从 ${Math.round(earlierHrv)}ms 降至 ${Math.round(recentHrv)}ms`],
+        factors_en: [`HRV fell from ${Math.round(earlierHrv)} ms to ${Math.round(recentHrv)} ms`],
         recommendation: '建议增加休息，减少高强度训练，关注睡眠质量',
+        recommendation_en: 'Add rest, reduce high-intensity training, prioritize sleep',
       });
     }
   }
@@ -241,11 +267,14 @@ function buildPredictions(store) {
   const lowActivity = stepDays.filter(s => s < 4000).length;
   if (lowActivity >= 3) {
     add({
-      category: 'metabolic', categoryLabel: CATEGORY_META.metabolic?.label || '代谢',
-      patient, risk: '长期活动不足', probability: Math.min(60, lowActivity * 10),
-      timeframe: '30天内', horizon: 'long', level: lowActivity >= 5 ? 'medium' : 'low',
+      ...cat('metabolic'),
+      patient, risk: '长期活动不足', risk_en: 'Sustained low activity',
+      probability: Math.min(60, lowActivity * 10),
+      timeframe: '30天内', timeframe_en: 'Within 30 days', horizon: 'long', level: lowActivity >= 5 ? 'medium' : 'low',
       factors: [`${lowActivity} 天步数低于 4000`],
+      factors_en: [`${lowActivity} days with steps below 4,000`],
       recommendation: '建议每日步行至少 6000 步，逐步提升活动量',
+      recommendation_en: 'Walk at least 6,000 steps daily; increase activity gradually',
     });
   }
 
@@ -253,10 +282,13 @@ function buildPredictions(store) {
   const prev = store.daily[days[days.length - 2]];
   if (latest && prev && latest.steps < prev.steps * 0.5 && latest.steps < 3000) {
     add({
-      category: 'infection', categoryLabel: CATEGORY_META.infection?.label || '感染/急性病',
-      patient, risk: '感冒/流感样活动骤降', probability: 38, timeframe: '3天内', horizon: 'short', level: 'medium',
+      ...cat('infection'),
+      patient, risk: '感冒/流感样活动骤降', risk_en: 'Cold/flu-like activity drop',
+      probability: 38, timeframe: '3天内', timeframe_en: 'Within 3 days', horizon: 'short', level: 'medium',
       factors: [`步数从 ${Math.round(prev.steps)} 降至 ${Math.round(latest.steps)}`],
+      factors_en: [`Steps fell from ${Math.round(prev.steps)} to ${Math.round(latest.steps)}`],
       recommendation: '注意休息补水，发热或气促请发热门诊就医',
+      recommendation_en: 'Rest and hydrate; seek care for fever or shortness of breath',
     });
   }
 
@@ -264,11 +296,14 @@ function buildPredictions(store) {
   const lowSpo2 = spo2All.filter(s => s < 94).length;
   if (lowSpo2 >= 2) {
     add({
-      category: 'respiratory', categoryLabel: CATEGORY_META.respiratory?.label || '呼吸系统',
-      patient, risk: '血氧偏低事件增加', probability: Math.min(65, lowSpo2 * 15),
-      timeframe: '7天内', horizon: 'short', level: 'medium',
+      ...cat('respiratory'),
+      patient, risk: '血氧偏低事件增加', risk_en: 'More low SpO₂ events',
+      probability: Math.min(65, lowSpo2 * 15),
+      timeframe: '7天内', timeframe_en: 'Within 7 days', horizon: 'short', level: 'medium',
       factors: [`${lowSpo2} 次血氧低于 94%`],
+      factors_en: [`${lowSpo2} readings below 94% SpO₂`],
       recommendation: '避免剧烈运动，持续低氧请呼吸科评估',
+      recommendation_en: 'Avoid strenuous exercise; pulmonology review if persistent hypoxemia',
     });
   }
 
@@ -280,11 +315,14 @@ function buildPredictions(store) {
     const recentSleep = avg(sleepDays.slice(-3));
     if (recentSleep && recentSleep < 6) {
       add({
-        category: 'sleep', categoryLabel: CATEGORY_META.sleep?.label || '睡眠健康',
-        patient, risk: '睡眠不足趋势', probability: Math.min(55, Math.round((7 - recentSleep) * 12)),
-        timeframe: '7天内', horizon: 'short', level: 'medium',
+        ...cat('sleep'),
+        patient, risk: '睡眠不足趋势', risk_en: 'Insufficient sleep trend',
+        probability: Math.min(55, Math.round((7 - recentSleep) * 12)),
+        timeframe: '7天内', timeframe_en: 'Within 7 days', horizon: 'short', level: 'medium',
         factors: [`近3天平均睡眠 ${recentSleep.toFixed(1)} 小时`],
+        factors_en: [`Avg sleep last 3 days ${recentSleep.toFixed(1)} h`],
         recommendation: '提前入睡，减少睡前屏幕时间',
+        recommendation_en: 'Go to bed earlier; limit pre-bed screen time',
       });
     }
   }

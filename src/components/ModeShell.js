@@ -5,6 +5,7 @@ import { useDemoPatient } from '../contexts/DemoPatientContext';
 import { useHealthData } from '../contexts/HealthDataContext';
 import { RequireHealthData, RealDataChip } from './RealDataGuard';
 import AiExemptBanner from './AiExemptBanner';
+import { useLang } from '../contexts/LanguageContext';
 
 /**
  * 演示/真实模式隔离：
@@ -16,15 +17,23 @@ export function ModeShell({ children, title, requireData = true, aiExempt = fals
   const { isDemo } = useDataMode();
   const { current: demoPatient } = useDemoPatient();
   const { hasData, loading, primarySource, meta } = useHealthData();
+  const { t, isEn } = useLang();
 
   if (isDemo) {
+    const scenario = demoPatient?.scenario
+      ? (isEn && demoPatient.scenario_en ? demoPatient.scenario_en : demoPatient.scenario)
+      : '';
     return (
       <>
         <Alert severity="info" sx={{ mb: 2 }} variant="outlined">
-          演示模式 · 当前患者：<strong>{demoPatient?.name || '—'}</strong>
-          {demoPatient?.id ? `（${demoPatient.id}）` : ''}
-          {demoPatient?.scenario ? ` · ${demoPatient.scenario}` : ''}
-          · 共 5000 名演示者可选，生理指标与 AI 分析随切换而变化
+          {t('演示模式 · 当前患者：', 'Demo mode · Current patient: ')}
+          <strong>{demoPatient?.name || '—'}</strong>
+          {demoPatient?.id ? ` (${demoPatient.id})` : ''}
+          {scenario ? ` · ${scenario}` : ''}
+          {t(
+            ' · 共 5000 名演示者可选，生理指标与 AI 分析随切换而变化',
+            ' · 5,000 demo patients available; vitals and AI analysis update when you switch',
+          )}
         </Alert>
         {children}
       </>
@@ -33,7 +42,7 @@ export function ModeShell({ children, title, requireData = true, aiExempt = fals
 
   if (requireData) {
     if (loading) return <LinearProgress sx={{ mb: 2 }} />;
-    if (!hasData) return <RequireHealthData title={title} />;
+    if (!hasData) return <RequireHealthData title={title}>{children}</RequireHealthData>;
   }
 
   const day = meta?.dateRange?.end;

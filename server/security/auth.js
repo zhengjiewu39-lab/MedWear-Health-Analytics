@@ -7,7 +7,8 @@ const {
 
 const IS_PROD = process.env.NODE_ENV === 'production';
 const ALLOW_DEMO = !IS_PROD || process.env.ALLOW_DEMO_AUTH === 'true';
-const JWT_SECRET = process.env.MEDWEAR_JWT_SECRET || (ALLOW_DEMO ? 'medwear-jwt-dev-only' : null);
+const JWT_SECRET = process.env.MEDWEAR_JWT_SECRET
+  || (ALLOW_DEMO ? 'medwear-local-jwt-v1' : null);
 const TOKEN_TTL_MS = 24 * 60 * 60 * 1000;
 
 if (IS_PROD && !process.env.MEDWEAR_JWT_SECRET) {

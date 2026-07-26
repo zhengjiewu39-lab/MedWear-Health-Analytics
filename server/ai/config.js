@@ -1,9 +1,10 @@
 const fs = require('fs');
 const path = require('path');
-const { encrypt, decrypt } = require('../security/crypto');
+const { encrypt, decryptAny } = require('../security/crypto');
 const { getProvider, resolveApiKeyFromEnv, listProviders } = require('./providers');
+const { getDataDir, ensureDataDir } = require('../paths');
 
-const CONFIG_FILE = path.join(__dirname, '../../data/ai-config.json');
+const CONFIG_FILE = path.join(getDataDir(), 'ai-config.json');
 
 const DEFAULT = {
   provider: 'openai',
@@ -23,7 +24,8 @@ function readFile() {
 
 function decryptApiKey(payload) {
   try {
-    return decrypt(payload);
+    const { value } = decryptAny(payload);
+    return typeof value === 'string' ? value.trim() : '';
   } catch {
     return '';
   }
@@ -43,23 +45,45 @@ function migrateLegacy(saved) {
   return saved;
 }
 
-function getProviderKeys(saved) {
-  return migrateLegacy({ ...saved }).providerKeys || {};
+/** 旧密钥解密成功后，用当前密钥重新加密并写回 */
+function reencryptLegacyKeys(saved) {
+  const providerKeys = saved.providerKeys || {};
+  let changed = false;
+  Object.entries(providerKeys).forEach(([pid, entry]) => {
+    if (!entry?.apiKeyEncrypted) return;
+    try {
+      const { value, usedLegacy } = decryptAny(entry.apiKeyEncrypted);
+      if (usedLegacy && typeof value === 'string' && value.trim()) {
+        providerKeys[pid] = { ...entry, apiKeyEncrypted: encrypt(value.trim()) };
+        changed = true;
+      }
+    } catch { /* ignore */ }
+  });
+  if (!changed) return saved;
+  const next = { ...saved, providerKeys };
+  fs.writeFileSync(CONFIG_FILE, JSON.stringify(next, null, 2));
+  return next;
+}
+
+function resolveStoredApiKey(providerId, providerKeys) {
+  const envKey = resolveApiKeyFromEnv(providerId);
+  if (envKey) return envKey.trim();
+  const pk = providerKeys[providerId];
+  if (!pk?.apiKeyEncrypted) return '';
+  return decryptApiKey(pk.apiKeyEncrypted);
 }
 
 function providerKeyConfigured(providerId, providerKeys) {
-  const pk = providerKeys[providerId];
-  return Boolean(resolveApiKeyFromEnv(providerId) || pk?.apiKeyEncrypted);
+  return Boolean(resolveStoredApiKey(providerId, providerKeys));
 }
 
 function loadConfig() {
-  const saved = migrateLegacy(readFile());
+  const saved = reencryptLegacyKeys(migrateLegacy(readFile()));
   const providerKeys = saved.providerKeys || {};
   const activeId = saved.provider || DEFAULT.provider;
   const active = getProvider(activeId);
   const activeEntry = providerKeys[activeId] || {};
   const model = activeEntry.model || saved.model || process.env.OPENAI_MODEL || active.defaultModel;
-  // Always use the active provider's endpoint — stale baseUrl from another provider breaks API calls.
   const baseUrl = active.baseUrl;
 
   const availableProviders = listProviders().map((p) => ({
@@ -77,20 +101,19 @@ function loadConfig() {
     apiKeySet: providerKeyConfigured(activeId, providerKeys),
     format: active.format,
     availableProviders,
+    configPath: CONFIG_FILE,
   };
 }
 
 function saveConfig(partial) {
-  const dir = path.dirname(CONFIG_FILE);
-  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  ensureDataDir();
   const current = migrateLegacy(readFile());
   const providerId = partial.provider || current.provider || DEFAULT.provider;
-  const provider = getProvider(providerId);
   const providerKeys = { ...(current.providerKeys || {}) };
   const entry = { ...(providerKeys[providerId] || {}) };
 
   if (partial.model) entry.model = partial.model;
-  if (partial.apiKey) entry.apiKeyEncrypted = encrypt(partial.apiKey);
+  if (partial.apiKey) entry.apiKeyEncrypted = encrypt(String(partial.apiKey).trim());
 
   providerKeys[providerId] = entry;
 
@@ -105,21 +128,24 @@ function saveConfig(partial) {
   };
 
   fs.writeFileSync(CONFIG_FILE, JSON.stringify(payload, null, 2));
+
+  if (partial.apiKey && !resolveStoredApiKey(activeId, providerKeys)) {
+    throw new Error('API Key 已写入但无法解密读取。请重启应用后重试，或使用环境变量 DEEPSEEK_API_KEY。');
+  }
+
   return loadConfig();
 }
 
 function getApiKey() {
   const saved = migrateLegacy(readFile());
   const providerId = saved.provider || DEFAULT.provider;
-  const envKey = resolveApiKeyFromEnv(providerId);
-  if (envKey) return envKey;
-  const pk = saved.providerKeys?.[providerId];
-  if (pk?.apiKeyEncrypted) return decryptApiKey(pk.apiKeyEncrypted);
-  return '';
+  return resolveStoredApiKey(providerId, saved.providerKeys || {});
 }
 
 function isAiConfigured() {
   return Boolean(getApiKey());
 }
 
-module.exports = { loadConfig, saveConfig, getApiKey, isAiConfigured, CONFIG_FILE };
+module.exports = {
+  loadConfig, saveConfig, getApiKey, isAiConfigured, CONFIG_FILE, resolveStoredApiKey,
+};

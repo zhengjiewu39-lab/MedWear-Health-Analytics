@@ -2,12 +2,12 @@ const path = require('path');
 const fs = require('fs');
 const multer = require('multer');
 const { importHealthFile } = require('../health/parser');
-const { clearStore, hasData, DATA_DIR } = require('../health/store');
+const { clearStore, hasData } = require('../health/store');
 const { getDataStatus } = require('../health/analytics');
 const { audit } = require('../security/audit');
+const { getImportDir, ensureImportDir } = require('../paths');
 
-const IMPORT_DIR = path.join(__dirname, '../../health-import');
-if (!fs.existsSync(IMPORT_DIR)) fs.mkdirSync(IMPORT_DIR, { recursive: true });
+const IMPORT_DIR = ensureImportDir();
 
 const MAX_IMPORT_MB = Number(process.env.HEALTH_IMPORT_MAX_MB || 512);
 

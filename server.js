@@ -1,4 +1,6 @@
 require('dotenv').config();
+const dns = require('dns');
+try { dns.setDefaultResultOrder('ipv4first'); } catch { /* ignore */ }
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -7,7 +9,9 @@ const { getExamSlots } = require('./server/mock/clinicalData');
 const { runFullAnalysis, getAllReferences } = require('./server/ai/engine');
 const { doctorChat, getChatStatus } = require('./server/ai/chatService');
 const { buildClinicalContext } = require('./server/ai/contextBuilder');
-const { loadConfig, saveConfig, isAiConfigured } = require('./server/ai/config');
+const { loadConfig, saveConfig, isAiConfigured, getApiKey } = require('./server/ai/config');
+const { getProvider: getAiProvider } = require('./server/ai/providers');
+const { testAiConnection } = require('./server/ai/llm');
 const { authenticate, verifyToken, authMiddleware, ALLOW_DEMO } = require('./server/security/auth');
 const { requestIdMiddleware, securityHeadersMiddleware } = require('./server/security/hardening');
 const { audit, auditMiddleware, getAuditLog } = require('./server/security/audit');
@@ -139,30 +143,43 @@ app.get('/api/health', (_, res) => {
     status: 'ok',
     service: 'MedWear API',
     version: '1.1',
+    pid: process.pid,
     modes: ['demo', 'real'],
     features: ['clinical-analytics', 'research-benchmarks', 'early-screening'],
   });
 });
 
-app.get('/api/methodology', (_, res) => {
-  const methodsPath = path.join(__dirname, 'docs', 'METHODS.md');
-  const evalPath = path.join(__dirname, 'docs', 'EVALUATION.md');
+app.get('/api/methodology', (req, res) => {
+  const isEn = req.query.lang === 'en' || String(req.headers['x-medwear-lang'] || '').toLowerCase() === 'en';
+  const methodsName = isEn ? 'METHODS.md' : 'METHODS.zh.md';
+  const evalName = isEn ? 'EVALUATION.md' : 'EVALUATION.zh.md';
+  const methodsPath = path.join(__dirname, 'docs', methodsName);
+  const evalPath = path.join(__dirname, 'docs', evalName);
   const parts = [];
   if (fs.existsSync(methodsPath)) parts.push(fs.readFileSync(methodsPath, 'utf8'));
   if (fs.existsSync(evalPath)) parts.push(fs.readFileSync(evalPath, 'utf8'));
   if (!parts.length) {
-    return res.status(404).json({ success: false, message: '方法学文档未找到' });
+    const fallback = path.join(__dirname, 'docs', 'METHODS.md');
+    if (fs.existsSync(fallback)) parts.push(fs.readFileSync(fallback, 'utf8'));
+  }
+  if (!parts.length) {
+    return res.status(404).json({
+      success: false,
+      message: isEn ? 'Methodology documents not found' : '方法学文档未找到',
+    });
   }
   return res.json({
-    filename: 'docs/METHODS.md + docs/EVALUATION.md',
+    filename: isEn ? 'docs/METHODS.md + docs/EVALUATION.md' : 'docs/METHODS.zh.md + docs/EVALUATION.zh.md',
+    lang: isEn ? 'en' : 'zh',
     engine: 'MedWear-AnalyticsCore-v1',
     framework: {
       benchmark_license: 'CC-BY-4.0',
       evaluation_type: 'rule-based mini benchmark',
+      evaluation_type_zh: '基于规则的迷你基准评测',
       layers: [
-        { id: 'L0', title: 'Proxy signals' },
-        { id: 'L1', title: 'Individual anomaly detection' },
-        { id: 'L2', title: 'Clinical screening' },
+        { id: 'L0', title: 'Proxy signals', title_zh: '代理信号' },
+        { id: 'L1', title: 'Individual anomaly detection', title_zh: '个体异常检测' },
+        { id: 'L2', title: 'Clinical screening', title_zh: '临床筛查' },
       ],
     },
     markdown: parts.join('\n\n---\n\n'),
@@ -324,6 +341,21 @@ app.get('/api/ai/chat/status', (req, res) => {
   res.json(getChatStatus());
 });
 
+app.post('/api/ai/chat/test', async (req, res) => {
+  if (!isAiConfigured()) {
+    return res.status(503).json({ success: false, message: 'AI 未配置' });
+  }
+  const result = await doctorChat(
+    { message: '请回复 OK', history: [] },
+    provider(req),
+    req.dataMode,
+  );
+  if (!result.success) {
+    return res.status(502).json(result);
+  }
+  return res.json({ success: true, reply: result.reply, model: result.model });
+});
+
 app.get('/api/ai/chat/context', (req, res) => {
   res.json(buildClinicalContext(provider(req), req.dataMode));
 });
@@ -347,6 +379,7 @@ app.post('/api/ai/chat', async (req, res) => {
 });
 
 app.post('/api/ai/analyze-anomaly', async (req, res) => {
+  const langEn = String(req.headers['x-medwear-lang'] || req.query.lang || 'zh').toLowerCase() === 'en';
   const p = provider(req);
   const anomalies = p.getAnomalies();
   const targetId = req.body?.anomalyId;
@@ -358,9 +391,9 @@ app.post('/api/ai/analyze-anomaly', async (req, res) => {
     return res.status(404).json({
       success: false,
       needsImport: isRealMode(req),
-      message: isRealMode(req)
-        ? '暂无异常数据，请先导入 Apple Health 数据'
-        : '当前无异常信号可分析',
+      message: langEn
+        ? 'No anomaly data yet — import Apple Health first'
+        : '暂无异常数据，请先导入 Apple Health 数据',
     });
   }
 
@@ -368,16 +401,18 @@ app.post('/api/ai/analyze-anomaly', async (req, res) => {
     return res.status(503).json({
       success: false,
       needsConfig: true,
-      message: '请先在「系统设置」配置 AI 提供商及 API Key，本系统仅使用真实 LLM，不提供模拟回复。',
+      message: langEn
+        ? 'Configure an AI provider and API Key in Settings. This system uses live LLMs only — no mock replies.'
+        : '请先在「系统设置」配置 AI 提供商及 API Key，本系统仅使用真实 LLM，不提供模拟回复。',
     });
   }
 
-  const healthCtx = {
-    mode: req.dataMode,
-    hasData: Boolean(p.getProfile()?.hasData ?? p.getProfile()?.dataImported),
-    summary: { type: a.type, pattern: a.pattern, severity: a.severity, confidence: a.confidence },
-  };
-  const prompt = `请深度分析以下可穿戴异常信号并给出可执行的临床建议：\n类型：${a.type}\n描述：${a.pattern}\n严重度：${a.severity}\n置信度：${a.confidence}%`;
+  const typeLabel = langEn ? (a.type_en || a.type) : a.type;
+  const patternLabel = langEn ? (a.pattern_en || a.pattern) : a.pattern;
+  const prompt = langEn
+    ? `Analyze this wearable anomaly signal in depth and give actionable clinical guidance:\nType: ${typeLabel}\nDescription: ${patternLabel}\nSeverity: ${a.severity}\nConfidence: ${a.confidence}%\nRespond in English.`
+    : `请深度分析以下可穿戴异常信号并给出可执行的临床建议：\n类型：${typeLabel}\n描述：${patternLabel}\n严重度：${a.severity}\n置信度：${a.confidence}%`;
+
   const result = await doctorChat(
     { message: prompt, history: [] },
     p,
@@ -392,7 +427,9 @@ app.post('/api/ai/analyze-anomaly', async (req, res) => {
     success: true,
     analysis: result.reply,
     confidence: a.confidence,
-    recommendation: '请结合线下体检确认，医师行使最终裁量权',
+    recommendation: langEn
+      ? 'Confirm with in-person examination; the physician retains final clinical judgment.'
+      : '请结合线下体检确认，医师行使最终裁量权',
     model: result.model,
     provider: result.provider,
     isRealAi: true,
@@ -640,17 +677,53 @@ app.get('/api/settings', (req, res) => {
   });
 });
 
-app.post('/api/settings/ai', (req, res) => {
-  const { apiKey, model, baseUrl, provider, setActive } = req.body;
-  const saved = saveConfig({
-    apiKey: apiKey || undefined,
-    model,
-    baseUrl,
-    provider,
-    setActive: setActive !== false,
-  });
-  audit('AI_CONFIG_UPDATE', { user: resolveUser(req)?.username, detail: `${saved.provider}/${saved.model}` });
-  res.json({ success: true, aiConfigured: saved.apiKeySet, provider: saved.provider, model: saved.model });
+app.post('/api/settings/ai', async (req, res) => {
+  try {
+    const { apiKey, model, baseUrl, provider, setActive, skipTest } = req.body;
+    const providerId = provider || loadConfig().provider;
+    const trimmedKey = apiKey?.trim();
+
+    if (!trimmedKey && !loadConfig().apiKeySet) {
+      return res.status(400).json({
+        success: false,
+        message: '请填写 API Key',
+      });
+    }
+
+    const saved = saveConfig({
+      apiKey: trimmedKey || undefined,
+      model,
+      baseUrl,
+      provider: providerId,
+      setActive: setActive !== false,
+    });
+
+    let testWarning = null;
+    if (trimmedKey && !skipTest) {
+      const test = await testAiConnection({
+        providerId,
+        apiKey: trimmedKey,
+        model: model || getAiProvider(providerId).defaultModel,
+      });
+      if (!test.ok) {
+        audit('AI_CONFIG_TEST_WARN', { user: resolveUser(req)?.username, detail: test.error?.slice(0, 120) });
+        testWarning = test.error;
+      }
+    }
+
+    audit('AI_CONFIG_UPDATE', { user: resolveUser(req)?.username, detail: `${saved.provider}/${saved.model}` });
+    res.json({
+      success: true,
+      aiConfigured: saved.apiKeySet,
+      provider: saved.provider,
+      model: saved.model,
+      tested: Boolean(trimmedKey && !skipTest),
+      warning: testWarning,
+      configPath: saved.configPath,
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message || '保存 AI 配置失败' });
+  }
 });
 
 app.get('/api/security/audit', (req, res) => res.json(getAuditLog(Number(req.query.limit) || 50)));
@@ -677,10 +750,45 @@ app.get('/api/security/export', (req, res) => {
   });
 });
 
-app.listen(port, () => {
+// ── Production: serve React build (single-port desktop / Docker app) ──
+const buildDir = path.join(__dirname, 'build');
+if (fs.existsSync(path.join(buildDir, 'index.html'))) {
+  app.use(express.static(buildDir));
+  app.get(/^(?!\/api).*/, (req, res) => {
+    res.sendFile(path.join(buildDir, 'index.html'));
+  });
+}
+
+const httpServer = app.listen(port, () => {
+  const hasUi = fs.existsSync(path.join(buildDir, 'index.html'));
   console.log(`MedWear API http://localhost:${port} [双模式 · 真实AI · IP定位医院]`);
-  console.log(`  真实 AI: ${isAiConfigured() ? '已配置 ✓' : '未配置 — 设置 OPENAI_API_KEY'}`);
+  if (hasUi) {
+    console.log(`MedWear 应用界面 http://localhost:${port} （前后端一体，可直接浏览器打开）`);
+  } else {
+    console.log('  提示: 运行 npm run build 后重启，可在同端口打开完整 Web 界面');
+  }
+  console.log(`  真实 AI: ${isAiConfigured() ? `已配置 ✓ (${loadConfig().provider}/${loadConfig().model})` : '未配置 — 系统设置或 .env DEEPSEEK_API_KEY'}`);
+  if (isAiConfigured()) {
+    const cfg = loadConfig();
+    testAiConnection({ providerId: cfg.provider, apiKey: getApiKey(), model: cfg.model })
+      .then((r) => {
+        if (r.ok) console.log('  DeepSeek 连通: ✓ 启动自检通过');
+        else console.log(`  DeepSeek 连通: ✗ ${r.error} — 运行 npm run test:ai 诊断`);
+      })
+      .catch((e) => console.log(`  DeepSeek 连通: ✗ ${e.message}`));
+  }
   if (ALLOW_DEMO) {
     console.log('  管理员账号: admin/admin123 (仅 DEV / ALLOW_DEMO_AUTH)');
   }
+});
+
+httpServer.on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    console.error(`\n[MedWear] 端口 ${port} 已被占用 — AI 请求会出现 fetch failed。`);
+    console.error('[MedWear] 请先运行: npm run stop');
+    console.error('[MedWear] 然后重新: npm run app\n');
+    process.exit(1);
+  }
+  console.error('[MedWear] 服务启动失败:', err.message);
+  process.exit(1);
 });

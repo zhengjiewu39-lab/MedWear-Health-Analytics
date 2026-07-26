@@ -224,37 +224,77 @@ function buildAnomalies(stats, cohort) {
   const s = cohort.signals;
   if (s.spo2 < 95) {
     list.push({
-      id: 1, type: '血氧饱和度下降', confidence: 85,
-      detectedAt: '2024-06-26 15:00', pattern: `日间 SpO₂ ${stats.spo2}%，低于个人基线`,
-      severity: s.spo2 < 94 ? 'high' : 'medium', status: 'investigating', aiModel: 'analyticsCore',
+      id: 1,
+      type: '血氧饱和度下降',
+      type_en: 'Declining SpO₂',
+      confidence: 85,
+      detectedAt: '2024-06-26 15:00',
+      pattern: `日间 SpO₂ ${stats.spo2}%，低于个人基线`,
+      pattern_en: `Daytime SpO₂ ${stats.spo2}%, below personal baseline`,
+      severity: s.spo2 < 94 ? 'high' : 'medium',
+      status: 'investigating',
+      aiModel: 'analyticsCore',
+      aiModel_en: 'analyticsCore',
     });
   }
   if (stats.restingHR > 82) {
     list.push({
-      id: list.length + 1, type: '静息心率偏高', confidence: 78,
-      detectedAt: '2024-06-26 07:00', pattern: `晨间静息心率 ${stats.restingHR} bpm，高于基线`,
-      severity: 'medium', status: 'monitoring', aiModel: 'analyticsCore',
+      id: list.length + 1,
+      type: '静息心率偏高',
+      type_en: 'Elevated resting heart rate',
+      confidence: 78,
+      detectedAt: '2024-06-26 07:00',
+      pattern: `晨间静息心率 ${stats.restingHR} bpm，高于基线`,
+      pattern_en: `Morning resting HR ${stats.restingHR} bpm, above baseline`,
+      severity: 'medium',
+      status: 'monitoring',
+      aiModel: 'analyticsCore',
+      aiModel_en: 'analyticsCore',
     });
   }
   if (stats.hrv < 35) {
     list.push({
-      id: list.length + 1, type: 'HRV 持续偏低', confidence: 82,
-      detectedAt: '2024-06-26 06:30', pattern: `HRV ${stats.hrv} ms，自主神经恢复不足`,
-      severity: cohort.riskTier === 'high' ? 'high' : 'medium', status: 'monitoring', aiModel: 'analyticsCore',
+      id: list.length + 1,
+      type: 'HRV 持续偏低',
+      type_en: 'Persistently low HRV',
+      confidence: 82,
+      detectedAt: '2024-06-26 06:30',
+      pattern: `HRV ${stats.hrv} ms，自主神经恢复不足`,
+      pattern_en: `HRV ${stats.hrv} ms — insufficient autonomic recovery`,
+      severity: cohort.riskTier === 'high' ? 'high' : 'medium',
+      status: 'monitoring',
+      aiModel: 'analyticsCore',
+      aiModel_en: 'analyticsCore',
     });
   }
   if (stats.steps < 4500) {
     list.push({
-      id: list.length + 1, type: '活动量不足', confidence: 76,
-      detectedAt: '2024-06-25 20:00', pattern: `7 天平均步数 ${stats.steps}，低于同龄均值`,
-      severity: 'medium', status: 'monitoring', aiModel: 'analyticsCore',
+      id: list.length + 1,
+      type: '活动量不足',
+      type_en: 'Insufficient activity',
+      confidence: 76,
+      detectedAt: '2024-06-25 20:00',
+      pattern: `7 天平均步数 ${stats.steps}，低于同龄均值`,
+      pattern_en: `7-day average steps ${stats.steps}, below age-matched norm`,
+      severity: 'medium',
+      status: 'monitoring',
+      aiModel: 'analyticsCore',
+      aiModel_en: 'analyticsCore',
     });
   }
   if (stats.sleepHours < 6.2) {
     list.push({
-      id: list.length + 1, type: '睡眠碎片化', confidence: 80,
-      detectedAt: '2024-06-26 04:00', pattern: `平均睡眠 ${stats.sleepHours}h，深睡占比下降`,
-      severity: 'medium', status: 'monitoring', aiModel: 'analyticsCore',
+      id: list.length + 1,
+      type: '睡眠碎片化',
+      type_en: 'Fragmented sleep',
+      confidence: 80,
+      detectedAt: '2024-06-26 04:00',
+      pattern: `平均睡眠 ${stats.sleepHours}h，深睡占比下降`,
+      pattern_en: `Average sleep ${stats.sleepHours} h; deep-sleep share declining`,
+      severity: 'medium',
+      status: 'monitoring',
+      aiModel: 'analyticsCore',
+      aiModel_en: 'analyticsCore',
     });
   }
   return list.slice(0, 3);

@@ -1,10 +1,10 @@
 import axios from 'axios';
 
-/** Dev: CRA proxy → :3001; prod: set REACT_APP_API_BASE_URL or fall back to :3001 */
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL
-  || (process.env.NODE_ENV === 'production' ? 'http://localhost:3001/api' : '/api');
+/** Same-origin `/api` works in dev (CRA proxy), production (Express static), and desktop app. */
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || '/api';
 const MODE_KEY = 'medwear_mode';
 const DEMO_PATIENT_KEY = 'medwear_demo_patient';
+const LANG_KEY = 'medwear_lang';
 
 const api = axios.create({ baseURL: API_BASE_URL, headers: { 'Content-Type': 'application/json' } });
 
@@ -12,6 +12,7 @@ api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
   if (token) config.headers.Authorization = `Bearer ${token}`;
   config.headers['X-MedWear-Mode'] = localStorage.getItem(MODE_KEY) || 'demo';
+  config.headers['X-MedWear-Lang'] = localStorage.getItem(LANG_KEY) || 'zh';
   if ((localStorage.getItem(MODE_KEY) || 'demo') === 'demo') {
     config.headers['X-MedWear-Demo-Patient'] = localStorage.getItem(DEMO_PATIENT_KEY) || 'IV-0001';
   }
@@ -21,8 +22,18 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (res) => res,
   (error) => {
-    if (!error.response && error.code === 'ERR_NETWORK') {
-      error.message = '无法连接 MedWear API（端口 3001）。请在项目目录运行 npm run dev 或 npm run server';
+    if (!error.response) {
+      const raw = error.message || '';
+      if (
+        error.code === 'ERR_NETWORK'
+        || /fetch failed|Network Error|ECONNREFUSED|Failed to fetch/i.test(raw)
+      ) {
+        error.serverDown = true;
+        const isEn = localStorage.getItem(LANG_KEY) === 'en';
+        error.message = isEn
+          ? 'MedWear backend is not running. Run npm run app in a terminal, keep it open, then open http://localhost:3001'
+          : 'MedWear 后端未运行：请在终端执行 npm run app 并保持窗口打开，然后访问 http://localhost:3001（不要关闭终端）';
+      }
     }
     const isLogin = error.config?.url?.includes('/auth/login');
     if (error.response?.status === 401 && !isLogin) {
@@ -70,7 +81,7 @@ export const aiApi = {
 export const chatApi = {
   getStatus: () => api.get('/ai/chat/status'),
   getContext: () => api.get('/ai/chat/context'),
-  send: (data) => api.post('/ai/chat', data),
+  send: (data) => api.post('/ai/chat', data, { timeout: 180000 }),
 };
 
 export const interventionApi = {
@@ -167,7 +178,7 @@ export const geoApi = {
 };
 
 export const methodologyApi = {
-  get: () => api.get('/methodology'),
+  get: (lang) => api.get('/methodology', { params: lang ? { lang } : undefined }),
 };
 
 export const outcomesApi = {

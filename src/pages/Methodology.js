@@ -195,7 +195,7 @@ function MarkdownBlock({ block }) {
 }
 
 function Methodology() {
-  const { t } = useLang();
+  const { t, isEn } = useLang();
   const [doc, setDoc] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -203,11 +203,11 @@ function Methodology() {
   const load = useCallback(() => {
     setLoading(true);
     setError('');
-    methodologyApi.get()
+    methodologyApi.get(isEn ? 'en' : 'zh')
       .then((res) => setDoc(res.data))
       .catch((e) => setError(e.response?.data?.message || t('方法学文档加载失败，请确认后端 API 已启动', 'Failed to load methodology doc — please ensure the backend API is running')))
       .finally(() => setLoading(false));
-  }, [t]);
+  }, [t, isEn]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -222,7 +222,11 @@ function Methodology() {
             {t('方法学文档', 'Methodology')}
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            {doc?.filename || 'docs/METHODS.md'} · {t('引擎', 'Engine')} {doc?.engine || '—'}
+            {doc?.filename || (isEn ? 'docs/METHODS.md' : 'docs/METHODS.zh.md')}
+            {' · '}
+            {t('引擎', 'Engine')} {doc?.engine || '—'}
+            {' · '}
+            {isEn ? 'English' : '中文'}
           </Typography>
         </Box>
         <Button startIcon={<Refresh />} onClick={load}>{t('刷新', 'Refresh')}</Button>
@@ -231,16 +235,25 @@ function Methodology() {
       {doc?.framework && (
         <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', mb: 2 }}>
           <Chip size="small" color="primary" label={`${t('开放基准', 'Open benchmark')} ${doc.framework.benchmark_license}`} />
-          <Chip size="small" variant="outlined" label={`${t('评估方式', 'Evaluation')}: ${doc.framework.evaluation_type}`} />
+          <Chip
+            size="small"
+            variant="outlined"
+            label={`${t('评估方式', 'Evaluation')}: ${isEn ? doc.framework.evaluation_type : (doc.framework.evaluation_type_zh || doc.framework.evaluation_type)}`}
+          />
           {(doc.framework.layers || []).map((l) => (
-            <Chip key={l.id} size="small" variant="outlined" label={`${l.id} ${l.title}`} />
+            <Chip
+              key={l.id}
+              size="small"
+              variant="outlined"
+              label={`${l.id} ${isEn ? l.title : (l.title_zh || l.title)}`}
+            />
           ))}
         </Box>
       )}
 
       {loading && <LinearProgress sx={{ mb: 2 }} />}
       {error && (
-        <Alert severity="error" sx={{ mb: 2 }} action={<Button onClick={load}>重试</Button>}>{error}</Alert>
+        <Alert severity="error" sx={{ mb: 2 }} action={<Button onClick={load}>{t('重试', 'Retry')}</Button>}>{error}</Alert>
       )}
 
       {doc && !loading && (

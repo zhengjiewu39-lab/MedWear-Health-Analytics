@@ -26,7 +26,7 @@ function InterventionPathway({ compact = false }) {
       <Stack direction="row" spacing={1} sx={{ mb: 2, flexWrap: 'wrap', alignItems: 'center' }}>
         <Chip
           size="small"
-          label={t(`步骤 ${current?.step || '—'}/7`, `Step ${current?.step || '—'}/7`)}
+          label={t(`步骤 ${current?.step || '—'}/8`, `Step ${current?.step || '—'}/8`)}
           color="primary"
           variant="outlined"
         />

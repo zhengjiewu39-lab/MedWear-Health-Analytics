@@ -11,10 +11,10 @@ export const PAPER_TITLE_EN = 'Early Prediction and Screening for Chronic Diseas
  * Consumer-grade wearable proxy signals used for early screening.
  */
 export const PROXY_SIGNALS = [
-  { key: 'hr', label: '心率 (HR)', proxy: '交感激活 / 发热代理', unit: 'bpm' },
-  { key: 'hrv', label: '心率变异 (HRV)', proxy: '自主神经应激代理', unit: 'ms' },
-  { key: 'spo2', label: '血氧 (SpO₂)', proxy: '呼吸道受累代理', unit: '%' },
-  { key: 'steps', label: '步数 (steps)', proxy: '活动度 / 病休代理', unit: 'steps' },
+  { key: 'hr', label: '心率 (HR)', label_en: 'Heart rate (HR)', proxy: '交感激活 / 发热代理', proxy_en: 'Sympathetic activation / fever proxy', unit: 'bpm' },
+  { key: 'hrv', label: '心率变异 (HRV)', label_en: 'HRV', proxy: '自主神经应激代理', proxy_en: 'Autonomic stress proxy', unit: 'ms' },
+  { key: 'spo2', label: '血氧 (SpO₂)', label_en: 'SpO₂', proxy: '呼吸道受累代理', proxy_en: 'Respiratory involvement proxy', unit: '%' },
+  { key: 'steps', label: '步数 (steps)', label_en: 'Steps', proxy: '活动度 / 病休代理', proxy_en: 'Activity / sick-leave proxy', unit: 'steps' },
 ];
 
 /** Curated one-click demo screening scenarios. */

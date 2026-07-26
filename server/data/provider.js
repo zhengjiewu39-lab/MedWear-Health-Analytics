@@ -16,10 +16,11 @@ const {
 const { hasData, getStore } = require('../health/store');
 const { STANDARDS } = require('../mock/clinicalData');
 const { getExamSlots } = require('../mock/clinicalData');
-
-const REAL_APPT_FILE = require('path').join(__dirname, '../../data/real-appointments.json');
 const fs = require('fs');
 const path = require('path');
+const { getDataDir, ensureDataDir } = require('../paths');
+
+const REAL_APPT_FILE = path.join(getDataDir(), 'real-appointments.json');
 
 const REAL_EXAM_PACKAGES = [
   { id: 'real-tumor', name: 'Apple Health 肿瘤早筛', category: 'tumor', price: 2680, duration: '半天', includesWearableReport: true, items: ['低剂量 CT', '肿瘤标志物', '甲状腺 B 超', 'MedWear 真实数据报告'] },

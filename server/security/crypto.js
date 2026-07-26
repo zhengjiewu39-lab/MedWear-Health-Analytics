@@ -1,29 +1,34 @@
 const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
+const { getDataDir, ensureDataDir } = require('../paths');
 
-const DATA_DIR = path.join(__dirname, '../../data');
+const DATA_DIR = getDataDir();
 const VAULT_FILE = path.join(DATA_DIR, 'health-vault.enc');
-const AUDIT_FILE = path.join(DATA_DIR, 'audit-log.json');
 
 const IS_PROD = process.env.NODE_ENV === 'production';
 const ALLOW_DEMO = !IS_PROD || process.env.ALLOW_DEMO_AUTH === 'true';
-const SECRET = process.env.MEDWEAR_ENCRYPTION_KEY || process.env.MEDWEAR_SECRET;
+/** 本地演示/桌面版统一密钥，避免 dev 与 desktop 加密不一致导致 API Key 无法解密 */
+const LOCAL_STORAGE_KEY = 'medwear-unified-local-encryption-v1';
+const SECRET = process.env.MEDWEAR_ENCRYPTION_KEY || process.env.MEDWEAR_SECRET
+  || (ALLOW_DEMO ? LOCAL_STORAGE_KEY : null);
 
-if (IS_PROD && !SECRET) {
-  console.error('[security] MEDWEAR_ENCRYPTION_KEY is required when NODE_ENV=production');
-  process.exit(1);
+/** 旧版桌面/开发密钥 — 仅用于解密历史 ai-config，新写入统一用 SECRET */
+const LEGACY_SECRETS = [
+  'medwear-desktop-encryption-key-32chars!!',
+  'medwear-demo-secret-change-in-production',
+];
+
+function deriveKey(secret) {
+  return crypto.scryptSync(secret, 'medwear-salt-v1', 32);
 }
 
 const ALGO = 'aes-256-gcm';
-const KEY = crypto.scryptSync(
-  SECRET || (ALLOW_DEMO ? 'medwear-demo-secret-change-in-production' : 'missing-key'),
-  'medwear-salt-v1',
-  32
-);
+const KEY = deriveKey(SECRET || 'missing-key');
 
-function ensureDataDir() {
-  if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+if (IS_PROD && !SECRET && !ALLOW_DEMO) {
+  console.error('[security] MEDWEAR_ENCRYPTION_KEY is required when NODE_ENV=production');
+  process.exit(1);
 }
 
 function encrypt(plaintext) {
@@ -34,14 +39,34 @@ function encrypt(plaintext) {
   return { iv: iv.toString('hex'), tag: tag.toString('hex'), data: enc.toString('hex') };
 }
 
-function decrypt(payload) {
+function decryptWithKey(payload, key) {
   const iv = Buffer.from(payload.iv, 'hex');
   const tag = Buffer.from(payload.tag, 'hex');
   const data = Buffer.from(payload.data, 'hex');
-  const decipher = crypto.createDecipheriv(ALGO, KEY, iv);
+  const decipher = crypto.createDecipheriv(ALGO, key, iv);
   decipher.setAuthTag(tag);
   const dec = Buffer.concat([decipher.update(data), decipher.final()]);
   return JSON.parse(dec.toString('utf8'));
+}
+
+function decrypt(payload) {
+  return decryptWithKey(payload, KEY);
+}
+
+/** 兼容旧版加密配置，返回 { value, usedLegacy } */
+function decryptAny(payload) {
+  const candidates = [
+    SECRET || LOCAL_STORAGE_KEY,
+    ...LEGACY_SECRETS,
+  ].filter(Boolean);
+  const unique = [...new Set(candidates)];
+  for (let i = 0; i < unique.length; i += 1) {
+    try {
+      const value = decryptWithKey(payload, deriveKey(unique[i]));
+      return { value, usedLegacy: i > 0 || unique[i] !== (SECRET || LOCAL_STORAGE_KEY) };
+    } catch { /* try next */ }
+  }
+  throw new Error('decrypt failed');
 }
 
 function saveVault(record) {
@@ -75,5 +100,5 @@ function maskToken(token) {
 }
 
 module.exports = {
-  encrypt, decrypt, saveVault, loadVault, hashSensitive, anonymizeProfile, maskToken, ALGO,
+  encrypt, decrypt, decryptAny, saveVault, loadVault, hashSensitive, anonymizeProfile, maskToken, ALGO,
 };

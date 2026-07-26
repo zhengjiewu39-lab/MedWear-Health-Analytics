@@ -27,6 +27,30 @@ const SUGGESTIONS_EN = [
   'What does the early-diagnosis delta between arms imply?',
 ];
 
+function formatChatError(err, t) {
+  const raw = String(err.message || '');
+  // 有 HTTP 响应 = MedWear 后端已连通，显示 DeepSeek/AI 真实错误
+  if (err.response) {
+    const data = err.response.data || {};
+    const msg = data.message || data.error || data.reply;
+    if (msg) return msg;
+    return t(
+      'AI 调用失败（后端已连接）。请运行 npm run test:ai 查看 DeepSeek 是否可达。',
+      'AI call failed (backend is up). Run npm run test:ai to check DeepSeek.',
+    );
+  }
+  if (
+    err.serverDown
+    || /ECONNREFUSED|Network Error|Failed to fetch|fetch failed/i.test(raw)
+  ) {
+    return t(
+      '⚠️ MedWear 后端未连接。\n\n1. 终端执行: npm run stop\n2. 再执行: npm run app:fresh\n3. 保持终端打开，访问 http://localhost:3001\n4. Cmd+Shift+R 强制刷新',
+      '⚠️ MedWear backend unreachable.\n\n1. Run: npm run stop\n2. Then: npm run app:fresh\n3. Keep terminal open; use http://localhost:3001\n4. Hard refresh (Cmd+Shift+R)',
+    );
+  }
+  return raw || t('AI 调用失败', 'AI request failed');
+}
+
 function MessageBubble({ msg, isEn }) {
   const isUser = msg.role === 'user';
   return (
@@ -101,13 +125,9 @@ function DoctorAiChat() {
         model: res.data.model,
       }]);
     } catch (err) {
-      const data = err.response?.data;
       setMessages((prev) => [...prev, {
         role: 'assistant',
-        content: data?.message || data?.reply || t(
-          'AI 调用失败。请确认已在系统设置中配置 API Key。',
-          'AI request failed. Please configure API key in Settings.',
-        ),
+        content: formatChatError(err, t),
         error: true,
       }]);
     } finally {

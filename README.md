@@ -30,16 +30,54 @@ Connects consumer wearables to actionable health insights with **local-first pri
 
 ## Quick Start
 
+### 开发（改代码）
+
 ```bash
 npm install
-npm run dev          # API :3001 + frontend :3000
+npm run dev          # API :3001 + 前端 :3000
 ```
 
-| Service | URL |
-|---------|-----|
-| Web app | http://localhost:3000 |
-| API | http://localhost:3001 |
-| Analytics Lab | http://localhost:3000/research |
+### 桌面安装包（无需 Node.js，双击即用）
+
+在项目目录打包（仅需一次）：
+
+```bash
+npm install
+npm run desktop:mac    # 生成 release/MedWear-0.1.0-mac.dmg
+```
+
+将 **`release/MedWear-0.1.0-mac.dmg`** 发给他人：双击安装 → 从「应用程序」打开 **MedWear Health Analytics**。  
+Windows 打包：`npm run desktop:win` → `release/MedWear-0.1.0-Setup.exe`。
+
+### 单机软件（需 Node.js，浏览器打开）
+
+**必须先进入项目文件夹**（不能在系统根目录 `/` 运行）：
+
+```bash
+cd ~/Desktop/医用可穿戴设备数据分析平台
+npm install          # 只需第一次
+npm run app          # 自动打开 http://localhost:3001
+```
+
+macOS 也可 **双击** 项目根目录下的 `启动 MedWear.command`。
+
+账号：`admin` / `admin123` · `demo` / `demo123`
+
+**常见错误：**
+
+| 报错 | 原因 | 解决 |
+|------|------|------|
+| `ENOENT ... /package.json` | 在错误目录（如 `/`）运行 | 先 `cd` 到项目文件夹 |
+| `Tracker "idealTree" already exists` | 在 `npm run app` 里嵌套运行了 npm | 先单独执行 `npm install`，再 `npm run app`；或 `npm cache clean --force` |
+
+详细打包与 Docker 分发见 **[docs/DESKTOP.md](docs/DESKTOP.md)**。
+
+| 模式 | 命令 | 访问地址 |
+|------|------|----------|
+| 开发 | `npm run dev` | http://localhost:3000 |
+| **桌面安装包** | **`npm run desktop:mac`** | 双击 `.app` / `.dmg` |
+| **单机应用** | **`npm run app`** | **http://localhost:3001** |
+| Docker | `docker compose up --build` | http://localhost:3001 |
 
 **Accounts:** `demo/demo123` · `admin/admin123`
 

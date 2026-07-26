@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Box, Typography, Paper, Grid, Card, CardContent, Chip, Button,
   LinearProgress, Dialog, DialogTitle, DialogContent, DialogActions, Alert,
@@ -11,6 +11,7 @@ import { aiApi } from '../services/api';
 import useModeRefresh from '../hooks/useModeRefresh';
 import { PROXY_SIGNALS } from '../config/paperDemo';
 import { useLang } from '../contexts/LanguageContext';
+import { localizeAnomalies, localizeAnomaly } from '../utils/anomalyLocale';
 
 const statusConfig = {
   resolved: { label: '已恢复', label_en: 'Resolved', color: 'success', icon: <CheckCircle /> },
@@ -33,15 +34,27 @@ function getStatusConfig(status) {
 function AnomalyDetection() {
   const { t, isEn } = useLang();
   const navigate = useNavigate();
-  const [anomalies, setAnomalies] = useState([]);
+  const [rawAnomalies, setRawAnomalies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState(null);
   const [analysis, setAnalysis] = useState(null);
   const [analyzing, setAnalyzing] = useState(false);
 
+  const anomalies = useMemo(
+    () => localizeAnomalies(rawAnomalies, isEn),
+    [rawAnomalies, isEn],
+  );
+
+  const selectedDisplay = useMemo(
+    () => (selected ? localizeAnomaly(selected, isEn) : null),
+    [selected, isEn],
+  );
+
   const load = () => {
     setLoading(true);
-    aiApi.getAnomalies().then(res => { setAnomalies(res.data); setLoading(false); }).catch(() => setLoading(false));
+    aiApi.getAnomalies()
+      .then(res => { setRawAnomalies(res.data || []); setLoading(false); })
+      .catch(() => { setRawAnomalies([]); setLoading(false); });
   };
 
   useModeRefresh(load);
@@ -74,7 +87,7 @@ function AnomalyDetection() {
     : '—';
 
   const stats = [
-    { label: t('代理信号维度', 'Proxy signals'), value: PROXY_SIGNALS.length, sub: 'HR·HRV·SpO₂·temp·steps' },
+    { label: t('代理信号维度', 'Proxy signals'), value: PROXY_SIGNALS.length, sub: 'HR · HRV · SpO₂ · temp · steps' },
     { label: t('异常事件', 'Anomaly events'), value: anomalies.length, sub: t('个体×日 异常信号', 'Person-day anomaly signals') },
     { label: t('平均信号强度', 'Mean signal strength'), value: avgConfidence, sub: t('阈值偏离 / z-score 归一', 'Threshold deviation / z-score') },
     { label: t('判定方式', 'Method'), value: t('透明', 'Transparent'), sub: t('阈值 + 滚动 2σ，公式公开', 'Thresholds + rolling 2σ, open formulas') },
@@ -94,8 +107,15 @@ function AnomalyDetection() {
 
       <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', mb: 3 }}>
         {PROXY_SIGNALS.map((s) => (
-          <Chip key={s.key} size="small" variant="outlined" color="primary"
-            label={`${s.label} · ${s.proxy}`} />
+          <Chip
+            key={s.key}
+            size="small"
+            variant="outlined"
+            color="primary"
+            label={isEn
+              ? `${s.label_en || s.label} · ${s.proxy_en || s.proxy}`
+              : `${s.label} · ${s.proxy}`}
+          />
         ))}
       </Box>
 
@@ -114,7 +134,9 @@ function AnomalyDetection() {
       <Grid container spacing={3}>
         {anomalies.map(anomaly => {
           const status = getStatusConfig(anomaly.status);
-          const severity = severityConfig[anomaly.severity] || { label: '—', color: 'default' };
+          const severity = severityConfig[anomaly.severity] || { label: '—', label_en: '—', color: 'default' };
+          const severityLabel = isEn ? (severity.label_en || severity.label) : severity.label;
+          const statusLabel = isEn ? (status.label_en || status.label) : status.label;
           return (
           <Grid item xs={12} md={6} key={anomaly.id}>
             <Card variant="outlined" sx={{ borderLeft: 4, borderColor: `${status.color}.main` }}>
@@ -124,10 +146,10 @@ function AnomalyDetection() {
                     <BugReport color="error" />
                     <Typography variant="h6">{anomaly.type}</Typography>
                   </Box>
-                  <Chip icon={status.icon} label={(isEn && status.label_en) || status.label} size="small" color={status.color} />
+                  <Chip icon={status.icon} label={statusLabel} size="small" color={status.color} />
                 </Box>
                 <Typography variant="body2" color="text.secondary" gutterBottom>
-                  {anomaly.detectedAt} · {t('严重度', 'Severity')} {(isEn && severity.label_en) || severity.label}
+                  {anomaly.detectedAt} · {t('严重度', 'Severity')} {severityLabel}
                 </Typography>
                 <Typography variant="body1" sx={{ mb: 2 }}>{anomaly.pattern}</Typography>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -148,7 +170,9 @@ function AnomalyDetection() {
       </Button>
 
       <Dialog open={Boolean(selected)} onClose={() => setSelected(null)} maxWidth="md" fullWidth>
-        <DialogTitle>{t('异常信号研判', 'Anomaly Signal Review')} - {selected?.type}</DialogTitle>
+        <DialogTitle>
+          {t('异常信号研判', 'Anomaly Signal Review')} — {selectedDisplay?.type || selected?.type}
+        </DialogTitle>
         <DialogContent>
           {analyzing ? (
             <Box sx={{ py: 4, textAlign: 'center' }}>

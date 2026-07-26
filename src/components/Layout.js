@@ -61,9 +61,11 @@ export function Layout({ children }) {
   const { toggleMode, isDemo, isReal } = useDataMode();
   const { current: demoPatient } = useDemoPatient();
   const { hasData } = useHealthData();
-  const { t, lang, toggle: toggleLang } = useLang();
+  const { t, lang, toggle: toggleLang, isEn } = useLang();
 
-  const tl = (zh) => t(zh, enLabel(zh));
+  const tl = (zh, en) => t(zh, en ?? enLabel(zh));
+  const tlItem = (item) => tl(item.text, item.text_en);
+  const tlSection = (section) => tl(section.label, section.label_en);
 
   const sections = useMemo(() => {
     return NAV_SECTIONS.filter((section) => !section.adminOnly || isAdmin);
@@ -74,7 +76,7 @@ export function Layout({ children }) {
     if (path.includes('#')) return location.pathname === base && location.hash === path.slice(path.indexOf('#'));
     return location.pathname === base && !location.hash;
   };
-  const title = getPageTitle(location.pathname, isAdmin);
+  const title = getPageTitle(location.pathname, isAdmin, isEn);
 
   const renderNavItem = (item) => {
     if (item.adminOnly && !isAdmin) return null;
@@ -97,10 +99,10 @@ export function Layout({ children }) {
         }}
       >
         <ListItemIcon sx={{ minWidth: 36, color: isActive(item.path) ? '#a5b4fc' : '#64748b' }}>
-          <NavIcon name={item.text} />
+          <NavIcon name={item.iconKey || item.text} />
         </ListItemIcon>
         <ListItemText
-          primary={tl(item.text)}
+          primary={tlItem(item)}
           primaryTypographyProps={{ fontSize: '0.875rem', fontWeight: isActive(item.path) ? 700 : 500 }}
         />
       </ListItemButton>
@@ -178,7 +180,7 @@ export function Layout({ children }) {
                     <Psychology fontSize="small" />
                   </ListItemIcon>
                   <ListItemText
-                    primary={tl(section.label)}
+                    primary={tlSection(section)}
                     primaryTypographyProps={{ fontSize: '0.75rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em' }}
                   />
                   {open ? <KeyboardArrowUp sx={{ color: '#64748b', fontSize: 18 }} /> : <KeyboardArrowDown sx={{ color: '#64748b', fontSize: 18 }} />}
@@ -201,7 +203,7 @@ export function Layout({ children }) {
                   fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em',
                 }}
               >
-                {tl(section.label)}
+                {tlSection(section)}
               </Typography>
               <List disablePadding>
                 {visibleItems.map(renderNavItem)}
@@ -239,7 +241,7 @@ export function Layout({ children }) {
             <MenuIcon />
           </IconButton>
           <Typography variant="h6" sx={{ flexGrow: 1, fontWeight: 700, fontSize: '1.05rem' }}>
-            {tl(title)}
+            {title}
           </Typography>
 
           <Tooltip title={t('切换语言 / Switch language', 'Switch language / 切换语言')}>
@@ -268,7 +270,7 @@ export function Layout({ children }) {
           </Tooltip>
 
           {isAdmin && (
-            <Tooltip title={t('AI 临床助手', 'Clinical AI')}>
+            <Tooltip title={t('AI 临床助手', 'Clinical AI Assistant')}>
               <IconButton onClick={() => navigate('/ai/chat')} sx={{ color: 'secondary.main' }}>
                 <SmartToy />
               </IconButton>
@@ -300,7 +302,7 @@ export function Layout({ children }) {
             {isAdmin && (
               <MenuItem onClick={() => { setAnchorEl(null); navigate('/ai/chat'); }}>
                 <ListItemIcon><SmartToy fontSize="small" /></ListItemIcon>
-                <ListItemText>{t('AI 临床助手', 'Clinical AI')}</ListItemText>
+                <ListItemText>{t('AI 临床助手', 'Clinical AI Assistant')}</ListItemText>
               </MenuItem>
             )}
             {isAdmin && (

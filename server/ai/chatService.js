@@ -27,7 +27,7 @@ async function doctorChat({ message, history = [] }, provider, dataMode) {
       needsConfig: result.needsConfig,
       error: result.error,
       message: result.error || 'AI 调用失败',
-      reply: result.reply,
+      reply: result.error,
       model: result.model,
     };
   }

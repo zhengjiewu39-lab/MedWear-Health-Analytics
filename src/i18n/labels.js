@@ -17,6 +17,7 @@ export const NAV_EN = {
   '临床筛查中心': 'Clinical Screening',
   '异常检测': 'Anomaly Detection',
   'AI 干预': 'AI Intervention',
+  'AI 临床助手': 'Clinical AI Assistant',
   '预测分析': 'Predictive Analytics',
   '医生报告': 'Doctor Report',
   '医生接诊报告': 'Doctor Report',

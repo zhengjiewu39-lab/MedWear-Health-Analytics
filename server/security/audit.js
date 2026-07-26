@@ -1,13 +1,13 @@
 const fs = require('fs');
 const path = require('path');
 const { maskToken } = require('./crypto');
+const { getDataDir, ensureDataDir } = require('../paths');
 
-const AUDIT_FILE = path.join(__dirname, '../../data/audit-log.json');
+const AUDIT_FILE = path.join(getDataDir(), 'audit-log.json');
 const MAX_ENTRIES = 500;
 
 function ensureFile() {
-  const dir = path.dirname(AUDIT_FILE);
-  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  ensureDataDir();
   if (!fs.existsSync(AUDIT_FILE)) fs.writeFileSync(AUDIT_FILE, '[]');
 }
 

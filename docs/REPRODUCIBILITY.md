@@ -17,8 +17,12 @@ npm run dev
 docker compose up --build
 ```
 
-- API: http://localhost:3001
-- Frontend (production build served separately): `npm run build && npx serve -s build -l 3000`
+- 应用（前后端一体）: http://localhost:3001
+- 数据目录挂载: `./data`
+
+## Desktop / portable
+
+See [docs/DESKTOP.md](DESKTOP.md) for `npm run app` and zip packaging.
 
 ## Environment
 

@@ -14,6 +14,7 @@ import useModeRefresh from '../hooks/useModeRefresh';
 import { useDataMode } from '../contexts/DataModeContext';
 import { useHealthData } from '../contexts/HealthDataContext';
 import { useLang } from '../contexts/LanguageContext';
+import { localizePredictions } from '../utils/predictionLocale';
 import { CHART, AXIS, GRID, chartMargin } from '../config/chartTheme';
 import { ChartGradients, MedWearTooltip } from '../components/ChartTheme';
 
@@ -35,7 +36,7 @@ const CATEGORY_COLORS = {
 };
 
 function PredictiveAnalytics() {
-  const { t } = useLang();
+  const { t, isEn } = useLang();
   const navigate = useNavigate();
   const [predictions, setPredictions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -46,11 +47,11 @@ function PredictiveAnalytics() {
   const load = () => {
     setLoading(true);
     aiApi.getPredictions()
-      .then(res => { setPredictions(res.data || []); setLoading(false); })
+      .then(res => { setPredictions(localizePredictions(res.data || [], isEn)); setLoading(false); })
       .catch(() => { setPredictions([]); setLoading(false); });
   };
 
-  useModeRefresh(load);
+  useModeRefresh(load, [isEn]);
 
   const categories = useMemo(() => {
     const map = {};

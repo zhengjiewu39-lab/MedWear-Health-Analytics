@@ -20,10 +20,10 @@ Implementation: `server/services/analyticsCore.js` → `computeDayScore()`
 
 Threshold-based rules on the **target day**:
 
-- **心率偏高**: mean HR > `heartRateMax` (default 100 bpm)
-- **心率偏低**: mean HR < `heartRateMin` (default 50 bpm)
-- **血氧偏低**: mean SpO2 < `spo2Min` (default 93%)
-- **活动量不足**: steps > 0 and steps < 3000
+- **Elevated heart rate**: mean HR > `heartRateMax` (default 100 bpm)
+- **Low heart rate**: mean HR < `heartRateMin` (default 50 bpm)
+- **Low SpO₂**: mean SpO2 < `spo2Min` (default 93%)
+- **Insufficient activity**: steps > 0 and steps < 3000
 
 ## Anomalies {#anomalies}
 

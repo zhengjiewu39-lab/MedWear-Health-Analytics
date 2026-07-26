@@ -1,7 +1,8 @@
 const fs = require('fs');
 const path = require('path');
+const { getDataDir, ensureDataDir } = require('../paths');
 
-const DATA_DIR = path.join(__dirname, '../../data');
+const DATA_DIR = getDataDir();
 const STORE_FILE = path.join(DATA_DIR, 'health-store.json');
 
 const EMPTY_STORE = {
@@ -19,7 +20,7 @@ const EMPTY_STORE = {
 };
 
 function ensureDir() {
-  if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+  ensureDataDir();
 }
 
 function loadStore() {

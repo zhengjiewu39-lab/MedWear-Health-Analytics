@@ -34,6 +34,7 @@ function SettingsPage() {
   const [auditLog, setAuditLog] = useState([]);
   const [saved, setSaved] = useState(false);
   const [actionMsg, setActionMsg] = useState('');
+  const [actionSeverity, setActionSeverity] = useState('info');
   const [drafts, setDrafts] = useState({});
   const [savingId, setSavingId] = useState(null);
   const { t, isEn, lang, setLang } = useLang();
@@ -57,26 +58,41 @@ function SettingsPage() {
     setDrafts((prev) => ({ ...prev, [id]: { ...prev[id], [field]: value } }));
   };
 
-  const saveProvider = async (p) => {
+  const saveProvider = async (p, { skipTest = false } = {}) => {
     const draft = drafts[p.id] || {};
     if (!draft.apiKey?.trim()) {
+      setActionSeverity('warning');
       setActionMsg(t('请填写 API Key', 'Please enter an API Key'));
       return;
     }
     setSavingId(p.id);
+    setActionMsg('');
     try {
-      await settingsApi.saveAi({
+      const res = await settingsApi.saveAi({
         provider: p.id,
         apiKey: draft.apiKey.trim(),
         model: draft.model || p.defaultModel,
         setActive: true,
+        skipTest,
       });
-      setActionMsg(t(
-        `${isEn ? p.label_en : p.label} 已保存并设为当前模型`,
-        `${p.label_en || p.label} saved and set as active`,
-      ));
+      const warn = res.data.warning;
+      setActionSeverity(warn ? 'warning' : 'success');
+      setActionMsg(warn
+        ? t(
+          `Key 已保存，但连接测试未通过：${warn}`,
+          `Key saved, but connection test failed: ${warn}`,
+        )
+        : t(
+          `${isEn ? p.label_en : p.label} 已连接并保存（${res.data.model}）`,
+          `${p.label_en || p.label} connected and saved (${res.data.model})`,
+        ));
       setDrafts((prev) => ({ ...prev, [p.id]: { ...prev[p.id], apiKey: '' } }));
       refresh();
+    } catch (err) {
+      const msg = err.response?.data?.message || err.message || t('保存失败', 'Save failed');
+      const hint = err.response?.data?.hint;
+      setActionSeverity('error');
+      setActionMsg(hint ? `${msg}\n${hint}` : msg);
     } finally {
       setSavingId(null);
     }
@@ -139,7 +155,11 @@ function SettingsPage() {
       />
 
       {saved && <Alert severity="success" sx={{ mb: 2 }}>{t('设置已保存', 'Settings saved')}</Alert>}
-      {actionMsg && <Alert severity="info" sx={{ mb: 2 }} onClose={() => setActionMsg('')}>{actionMsg}</Alert>}
+      {actionMsg && (
+        <Alert severity={actionSeverity} sx={{ mb: 2, whiteSpace: 'pre-line' }} onClose={() => setActionMsg('')}>
+          {actionMsg}
+        </Alert>
+      )}
 
       <Grid container spacing={3}>
         <Grid item xs={12}>
@@ -234,7 +254,15 @@ function SettingsPage() {
                             disabled={savingId === p.id || !draft.apiKey?.trim()}
                             onClick={() => saveProvider(p)}
                           >
-                            {t('保存', 'Save')}
+                            {t('保存并测试', 'Save & test')}
+                          </Button>
+                          <Button
+                            variant="text"
+                            size="small"
+                            disabled={savingId === p.id || !draft.apiKey?.trim()}
+                            onClick={() => saveProvider(p, { skipTest: true })}
+                          >
+                            {t('仅保存', 'Save only')}
                           </Button>
                           {p.apiKeySet && !p.isActive && (
                             <Button
