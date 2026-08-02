@@ -6,24 +6,18 @@
  * centres, laboratories) around a coordinate and normalise the results into
  * the facility schema used by the exam-booking UI.
  *
- * Note: OSM does not carry statutory licence numbers, so for each facility we
- * attach a `qualification` descriptor derived from the facility category plus
- * the competent health authority for the country (see REGULATORS). This is an
- * honest representation of "locally-recognised" institutions rather than a
- * fabricated licence number.
- *
  * @module server/geo/overpass
  */
 
 const { haversineKm } = require('./location');
+const { sanitizeFacilityWebsite } = require('./website');
 
 const OVERPASS_ENDPOINTS = [
   process.env.OVERPASS_API_URL,
-  'https://maps.mail.ru/osm/tools/overpass/api/interpreter',
   'https://overpass-api.de/api/interpreter',
   'https://overpass.kumi.systems/api/interpreter',
+  'https://maps.mail.ru/osm/tools/overpass/api/interpreter',
   'https://overpass.private.coffee/api/interpreter',
-  'https://overpass.openstreetmap.ru/api/interpreter',
 ].filter(Boolean);
 
 /** Health authority per country (competent regulator for medical institutions). */
@@ -43,21 +37,51 @@ const REGULATORS = {
 
 const DEFAULT_REGULATOR = { zh: '当地卫生主管部门', en: 'Local health authority' };
 
-/** OSM tag → internal facility type. */
+/** Exclude non medical-checkup noise commonly mistagged in OSM. */
+function isExcluded(tags = {}, name = '') {
+  const amenity = tags.amenity || '';
+  const healthcare = tags.healthcare || '';
+  const n = name.toLowerCase();
+  if (/veterinary|animal|宠物|动物|牙科|齿科|dental|dentist|药店|pharmacy|opti[ck]|眼科配镜|美容|cosmetic|plastic|整形|养生|spa|按摩|massage|养老|nursing|psychiatric|精神病|戒毒|rehab/.test(n)) {
+    return true;
+  }
+  if (['veterinary', 'dentist', 'pharmacy', 'nursing_home', 'social_facility'].includes(amenity)) return true;
+  if (['dentist', 'pharmacy', 'veterinary', 'nurse', 'physiotherapist', 'alternative', 'optometrist'].includes(healthcare)) {
+    return true;
+  }
+  return false;
+}
+
+/**
+ * OSM tag → internal facility type.
+ * Only keep institutions suitable for medical checkup booking:
+ * hospitals, checkup / health-management centres, medical labs, and larger clinics.
+ * Solo GPs / random doctors are excluded.
+ */
 function classify(tags = {}) {
   const amenity = tags.amenity;
   const healthcare = tags.healthcare;
-  const name = `${tags.name || ''} ${tags['name:en'] || ''} ${tags['name:zh'] || ''}`.toLowerCase();
+  const name = `${tags.name || ''} ${tags['name:en'] || ''} ${tags['name:zh'] || ''}`;
+  const nameL = name.toLowerCase();
   const speciality = (tags['healthcare:speciality'] || '').toLowerCase();
 
-  const looksLikeCheckup = /体检|健康管理|health\s?check|check[-\s]?up|medical\s?exam|screening|preventive/.test(name)
-    || /occupational|preventive|check_up|screening/.test(speciality);
+  if (!tags.name && !tags['name:en'] && !tags['name:zh']) return null;
+  if (isExcluded(tags, name)) return null;
 
-  if (amenity === 'hospital' || healthcare === 'hospital') return 'hospital';
-  if (healthcare === 'laboratory' || amenity === 'laboratory') return 'lab';
+  const looksLikeCheckup = /体检|健康管理|健康检查|health\s?check|check[-\s]?up|medical\s?exam|screening|preventive|occupational\s?health|wellness\s?centre|wellness\s?center/.test(nameL)
+    || /occupational|preventive|check_up|screening/.test(speciality);
+  const looksLikeHospital = /医院|hospital|infirmary|medical\s?center|medical\s?centre|nhs\s?trust|university\s?hospital|综合医院|人民医院|中心医院/.test(nameL);
+  const looksLikeLab = /检验|检查|实验室|laboratory|patholog|诊断中心|diagnostic/.test(nameL);
+
+  if (amenity === 'hospital' || healthcare === 'hospital' || looksLikeHospital) return 'hospital';
   if (looksLikeCheckup) return 'checkup';
-  if (amenity === 'clinic' || healthcare === 'clinic') return 'clinic';
-  if (amenity === 'doctors' || healthcare === 'doctor' || healthcare === 'centre') return 'clinic';
+  if (healthcare === 'laboratory' || looksLikeLab) return 'lab';
+  // Clinics only when they look like medical / checkup institutions (not beauty/solo GP).
+  if ((amenity === 'clinic' || healthcare === 'clinic' || healthcare === 'centre')
+    && /医院|门诊|医疗|clinic|medical|health|hospital|体检/.test(nameL)
+    && !/美容|dental|牙|宠物/.test(nameL)) {
+    return 'clinic';
+  }
   return null;
 }
 
@@ -106,24 +130,22 @@ function departments(tags = {}) {
   return raw.split(';').map((s) => s.replace(/_/g, ' ').trim()).filter(Boolean).slice(0, 6);
 }
 
-/**
- * Build the Overpass QL query for healthcare POIs around a point.
- * @param {number} lat
- * @param {number} lng
- * @param {number} radiusM
- * @returns {string}
- */
 function buildQuery(lat, lng, radiusM) {
   const r = Math.round(radiusM);
-  return `[out:json][timeout:25];
+  // Prefer hospitals / labs / clinics — exclude amenity=doctors (solo GP noise).
+  return `[out:json][timeout:12];
 (
-  nwr["amenity"~"^(hospital|clinic|doctors)$"](around:${r},${lat},${lng});
-  nwr["healthcare"~"^(hospital|clinic|centre|laboratory|doctor)$"](around:${r},${lat},${lng});
+  nwr["amenity"="hospital"](around:${r},${lat},${lng});
+  nwr["amenity"="clinic"](around:${r},${lat},${lng});
+  nwr["healthcare"="hospital"](around:${r},${lat},${lng});
+  nwr["healthcare"="clinic"](around:${r},${lat},${lng});
+  nwr["healthcare"="centre"](around:${r},${lat},${lng});
+  nwr["healthcare"="laboratory"](around:${r},${lat},${lng});
+  nwr["name"~"体检|健康管理|Health Check|Check[- ]?up|Medical Centre|Medical Center|Hospital",i](around:${r},${lat},${lng});
 );
-out center 250;`;
+out center 200;`;
 }
 
-/** Short-lived cache keyed by rounded coordinate + radius to avoid re-hitting mirrors. */
 const queryCache = new Map();
 const QUERY_TTL_MS = 15 * 60 * 1000;
 
@@ -132,56 +154,63 @@ function cacheKey(lat, lng, radiusM) {
 }
 
 /**
- * POST a query to the Overpass mirrors, trying each until one returns valid
- * JSON. Public mirrors are frequently rate-limited (429) or overloaded (504)
- * and may return HTML error pages, so every response is validated as JSON.
- * @param {string} query
- * @returns {Promise<Array>}
+ * Race Overpass mirrors in parallel — first valid JSON wins.
+ * Previously tried endpoints sequentially (up to ~60s), which hung the booking page.
  */
 async function runOverpass(query) {
-  const perTimeout = Number(process.env.OVERPASS_TIMEOUT_MS) || 12000;
-  let lastErr = null;
-  for (const endpoint of OVERPASS_ENDPOINTS) {
+  const perTimeout = Number(process.env.OVERPASS_TIMEOUT_MS) || 6000;
+  const overallTimeout = Number(process.env.OVERPASS_OVERALL_MS) || 8000;
+
+  const attempts = OVERPASS_ENDPOINTS.map(async (endpoint) => {
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'User-Agent': 'MedWear-HealthAnalytics/1.0 (exam-booking facility search)',
+      },
+      body: `data=${encodeURIComponent(query)}`,
+      signal: AbortSignal.timeout(perTimeout),
+    });
+    if (!res.ok) throw new Error(`Overpass ${res.status} @ ${endpoint}`);
+    const text = await res.text();
+    let json;
     try {
-      const res = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'User-Agent': 'MedWear-HealthAnalytics/1.0 (exam-booking facility search)',
-        },
-        body: `data=${encodeURIComponent(query)}`,
-        signal: AbortSignal.timeout(perTimeout),
-      });
-      if (!res.ok) { lastErr = new Error(`Overpass ${res.status} @ ${endpoint}`); continue; }
-      const text = await res.text();
-      let json;
-      try {
-        json = JSON.parse(text);
-      } catch {
-        lastErr = new Error(`Overpass non-JSON @ ${endpoint}`);
-        continue;
-      }
-      if (Array.isArray(json.elements)) return json.elements;
-      lastErr = new Error(`Overpass no elements @ ${endpoint}`);
-    } catch (err) {
-      lastErr = err;
+      json = JSON.parse(text);
+    } catch {
+      throw new Error(`Overpass non-JSON @ ${endpoint}`);
     }
-  }
-  if (lastErr) throw lastErr;
-  return [];
+    if (!Array.isArray(json.elements)) throw new Error(`Overpass no elements @ ${endpoint}`);
+    return json.elements;
+  });
+
+  return new Promise((resolve, reject) => {
+    let rejected = 0;
+    let settled = false;
+    const timer = setTimeout(() => {
+      if (!settled) {
+        settled = true;
+        reject(new Error('Overpass overall timeout'));
+      }
+    }, overallTimeout);
+
+    for (const p of attempts) {
+      p.then((elements) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        resolve(elements);
+      }).catch(() => {
+        rejected += 1;
+        if (!settled && rejected === attempts.length) {
+          settled = true;
+          clearTimeout(timer);
+          reject(new Error('All Overpass mirrors failed'));
+        }
+      });
+    }
+  });
 }
 
-/**
- * Fetch and normalise nearby medical facilities from OpenStreetMap.
- * @param {number} lat
- * @param {number} lng
- * @param {object} [opts]
- * @param {number} [opts.radiusKm=40]
- * @param {number} [opts.limit=30]
- * @param {string} [opts.country]
- * @param {string} [opts.city]
- * @returns {Promise<Array<object>>}
- */
 async function fetchNearbyFacilitiesOSM(lat, lng, opts = {}) {
   const { radiusKm = 40, limit = 30, country = '', city = '' } = opts;
   if (typeof lat !== 'number' || typeof lng !== 'number') return [];
@@ -212,12 +241,17 @@ async function fetchNearbyFacilitiesOSM(lat, lng, opts = {}) {
     if (typeof fLat !== 'number' || typeof fLng !== 'number') continue;
 
     const name = facilityName(tags, type, isZh);
+    // Skip nameless / generic placeholders
+    if (!name || /^(医院|hospital|clinic|医疗机构|medical facility)$/i.test(name.trim())) continue;
+
     const dedupeKey = `${name}|${fLat.toFixed(3)}|${fLng.toFixed(3)}`;
     if (seen.has(dedupeKey)) continue;
     seen.add(dedupeKey);
 
     const distanceKm = +haversineKm(lat, lng, fLat, fLng).toFixed(1);
     const typeLabelZh = { hospital: '医院', checkup: '体检中心', clinic: '门诊部', lab: '医学检验机构' }[type];
+    const rawWebsite = tags.website || tags['contact:website'] || tags['contact:website:en'] || '';
+    const website = sanitizeFacilityWebsite(name, rawWebsite);
 
     facilities.push({
       id: `osm-${el.type}-${el.id}`,
@@ -230,12 +264,11 @@ async function fetchNearbyFacilitiesOSM(lat, lng, opts = {}) {
       lat: fLat,
       lng: fLng,
       phone: tags.phone || tags['contact:phone'] || '',
-      website: tags.website || tags['contact:website'] || '',
+      website,
       departments: departments(tags),
       country: country || tags['addr:country'] || '',
       distanceKm,
       distance: distanceKm < 1 ? `${Math.round(distanceKm * 1000)} m` : `${distanceKm} km`,
-      // Qualification descriptor (no statutory licence number available from OSM).
       verified: false,
       qualification: {
         category: typeLabelZh,

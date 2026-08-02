@@ -447,30 +447,61 @@ app.get('/api/geo/location', async (req, res) => {
 });
 
 app.get('/api/hospitals', async (req, res) => {
-  let location = await geolocate(req);
-  location = withSearchCoords(location);
-  const radiusKm = Math.min(Number(req.query.radius) || 40, 200);
-  const type = req.query.type && req.query.type !== 'all' ? req.query.type : null;
-  const useLiveSearch = isRealMode(req)
-    || !/china|中国/i.test(String(location.country || ''));
+  try {
+    let location = await geolocate(req);
+    const geoFailed = location?.source === 'unavailable' || location?.lat == null;
+    location = withSearchCoords(location);
+    const radiusKm = Math.min(Number(req.query.radius) || 40, 100);
+    const type = req.query.type && req.query.type !== 'all' ? req.query.type : null;
+    const mode = isRealMode(req) ? 'real' : 'demo';
 
-  if (useLiveSearch) {
-    const { facilities, source } = await findNearbyHospitalsLive(location, { radiusKm, type });
-    rememberFacilities(location.ip, facilities);
+    // Both demo and real modes: realtime IP/GPS location + nearby medical facilities.
+    const {
+      facilities, source, searchRadiusKm, nearbyCount, expanded,
+    } = await findNearbyHospitalsLive(location, { radiusKm, type, minResults: 6 });
+    rememberFacilities(location.ip || `${location.lat},${location.lng}`, facilities);
+
+    const warnings = [];
+    if (geoFailed) {
+      warnings.push('IP 定位失败，已使用默认坐标；请允许浏览器定位或在 .env 设置 MEDWEAR_GEO_*');
+    } else if (location.fallback) {
+      warnings.push('定位坐标为回退值，距离可能不准确');
+    }
+    if (location.source === 'browser-gps' && location.ipCity && location.city
+      && location.ipCity !== location.city) {
+      warnings.push(`浏览器定位为 ${location.city}，公网 IP（${location.ip}）归属地为 ${location.ipCity}（VPN/代理时常见）`);
+    }
+    if (expanded || nearbyCount === 0) {
+      warnings.push(`已在 ${searchRadiusKm} km 范围内检索（上限 100 km）`);
+    }
+    if (!facilities.length) {
+      warnings.push('当前定位 100 km 内暂未找到医疗体检机构，请允许浏览器定位后重试，或设置 MEDWEAR_GEO_*');
+    }
+
     return res.json({
-      mode: isRealMode(req) ? 'real' : 'demo',
+      mode,
       location,
       hospitals: facilities,
       dataSource: source,
+      searchRadiusKm,
+      nearbyCount,
+      warning: warnings.length ? warnings.join('；') : undefined,
     });
+  } catch (err) {
+    try {
+      const loc = withSearchCoords({ source: 'error-fallback', ip: 'unknown' });
+      const { facilities } = await findNearbyHospitalsLive(loc, { radiusKm: 100, minResults: 6 });
+      return res.json({
+        mode: isRealMode(req) ? 'real' : 'demo',
+        location: loc,
+        hospitals: facilities,
+        dataSource: 'catalog',
+        warning: err.message || '医院列表加载失败，已返回本地目录',
+      });
+    } catch {
+      return res.status(500).json({ message: err.message || '医院列表加载失败' });
+    }
   }
-
-  return res.json({
-    mode: 'demo',
-    location,
-    hospitals: provider(req).getHospitals(),
-    dataSource: 'demo-catalog',
-  });
 });
 
 // ── Screening & Appointments ──

@@ -1,13 +1,15 @@
 const { findNearbyFacilities, getDemoFacilities, FACILITY_DB } = require('../data/medicalFacilities');
 const { fetchNearbyFacilitiesOSM } = require('./overpass');
+const { sanitizeFacilityWebsite } = require('./website');
 
-function findNearbyHospitals(lat, lng, limit = 15, maxKm = 800) {
-  return findNearbyFacilities(lat, lng, { limit, maxKm });
+const MAX_SEARCH_RADIUS_KM = 100;
+
+function findNearbyHospitals(lat, lng, limit = 15, maxKm = MAX_SEARCH_RADIUS_KM) {
+  return findNearbyFacilities(lat, lng, { limit, maxKm: Math.min(maxKm, MAX_SEARCH_RADIUS_KM) });
 }
 
 const LIVE_ENABLED = process.env.DISABLE_LIVE_HOSPITALS !== '1';
 
-/** Short-lived per-client cache so bookings can validate against the last shown list. */
 const facilityCache = new Map();
 const CACHE_TTL_MS = 10 * 60 * 1000;
 
@@ -27,7 +29,6 @@ function recallFacilities(key) {
   return hit.facilities;
 }
 
-/** Deduplicate curated + live facilities that describe the same place (name/proximity). */
 function mergeFacilities(curated, live) {
   const out = [...curated];
   const norm = (s) => (s || '').toLowerCase().replace(/[\s·・,，.。()（）]/g, '');
@@ -43,47 +44,94 @@ function mergeFacilities(curated, live) {
   return out.sort((a, b) => (a.distanceKm ?? 9999) - (b.distanceKm ?? 9999));
 }
 
+function withTimeout(promise, ms, fallback) {
+  return new Promise((resolve) => {
+    let done = false;
+    const timer = setTimeout(() => {
+      if (!done) {
+        done = true;
+        resolve(fallback);
+      }
+    }, ms);
+    promise.then((value) => {
+      if (!done) {
+        done = true;
+        clearTimeout(timer);
+        resolve(value);
+      }
+    }).catch(() => {
+      if (!done) {
+        done = true;
+        clearTimeout(timer);
+        resolve(fallback);
+      }
+    });
+  });
+}
+
+function polishFacilities(list) {
+  return (list || []).map((f) => {
+    const website = sanitizeFacilityWebsite(f.name, f.website);
+    return { ...f, website };
+  }).filter((f) => f.name && f.type);
+}
+
 /**
- * Real-mode nearby search. Combines the curated licensed catalog (rich Chinese
- * licence data) with live worldwide OpenStreetMap facilities so both domestic
- * and international, locally-recognised institutions are returned.
- *
- * @param {{lat:number,lng:number,country?:string,city?:string,ip?:string}} location
- * @param {object} [opts]
- * @param {number} [opts.limit=30]
- * @param {number} [opts.radiusKm=40]
- * @param {string} [opts.type]
- * @returns {Promise<{facilities:Array,source:string}>}
+ * Progressive nearby search for both demo and real modes.
+ * Expands OSM + catalog radius until enough checkup-relevant facilities are found.
  */
 async function findNearbyHospitalsLive(location, opts = {}) {
   const { lat, lng, country, city } = location || {};
-  const { limit = 30, radiusKm = 40, type = null } = opts;
+  const { limit = 30, radiusKm = 40, type = null, minResults = 6 } = opts;
 
-  const curated = findNearbyFacilities(lat, lng, { limit: 40, maxKm: radiusKm });
-
+  // Search radius may expand up to 100 km, never beyond.
+  const requested = Math.min(MAX_SEARCH_RADIUS_KM, Math.max(Number(radiusKm) || 40, 1));
+  let usedRadius = requested;
   let live = [];
-  if (LIVE_ENABLED) {
-    try {
-      live = await fetchNearbyFacilitiesOSM(lat, lng, { radiusKm, limit: 60, country, city });
-    } catch {
-      live = [];
+  let source = 'catalog';
+
+  const osmBudget = Number(process.env.OVERPASS_BUDGET_MS) || 7000;
+
+  async function searchAt(radius) {
+    const curated = findNearbyFacilities(lat, lng, { limit: 40, maxKm: radius });
+    let osm = [];
+    if (LIVE_ENABLED && typeof lat === 'number' && typeof lng === 'number') {
+      osm = await withTimeout(
+        fetchNearbyFacilitiesOSM(lat, lng, { radiusKm: radius, limit: 80, country, city }),
+        osmBudget,
+        [],
+      );
     }
+    let list = osm.length ? mergeFacilities(curated, osm) : curated;
+    list = polishFacilities(list)
+      .filter((f) => (f.distanceKm ?? 9999) <= radius)
+      .filter((f) => (!type || f.type === type));
+    return {
+      list,
+      source: osm.length ? (curated.length ? 'merged' : 'openstreetmap') : 'catalog',
+    };
   }
 
-  let facilities;
-  let source;
-  if (live.length) {
-    facilities = mergeFacilities(curated, live);
-    source = curated.length ? 'merged' : 'openstreetmap';
-  } else {
-    facilities = curated;
-    source = 'catalog';
+  let { list: facilities, source: src } = await searchAt(usedRadius);
+  source = src;
+
+  // Expand once to the 100 km cap if too few results.
+  if (facilities.length < minResults && usedRadius < MAX_SEARCH_RADIUS_KM) {
+    usedRadius = MAX_SEARCH_RADIUS_KM;
+    ({ list: facilities, source: src } = await searchAt(usedRadius));
+    source = src;
   }
 
-  if (type) facilities = facilities.filter((f) => f.type === type);
   facilities = facilities.slice(0, limit);
-
-  return { facilities, source };
+  const nearbyCount = facilities.length;
+  return {
+    facilities,
+    source,
+    searchRadiusKm: usedRadius,
+    nearbyCount,
+    expanded: usedRadius > requested,
+    maxRadiusKm: MAX_SEARCH_RADIUS_KM,
+  };
 }
 
 module.exports = {

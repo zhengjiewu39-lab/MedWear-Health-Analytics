@@ -100,7 +100,7 @@ export const settingsApi = {
 
 export const screeningApi = {
   getScreening: () => api.get('/screening'),
-  getHospitals: () => api.get('/hospitals'),
+  getHospitals: (params = {}) => api.get('/hospitals', { params, timeout: 25000 }),
   getExamPackages: () => api.get('/exam-packages'),
   getAppointments: () => api.get('/appointments'),
   getSlots: (date) => api.get('/appointments/slots', { params: { date } }),
