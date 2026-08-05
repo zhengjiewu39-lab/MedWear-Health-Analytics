@@ -1,0 +1,129 @@
+{
+  "dataset": "MedWear-Wearable-Analytics-Mini-v1",
+  "version": "1.0.0",
+  "license": "CC-BY-4.0",
+  "description": "Synthetic wearable time-series snippets with expert labels for alert detection, anomaly detection, and risk stratification. No real patient PHI.",
+  "thresholds": { "heartRateMax": 100, "heartRateMin": 50, "spo2Min": 93 },
+  "cases": [
+    {
+      "id": "WA-001",
+      "label": "Healthy baseline",
+      "targetDay": "2026-06-14",
+      "days": {
+        "2026-06-08": { "steps": 8200, "heartRate": [68, 70, 72, 69], "spo2": [97, 98], "hrv": [48, 52], "restingHeartRate": 62, "sleepMinutes": { "deep": 90, "rem": 100, "light": 200, "awake": 15 }, "activeEnergy": 420 },
+        "2026-06-09": { "steps": 7800, "heartRate": [67, 69, 71], "spo2": [97, 97], "hrv": [46, 50], "restingHeartRate": 63, "sleepMinutes": { "deep": 85, "rem": 95, "light": 210, "awake": 20 }, "activeEnergy": 400 },
+        "2026-06-10": { "steps": 8500, "heartRate": [66, 68, 70], "spo2": [98, 98], "hrv": [50, 54], "restingHeartRate": 61, "sleepMinutes": { "deep": 95, "rem": 105, "light": 195, "awake": 10 }, "activeEnergy": 430 },
+        "2026-06-11": { "steps": 8100, "heartRate": [69, 71, 73], "spo2": [97, 98], "hrv": [47, 51], "restingHeartRate": 64, "sleepMinutes": { "deep": 88, "rem": 98, "light": 205, "awake": 18 }, "activeEnergy": 410 },
+        "2026-06-12": { "steps": 7900, "heartRate": [68, 70, 72], "spo2": [97, 97], "hrv": [49, 53], "restingHeartRate": 62, "sleepMinutes": { "deep": 92, "rem": 102, "light": 198, "awake": 12 }, "activeEnergy": 405 },
+        "2026-06-13": { "steps": 8300, "heartRate": [67, 69, 71], "spo2": [98, 98], "hrv": [51, 55], "restingHeartRate": 61, "sleepMinutes": { "deep": 93, "rem": 103, "light": 200, "awake": 14 }, "activeEnergy": 425 },
+        "2026-06-14": { "steps": 8600, "heartRate": [66, 68, 70, 69], "spo2": [97, 98], "hrv": [50, 52], "restingHeartRate": 62, "sleepMinutes": { "deep": 90, "rem": 100, "light": 200, "awake": 15 }, "activeEnergy": 440 }
+      },
+      "expected": { "alerts": [], "anomaly": false, "riskLevel": "low", "healthScoreMin": 75 }
+    },
+    {
+      "id": "WA-002",
+      "label": "Tachycardia alert",
+      "targetDay": "2026-06-14",
+      "days": {
+        "2026-06-08": { "steps": 6000, "heartRate": [70, 72, 74], "spo2": [97, 98], "hrv": [40, 42], "restingHeartRate": 68, "sleepMinutes": { "deep": 70, "rem": 80, "light": 180, "awake": 30 }, "activeEnergy": 350 },
+        "2026-06-09": { "steps": 5500, "heartRate": [72, 74, 76], "spo2": [96, 97], "hrv": [38, 40], "restingHeartRate": 70, "sleepMinutes": { "deep": 65, "rem": 75, "light": 190, "awake": 35 }, "activeEnergy": 320 },
+        "2026-06-10": { "steps": 5800, "heartRate": [71, 73, 75], "spo2": [97, 97], "hrv": [39, 41], "restingHeartRate": 69, "sleepMinutes": { "deep": 68, "rem": 78, "light": 185, "awake": 32 }, "activeEnergy": 330 },
+        "2026-06-11": { "steps": 5200, "heartRate": [73, 75, 77], "spo2": [96, 96], "hrv": [37, 39], "restingHeartRate": 71, "sleepMinutes": { "deep": 60, "rem": 70, "light": 195, "awake": 40 }, "activeEnergy": 300 },
+        "2026-06-12": { "steps": 5600, "heartRate": [74, 76, 78], "spo2": [96, 97], "hrv": [36, 38], "restingHeartRate": 72, "sleepMinutes": { "deep": 62, "rem": 72, "light": 188, "awake": 38 }, "activeEnergy": 310 },
+        "2026-06-13": { "steps": 5400, "heartRate": [75, 77, 79], "spo2": [96, 96], "hrv": [35, 37], "restingHeartRate": 73, "sleepMinutes": { "deep": 58, "rem": 68, "light": 200, "awake": 42 }, "activeEnergy": 290 },
+        "2026-06-14": { "steps": 5000, "heartRate": [105, 108, 112, 110], "spo2": [96, 97], "hrv": [32, 34], "restingHeartRate": 88, "sleepMinutes": { "deep": 55, "rem": 65, "light": 195, "awake": 45 }, "activeEnergy": 280 }
+      },
+      "expected": { "alerts": ["心率偏高"], "anomaly": false, "riskLevel": "moderate", "healthScoreMin": 50 }
+    },
+    {
+      "id": "WA-003",
+      "label": "Bradycardia alert",
+      "targetDay": "2026-06-14",
+      "days": {
+        "2026-06-08": { "steps": 7000, "heartRate": [55, 58, 56], "spo2": [98, 98], "hrv": [55, 58], "restingHeartRate": 54, "sleepMinutes": { "deep": 100, "rem": 110, "light": 190, "awake": 10 }, "activeEnergy": 380 },
+        "2026-06-09": { "steps": 7200, "heartRate": [54, 57, 55], "spo2": [98, 99], "hrv": [56, 59], "restingHeartRate": 53, "sleepMinutes": { "deep": 105, "rem": 115, "light": 185, "awake": 8 }, "activeEnergy": 390 },
+        "2026-06-10": { "steps": 6800, "heartRate": [56, 58, 57], "spo2": [98, 98], "hrv": [54, 57], "restingHeartRate": 55, "sleepMinutes": { "deep": 98, "rem": 108, "light": 192, "awake": 12 }, "activeEnergy": 370 },
+        "2026-06-11": { "steps": 7100, "heartRate": [55, 57, 56], "spo2": [99, 98], "hrv": [57, 60], "restingHeartRate": 54, "sleepMinutes": { "deep": 102, "rem": 112, "light": 188, "awake": 9 }, "activeEnergy": 385 },
+        "2026-06-12": { "steps": 6900, "heartRate": [54, 56, 55], "spo2": [98, 98], "hrv": [55, 58], "restingHeartRate": 53, "sleepMinutes": { "deep": 100, "rem": 110, "light": 190, "awake": 11 }, "activeEnergy": 375 },
+        "2026-06-13": { "steps": 7300, "heartRate": [55, 58, 56], "spo2": [98, 99], "hrv": [56, 59], "restingHeartRate": 54, "sleepMinutes": { "deep": 103, "rem": 113, "light": 187, "awake": 8 }, "activeEnergy": 395 },
+        "2026-06-14": { "steps": 6500, "heartRate": [42, 44, 43, 45], "spo2": [98, 98], "hrv": [58, 60], "restingHeartRate": 43, "sleepMinutes": { "deep": 110, "rem": 120, "light": 180, "awake": 5 }, "activeEnergy": 360 }
+      },
+      "expected": { "alerts": ["心率偏低"], "anomaly": false, "riskLevel": "moderate", "healthScoreMin": 60 }
+    },
+    {
+      "id": "WA-004",
+      "label": "Hypoxemia alert",
+      "targetDay": "2026-06-14",
+      "days": {
+        "2026-06-08": { "steps": 7500, "heartRate": [72, 74, 73], "spo2": [97, 98], "hrv": [42, 45], "restingHeartRate": 70, "sleepMinutes": { "deep": 80, "rem": 90, "light": 200, "awake": 25 }, "activeEnergy": 360 },
+        "2026-06-09": { "steps": 7200, "heartRate": [73, 75, 74], "spo2": [96, 97], "hrv": [40, 43], "restingHeartRate": 71, "sleepMinutes": { "deep": 75, "rem": 85, "light": 205, "awake": 28 }, "activeEnergy": 350 },
+        "2026-06-10": { "steps": 6800, "heartRate": [74, 76, 75], "spo2": [95, 96], "hrv": [38, 41], "restingHeartRate": 72, "sleepMinutes": { "deep": 70, "rem": 80, "light": 210, "awake": 30 }, "activeEnergy": 340 },
+        "2026-06-11": { "steps": 7000, "heartRate": [75, 77, 76], "spo2": [94, 95], "hrv": [37, 40], "restingHeartRate": 73, "sleepMinutes": { "deep": 68, "rem": 78, "light": 212, "awake": 32 }, "activeEnergy": 345 },
+        "2026-06-12": { "steps": 6500, "heartRate": [76, 78, 77], "spo2": [93, 94], "hrv": [35, 38], "restingHeartRate": 74, "sleepMinutes": { "deep": 65, "rem": 75, "light": 215, "awake": 35 }, "activeEnergy": 330 },
+        "2026-06-13": { "steps": 6200, "heartRate": [77, 79, 78], "spo2": [92, 93], "hrv": [34, 37], "restingHeartRate": 75, "sleepMinutes": { "deep": 60, "rem": 70, "light": 220, "awake": 38 }, "activeEnergy": 320 },
+        "2026-06-14": { "steps": 5800, "heartRate": [78, 80, 79], "spo2": [89, 90, 91], "hrv": [32, 35], "restingHeartRate": 76, "sleepMinutes": { "deep": 55, "rem": 65, "light": 225, "awake": 40 }, "activeEnergy": 300 }
+      },
+      "expected": { "alerts": ["血氧偏低"], "anomaly": true, "riskLevel": "high", "healthScoreMin": 40 }
+    },
+    {
+      "id": "WA-005",
+      "label": "Sedentary alert",
+      "targetDay": "2026-06-14",
+      "days": {
+        "2026-06-08": { "steps": 8500, "heartRate": [68, 70], "spo2": [97, 98], "hrv": [48, 50], "restingHeartRate": 65, "sleepMinutes": { "deep": 90, "rem": 100, "light": 200, "awake": 15 }, "activeEnergy": 400 },
+        "2026-06-09": { "steps": 8200, "heartRate": [69, 71], "spo2": [97, 98], "hrv": [47, 49], "restingHeartRate": 66, "sleepMinutes": { "deep": 88, "rem": 98, "light": 202, "awake": 16 }, "activeEnergy": 390 },
+        "2026-06-10": { "steps": 7800, "heartRate": [70, 72], "spo2": [97, 97], "hrv": [46, 48], "restingHeartRate": 67, "sleepMinutes": { "deep": 85, "rem": 95, "light": 205, "awake": 18 }, "activeEnergy": 380 },
+        "2026-06-11": { "steps": 8000, "heartRate": [68, 70], "spo2": [98, 98], "hrv": [48, 50], "restingHeartRate": 65, "sleepMinutes": { "deep": 90, "rem": 100, "light": 200, "awake": 15 }, "activeEnergy": 395 },
+        "2026-06-12": { "steps": 7600, "heartRate": [69, 71], "spo2": [97, 98], "hrv": [47, 49], "restingHeartRate": 66, "sleepMinutes": { "deep": 87, "rem": 97, "light": 203, "awake": 17 }, "activeEnergy": 385 },
+        "2026-06-13": { "steps": 8100, "heartRate": [68, 70], "spo2": [97, 98], "hrv": [49, 51], "restingHeartRate": 64, "sleepMinutes": { "deep": 92, "rem": 102, "light": 198, "awake": 14 }, "activeEnergy": 400 },
+        "2026-06-14": { "steps": 1800, "heartRate": [72, 74], "spo2": [97, 98], "hrv": [45, 47], "restingHeartRate": 70, "sleepMinutes": { "deep": 80, "rem": 90, "light": 210, "awake": 25 }, "activeEnergy": 120 }
+      },
+      "expected": { "alerts": ["活动量不足"], "anomaly": false, "riskLevel": "moderate", "healthScoreMin": 55 }
+    },
+    {
+      "id": "WA-006",
+      "label": "HR spike anomaly",
+      "targetDay": "2026-06-14",
+      "days": {
+        "2026-06-08": { "steps": 7000, "heartRate": [68, 70, 69, 71], "spo2": [97, 98], "hrv": [45, 48], "restingHeartRate": 67, "sleepMinutes": { "deep": 85, "rem": 95, "light": 200, "awake": 20 }, "activeEnergy": 360 },
+        "2026-06-09": { "steps": 7200, "heartRate": [69, 71, 70, 72], "spo2": [97, 98], "hrv": [46, 49], "restingHeartRate": 68, "sleepMinutes": { "deep": 88, "rem": 98, "light": 198, "awake": 18 }, "activeEnergy": 370 },
+        "2026-06-10": { "steps": 6800, "heartRate": [68, 70, 69, 71], "spo2": [98, 98], "hrv": [47, 50], "restingHeartRate": 67, "sleepMinutes": { "deep": 90, "rem": 100, "light": 195, "awake": 16 }, "activeEnergy": 355 },
+        "2026-06-11": { "steps": 7100, "heartRate": [70, 72, 71, 73], "spo2": [97, 97], "hrv": [45, 48], "restingHeartRate": 69, "sleepMinutes": { "deep": 86, "rem": 96, "light": 202, "awake": 19 }, "activeEnergy": 365 },
+        "2026-06-12": { "steps": 6900, "heartRate": [69, 71, 70, 72], "spo2": [97, 98], "hrv": [46, 49], "restingHeartRate": 68, "sleepMinutes": { "deep": 87, "rem": 97, "light": 200, "awake": 17 }, "activeEnergy": 360 },
+        "2026-06-13": { "steps": 7300, "heartRate": [68, 70, 69, 71], "spo2": [98, 98], "hrv": [48, 51], "restingHeartRate": 67, "sleepMinutes": { "deep": 89, "rem": 99, "light": 197, "awake": 15 }, "activeEnergy": 375 },
+        "2026-06-14": { "steps": 6500, "heartRate": [70, 72, 130, 128, 132, 129, 71, 73], "spo2": [97, 98], "hrv": [44, 47], "restingHeartRate": 70, "sleepMinutes": { "deep": 82, "rem": 92, "light": 205, "awake": 22 }, "activeEnergy": 340 }
+      },
+      "expected": { "alerts": [], "anomaly": true, "riskLevel": "moderate", "healthScoreMin": 60 }
+    },
+    {
+      "id": "WA-007",
+      "label": "Poor sleep high risk",
+      "targetDay": "2026-06-14",
+      "days": {
+        "2026-06-08": { "steps": 4000, "heartRate": [78, 80, 79], "spo2": [96, 97], "hrv": [28, 30], "restingHeartRate": 76, "sleepMinutes": { "deep": 30, "rem": 40, "light": 150, "awake": 60 }, "activeEnergy": 200 },
+        "2026-06-09": { "steps": 3500, "heartRate": [79, 81, 80], "spo2": [95, 96], "hrv": [26, 28], "restingHeartRate": 77, "sleepMinutes": { "deep": 25, "rem": 35, "light": 155, "awake": 65 }, "activeEnergy": 180 },
+        "2026-06-10": { "steps": 3800, "heartRate": [80, 82, 81], "spo2": [95, 95], "hrv": [25, 27], "restingHeartRate": 78, "sleepMinutes": { "deep": 28, "rem": 38, "light": 152, "awake": 62 }, "activeEnergy": 190 },
+        "2026-06-11": { "steps": 3200, "heartRate": [81, 83, 82], "spo2": [94, 95], "hrv": [24, 26], "restingHeartRate": 79, "sleepMinutes": { "deep": 22, "rem": 32, "light": 158, "awake": 68 }, "activeEnergy": 170 },
+        "2026-06-12": { "steps": 3600, "heartRate": [82, 84, 83], "spo2": [94, 94], "hrv": [23, 25], "restingHeartRate": 80, "sleepMinutes": { "deep": 20, "rem": 30, "light": 160, "awake": 70 }, "activeEnergy": 175 },
+        "2026-06-13": { "steps": 3000, "heartRate": [83, 85, 84], "spo2": [93, 94], "hrv": [22, 24], "restingHeartRate": 81, "sleepMinutes": { "deep": 18, "rem": 28, "light": 162, "awake": 72 }, "activeEnergy": 160 },
+        "2026-06-14": { "steps": 2800, "heartRate": [84, 86, 85], "spo2": [93, 93], "hrv": [20, 22], "restingHeartRate": 82, "sleepMinutes": { "deep": 15, "rem": 25, "light": 165, "awake": 75 }, "activeEnergy": 150 }
+      },
+      "expected": { "alerts": ["活动量不足"], "anomaly": true, "riskLevel": "high", "healthScoreMin": 30 }
+    },
+    {
+      "id": "WA-008",
+      "label": "Multi-alert compound",
+      "targetDay": "2026-06-14",
+      "days": {
+        "2026-06-08": { "steps": 6000, "heartRate": [75, 77], "spo2": [96, 97], "hrv": [35, 38], "restingHeartRate": 73, "sleepMinutes": { "deep": 60, "rem": 70, "light": 190, "awake": 35 }, "activeEnergy": 300 },
+        "2026-06-09": { "steps": 5500, "heartRate": [76, 78], "spo2": [95, 96], "hrv": [34, 37], "restingHeartRate": 74, "sleepMinutes": { "deep": 55, "rem": 65, "light": 195, "awake": 38 }, "activeEnergy": 280 },
+        "2026-06-10": { "steps": 5200, "heartRate": [77, 79], "spo2": [94, 95], "hrv": [33, 36], "restingHeartRate": 75, "sleepMinutes": { "deep": 50, "rem": 60, "light": 200, "awake": 40 }, "activeEnergy": 270 },
+        "2026-06-11": { "steps": 5000, "heartRate": [78, 80], "spo2": [93, 94], "hrv": [32, 35], "restingHeartRate": 76, "sleepMinutes": { "deep": 48, "rem": 58, "light": 202, "awake": 42 }, "activeEnergy": 260 },
+        "2026-06-12": { "steps": 4800, "heartRate": [79, 81], "spo2": [92, 93], "hrv": [30, 33], "restingHeartRate": 77, "sleepMinutes": { "deep": 45, "rem": 55, "light": 205, "awake": 45 }, "activeEnergy": 250 },
+        "2026-06-13": { "steps": 4500, "heartRate": [80, 82], "spo2": [91, 92], "hrv": [28, 31], "restingHeartRate": 78, "sleepMinutes": { "deep": 42, "rem": 52, "light": 208, "awake": 48 }, "activeEnergy": 240 },
+        "2026-06-14": { "steps": 2200, "heartRate": [110, 112, 115], "spo2": [88, 89], "hrv": [25, 28], "restingHeartRate": 90, "sleepMinutes": { "deep": 40, "rem": 50, "light": 210, "awake": 50 }, "activeEnergy": 130 }
+      },
+      "expected": { "alerts": ["心率偏高", "血氧偏低", "活动量不足"], "anomaly": true, "riskLevel": "high", "healthScoreMin": 25 }
+    }
+  ]
+}

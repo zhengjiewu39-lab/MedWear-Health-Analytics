@@ -44,6 +44,7 @@
     "desktop:win": "npm run build && electron-builder --win",
     "test:ai": "node scripts/test-ai.js",
     "evaluate": "node scripts/evaluate-analytics.js",
+    "generate:benchmark": "node scripts/generate-wearable-benchmark.js --n 1000 --seed 42",
     "generate:cohort": "node scripts/generate-screening-cohort.js",
     "evaluate:outcomes": "node scripts/evaluate-screening-outcomes.js",
     "validate:cohort": "node scripts/validate-clinical-cohort.js",

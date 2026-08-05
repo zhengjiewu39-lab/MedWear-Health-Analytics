@@ -4,7 +4,8 @@ import {
   Table, TableBody, TableCell, TableHead, TableRow, Button,
 } from '@mui/material';
 import { MenuBook, Refresh } from '@mui/icons-material';
-import { methodologyApi } from '../services/api';
+import { methodologyApi, researchApi } from '../services/api';
+import EvaluationIntegrityBanner from '../components/EvaluationIntegrityBanner';
 import { useLang } from '../contexts/LanguageContext';
 
 /** Split a line into React nodes, handling `code` and **bold**. */
@@ -197,16 +198,25 @@ function MarkdownBlock({ block }) {
 function Methodology() {
   const { t, isEn } = useLang();
   const [doc, setDoc] = useState(null);
+  const [evalFramework, setEvalFramework] = useState(null);
+  const [wearableEval, setWearableEval] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   const load = useCallback(() => {
     setLoading(true);
     setError('');
-    methodologyApi.get(isEn ? 'en' : 'zh')
-      .then((res) => setDoc(res.data))
-      .catch((e) => setError(e.response?.data?.message || t('方法学文档加载失败，请确认后端 API 已启动', 'Failed to load methodology doc — please ensure the backend API is running')))
-      .finally(() => setLoading(false));
+    Promise.allSettled([
+      methodologyApi.get(isEn ? 'en' : 'zh'),
+      researchApi.getEvaluationFramework(),
+    ]).then(([docRes, fwRes]) => {
+      if (docRes.status === 'fulfilled') setDoc(docRes.value.data);
+      else setError(docRes.reason?.response?.data?.message || t('方法学文档加载失败，请确认后端 API 已启动', 'Failed to load methodology doc — please ensure the backend API is running'));
+      if (fwRes.status === 'fulfilled') {
+        setEvalFramework(fwRes.value.data);
+        setWearableEval(fwRes.value.data?.wearable?.latestEvaluation || null);
+      }
+    }).finally(() => setLoading(false));
   }, [t, isEn]);
 
   useEffect(() => { load(); }, [load]);
@@ -232,8 +242,17 @@ function Methodology() {
         <Button startIcon={<Refresh />} onClick={load}>{t('刷新', 'Refresh')}</Button>
       </Box>
 
+      <EvaluationIntegrityBanner framework={evalFramework || doc?.framework} wearableResults={wearableEval} compact />
+
       {doc?.framework && (
         <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', mb: 2 }}>
+          <Chip
+            size="small"
+            color="secondary"
+            label={isEn
+              ? `${doc.framework.benchmark_name || 'Clinical-v2'} · n=${doc.framework.benchmark_n || 1000}`
+              : `${doc.framework.benchmark_name_zh || doc.framework.benchmark_name || 'Clinical-v2'} · n=${doc.framework.benchmark_n || 1000}`}
+          />
           <Chip size="small" color="primary" label={`${t('开放基准', 'Open benchmark')} ${doc.framework.benchmark_license}`} />
           <Chip
             size="small"

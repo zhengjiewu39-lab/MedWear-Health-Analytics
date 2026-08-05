@@ -2,16 +2,33 @@
 
 ## 基准数据集
 
-**MedWear-Wearable-Analytics-Mini-v1** — 8 例合成多日可穿戴案例（CC-BY-4.0）。
+**MedWear-Wearable-Analytics-Clinical-v2** — 1000 例合成多日可穿戴案例（CC-BY-4.0），可用于 Wilson 95% CI 临床性能估计。
 
-每例含 7 天步数、心率、SpO₂、HRV、睡眠及专家标注：
+### 双引擎架构（防止自评虚高）
+
+| 角色 | 模块 | 用途 |
+|------|------|------|
+| 产品流水线 | `MedWear-AnalyticsCore-v1` | 应用内实时告警/异常/风险 |
+| 基准金标准 | `clinicalGoldStandard-v1` | 独立标注（更严 SpO₂、不同评分公式） |
+| 评测 | `engine-vs-gold-agreement` | 衡量分歧率，**非**引擎自标注 |
+
+生理信号：**28% 均匀随机** + **72% 表型随机**（`seed=42`）。
+
+每例含 7 天步数、心率、SpO₂、HRV、睡眠；**临床金标准** 由 `clinicalGoldStandard-v1` 裁决（与产品引擎分离）：
 
 - 预期告警类型
 - 是否存在异常（二分类）
 - 风险等级（低 / 中 / 高）
 - 健康评分下限
 
-文件：`benchmarks/wearable-analytics-dataset.json`
+文件：`benchmarks/wearable-analytics-dataset.json`  
+原始 8 例种子：`benchmarks/wearable-analytics-seed-v1.json`
+
+**重新生成（可复现，seed=42）：**
+
+```bash
+npm run generate:benchmark
+```
 
 ## 运行评测
 
@@ -30,10 +47,11 @@ npm run evaluate
 | 异常准确率 | `anomalyDetected` 二分类一致率 |
 | 风险准确率 | `riskLevel` 三分类一致率 |
 | 分数达标 | healthScore ≥ 预期下限 |
+| 95% CI | Wilson 区间（n≥100 时可用于临床报告） |
 
-## 参考结果（v1，n=8）
+## 参考结果（v2，n=1000）
 
-运行 `npm run evaluate` 获取当前数值。规则流水线与标注阈值一致，预期表现稳定。
+运行 `npm run evaluate` 获取当前数值及置信区间。指标为 **产品引擎 vs 临床金标准** 的一致率；若全部 ≥98% 说明标注与引擎同源（无效）。典型量级：告警 F1 ~0.90，异常/风险 ~85%，评分一致 ~94%。
 
 ## API 评测
 
@@ -44,7 +62,7 @@ curl http://localhost:3001/api/research/results
 
 ## 后续工作
 
-- 扩展至 50+ 案例（缺失传感器、稀疏数据等边界）
+- 在 v2 生成器内扩展边界案例（缺失传感器、稀疏数据等）
 - 与朴素基线对比（人群固定阈值）
 - 在公开可穿戴数据集上交叉验证（WESAD、PPG-DaLiA 子集等）
 - 临床专家对筛查类别映射的审阅

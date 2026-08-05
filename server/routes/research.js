@@ -10,11 +10,18 @@ const {
   listReferenceSubsets,
   getReferenceSubset,
 } = require('../screening/cohortValidator');
+const {
+  getFrameworkPayload,
+  summarizeWearableResults,
+  wearable: wearablePolicy,
+} = require('../config/evaluationFramework');
 
 const router = express.Router();
 const DATASET_PATH = path.join(__dirname, '../../benchmarks/screening-outcome-dataset.json');
 const RESULTS_PATH = path.join(__dirname, '../../benchmarks/results/screening-outcomes-latest.json');
 const VALIDATION_PATH = path.join(__dirname, '../../benchmarks/results/clinical-validation-latest.json');
+const WEARABLE_DATASET_PATH = path.join(__dirname, '../../benchmarks/wearable-analytics-dataset.json');
+const WEARABLE_RESULTS_PATH = path.join(__dirname, '../../benchmarks/results/latest.json');
 
 function loadDatasetSummary() {
   const summary = getOutcomeSummary();
@@ -39,8 +46,103 @@ function loadDatasetSummary() {
   };
 }
 
+function loadWearableBenchmarkSummary() {
+  if (!fs.existsSync(WEARABLE_DATASET_PATH)) {
+    return {
+      available: false,
+      message: 'Wearable benchmark not found. Run npm run generate:benchmark',
+    };
+  }
+  const raw = JSON.parse(fs.readFileSync(WEARABLE_DATASET_PATH, 'utf8'));
+  const riskLevel = { low: 0, moderate: 0, high: 0 };
+  const anomaly = { true: 0, false: 0 };
+  (raw.cases || []).forEach((c) => {
+    if (c.expected?.riskLevel) riskLevel[c.expected.riskLevel] += 1;
+    if (c.expected?.anomaly != null) anomaly[c.expected.anomaly] += 1;
+  });
+  return {
+    available: true,
+    dataset: raw.dataset,
+    version: raw.version,
+    license: raw.license || 'CC-BY-4.0',
+    superseded: raw.superseded,
+    description: raw.description,
+    n: raw.n,
+    seed: raw.seed,
+    daysPerCase: raw.daysPerCase,
+    expansionMethod: raw.expansionMethod,
+    labelSource: raw.labelSource || wearablePolicy.labelSource,
+    generatedAt: raw.generatedAt,
+    phenotypeDistribution: raw.phenotypeDistribution || raw.archetypeDistribution,
+    archetypeDistribution: raw.archetypeDistribution,
+    thresholds: raw.thresholds,
+    labelDistribution: { riskLevel, anomaly },
+    sampleCases: (raw.cases || []).slice(0, 16).map((c) => ({
+      id: c.id,
+      label: c.label,
+      expected: c.expected,
+    })),
+    reproducible: {
+      generate: 'npm run generate:benchmark',
+      evaluate: 'npm run evaluate',
+      reference: 'benchmarks/wearable-analytics-dataset.json',
+    },
+    latestEvaluation: fs.existsSync(WEARABLE_RESULTS_PATH)
+      ? summarizeWearableResults(JSON.parse(fs.readFileSync(WEARABLE_RESULTS_PATH, 'utf8')))
+      : null,
+  };
+}
+
+function loadWearableResults() {
+  if (fs.existsSync(WEARABLE_RESULTS_PATH)) {
+    const raw = JSON.parse(fs.readFileSync(WEARABLE_RESULTS_PATH, 'utf8'));
+    return summarizeWearableResults(raw) || {
+      dataset: raw.dataset,
+      version: raw.version,
+      evaluatedAt: raw.evaluatedAt,
+      n: raw.n,
+      engine: raw.engine,
+      metrics: raw.metrics,
+      mismatchCount: (raw.mismatches || []).length,
+      circularLabelWarning: raw.circularLabelWarning || null,
+      integrity: 'independent-gold',
+    };
+  }
+  return {
+    message: 'No cached wearable results. Run POST /research/wearable/evaluate first.',
+    dataset: wearablePolicy.dataset,
+    n: loadWearableBenchmarkSummary().n || null,
+    metrics: null,
+    integrity: 'pending',
+  };
+}
+
+router.get('/framework', (_, res) => {
+  const payload = getFrameworkPayload();
+  const latest = loadWearableResults();
+  if (latest?.metrics) payload.wearable.latestEvaluation = latest;
+  res.json(payload);
+});
+
 router.get('/dataset', (_, res) => {
   res.json(loadDatasetSummary());
+});
+
+router.get('/wearable/dataset', (_, res) => {
+  res.json(loadWearableBenchmarkSummary());
+});
+
+router.get('/wearable/results', (_, res) => {
+  res.json(loadWearableResults());
+});
+
+router.post('/wearable/evaluate', (_, res) => {
+  const { run } = require('../../scripts/evaluate-analytics');
+  const results = run();
+  fs.mkdirSync(path.dirname(WEARABLE_RESULTS_PATH), { recursive: true });
+  fs.writeFileSync(WEARABLE_RESULTS_PATH, JSON.stringify(results, null, 2));
+  const summary = summarizeWearableResults(results);
+  res.json(summary);
 });
 
 router.get('/results', (_, res) => {
@@ -59,7 +161,23 @@ router.get('/results', (_, res) => {
 });
 
 router.get('/methods', (_, res) => {
+  const wearable = loadWearableBenchmarkSummary();
   res.json({
+    wearableBenchmark: wearable.available ? {
+      name: wearable.dataset,
+      version: wearable.version,
+      n: wearable.n,
+      seed: wearable.seed,
+      superseded: wearable.superseded,
+      expansionMethod: wearable.expansionMethod,
+      labelSource: wearable.labelSource,
+      archetypes: wearable.phenotypeDistribution?.length || 8,
+      metrics: ['alert F1', 'anomaly accuracy', 'risk accuracy', 'score agreement (±8)', 'Wilson 95% CI'],
+      evaluationModel: wearablePolicy.evaluationModel,
+      goldStandard: wearablePolicy.goldStandard,
+      productEngine: wearablePolicy.productEngine,
+      reference: wearable.reproducible?.reference,
+    } : null,
     cohort: {
       name: 'MedWear-Screening-Outcome-Cohort-v1',
       n: 5000,
@@ -80,6 +198,10 @@ router.get('/methods', (_, res) => {
       steps: 'screening → anomaly → prediction → AI intervention → report → exam → evaluation → outcomes',
     },
     reproducibility: {
+      wearable: {
+        generate: 'npm run generate:benchmark',
+        evaluate: 'npm run evaluate',
+      },
       generate: 'npm run generate:cohort',
       evaluate: 'npm run evaluate:outcomes',
       validate: 'npm run validate:cohort',

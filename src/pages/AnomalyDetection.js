@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Box, Typography, Paper, Grid, Card, CardContent, Chip, Button,
   LinearProgress, Dialog, DialogTitle, DialogContent, DialogActions, Alert,
@@ -7,6 +7,8 @@ import { BugReport, Psychology, CheckCircle, NewReleases, Search } from '@mui/ic
 import { useNavigate } from 'react-router-dom';
 import InterventionPathway from '../components/InterventionPathway';
 import AiGovernanceBanner from '../components/AiGovernanceBanner';
+import EvaluationIntegrityBanner from '../components/EvaluationIntegrityBanner';
+import { researchApi } from '../services/api';
 import { aiApi } from '../services/api';
 import useModeRefresh from '../hooks/useModeRefresh';
 import { PROXY_SIGNALS } from '../config/paperDemo';
@@ -39,6 +41,13 @@ function AnomalyDetection() {
   const [selected, setSelected] = useState(null);
   const [analysis, setAnalysis] = useState(null);
   const [analyzing, setAnalyzing] = useState(false);
+  const [evalFramework, setEvalFramework] = useState(null);
+
+  useEffect(() => {
+    researchApi.getEvaluationFramework()
+      .then((res) => setEvalFramework(res.data))
+      .catch(() => {});
+  }, []);
 
   const anomalies = useMemo(
     () => localizeAnomalies(rawAnomalies, isEn),
@@ -97,6 +106,7 @@ function AnomalyDetection() {
     <Box>
       <InterventionPathway />
       <AiGovernanceBanner compact />
+      <EvaluationIntegrityBanner framework={evalFramework} compact />
       <Typography variant="h5" gutterBottom fontWeight={600}>
         {t('个体异常检测（代理信号）', 'Individual Anomaly Detection (Proxy Signals)')}
       </Typography>

@@ -99,16 +99,20 @@ Supported: HeartRate, OxygenSaturation, StepCount, SleepAnalysis, HRV, ActiveEne
 
 ## Evaluation & Reproducibility
 
+**Anti–self-test policy:** wearable benchmark labels come from `clinicalGoldStandard-v1` (independent of `MedWear-AnalyticsCore-v1`). Metrics measure **engine vs gold agreement** — not circular 100% self-scores.
+
 ```bash
-npm run test:server    # unit tests
-npm run evaluate       # → benchmarks/results/latest.json
+npm run generate:benchmark   # random physiology + independent gold labels (n=1000)
+npm run test:server
+npm run evaluate             # → benchmarks/results/latest.json
 ```
 
-| Metric (n=8) | Value |
+| Metric (n=1000, seed=42) | Typical value |
 |--------------|-------|
-| Alert F1 | 0.94 |
-| Anomaly Accuracy | 0.75 |
-| Risk Accuracy | 0.63 |
+| Alert F1 | ~0.90 |
+| Anomaly accuracy | ~0.86 |
+| Risk accuracy | ~0.86 |
+| Score agreement (±8) | ~0.87 |
 
 ### Documentation
 

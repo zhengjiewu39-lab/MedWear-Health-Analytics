@@ -23,6 +23,7 @@ const { getProvider } = require('./server/data/provider');
 const { registerDataRoutes } = require('./server/routes/data');
 const { registerAdminRoutes } = require('./server/routes/admin');
 const researchRoutes = require('./server/routes/research');
+const { getFrameworkPayload, wearable: wearablePolicy } = require('./server/config/evaluationFramework');
 const {
   generateInterventions, getInterventions, getApprovedInterventions,
   getSummary, approveIntervention, rejectIntervention,
@@ -146,6 +147,17 @@ app.get('/api/health', (_, res) => {
     pid: process.pid,
     modes: ['demo', 'real'],
     features: ['clinical-analytics', 'research-benchmarks', 'early-screening'],
+    benchmarks: {
+      wearable: {
+        name: wearablePolicy.dataset,
+        n: wearablePolicy.n,
+        version: wearablePolicy.version,
+        labelSource: wearablePolicy.labelSource,
+        evaluationModel: wearablePolicy.evaluationModel,
+      },
+      screening: { name: 'MedWear-Screening-Outcome-Cohort-v1', n: 5000 },
+    },
+    evaluationFramework: getFrameworkPayload(),
   });
 });
 
@@ -173,9 +185,14 @@ app.get('/api/methodology', (req, res) => {
     lang: isEn ? 'en' : 'zh',
     engine: 'MedWear-AnalyticsCore-v1',
     framework: {
+      ...getFrameworkPayload(),
       benchmark_license: 'CC-BY-4.0',
-      evaluation_type: 'rule-based mini benchmark',
-      evaluation_type_zh: '基于规则的迷你基准评测',
+      benchmark_name: wearablePolicy.dataset,
+      benchmark_name_zh: 'MedWear 可穿戴分析临床基准 v2',
+      benchmark_n: wearablePolicy.n,
+      benchmark_supersedes: 'MedWear-Wearable-Analytics-Mini-v1 (n=8)',
+      evaluation_type: 'Engine vs independent clinical gold standard (not self-test)',
+      evaluation_type_zh: '产品引擎 vs 独立临床金标准（非自评）',
       layers: [
         { id: 'L0', title: 'Proxy signals', title_zh: '代理信号' },
         { id: 'L1', title: 'Individual anomaly detection', title_zh: '个体异常检测' },

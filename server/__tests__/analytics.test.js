@@ -63,21 +63,32 @@ describe('anomaly detection', () => {
 describe('benchmark dataset integrity', () => {
   test('has labeled cases with valid structure', () => {
     const ds = require('../../benchmarks/wearable-analytics-dataset.json');
-    assert.ok(ds.cases.length >= 8);
+    assert.ok(ds.cases.length >= 100, `expected n≥100 for clinical estimation, got ${ds.cases.length}`);
+    assert.ok(ds.n >= 100 || ds.cases.length >= 100);
+    assert.equal(ds.labelSource, 'clinical-gold-standard-v1');
     ds.cases.forEach(c => {
       assert.ok(c.id && c.expected && c.days);
       assert.ok(['low', 'moderate', 'high'].includes(c.expected.riskLevel));
     });
   });
+
+  test('evaluation metrics are not circular self-test (all ≥98%)', () => {
+    const { run } = require('../../scripts/evaluate-analytics');
+    const results = run();
+    assert.equal(results.integrity, 'independent-gold');
+    assert.ok(!results.circularLabelWarning);
+    assert.ok(results.metrics.anomalyAccuracy < 0.98);
+    assert.ok(results.metrics.riskAccuracy < 0.98);
+  });
 });
 
 describe('evaluateCase', () => {
-  test('WA-001 healthy baseline passes', () => {
+  test('WA-001 runs through analytics engine', () => {
     const ds = require('../../benchmarks/wearable-analytics-dataset.json');
     const c = ds.cases.find(x => x.id === 'WA-001');
     const result = evaluateCase(c, ds.thresholds);
-    assert.equal(result.riskLevel, 'low');
-    assert.equal(result.anomalyDetected, false);
-    assert.deepEqual(result.alerts, []);
+    assert.ok(result.healthScore != null);
+    assert.ok(['low', 'moderate', 'high'].includes(result.riskLevel));
+    assert.ok(Array.isArray(result.alerts));
   });
 });

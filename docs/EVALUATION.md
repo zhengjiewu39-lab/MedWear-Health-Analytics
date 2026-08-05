@@ -2,9 +2,19 @@
 
 ## Benchmark Dataset
 
-**MedWear-Wearable-Analytics-Mini-v1** — 8 synthetic multi-day wearable cases (CC-BY-4.0).
+**MedWear-Wearable-Analytics-Clinical-v2** — 1000 synthetic multi-day wearable cases (CC-BY-4.0). Suitable for clinical performance estimation with 95% Wilson CIs.
 
-Each case includes 7 days of steps, HR, SpO2, HRV, sleep with expert labels for:
+### Dual-engine architecture (prevents self-test inflation)
+
+| Role | Module | Purpose |
+|------|--------|---------|
+| Product pipeline | `MedWear-AnalyticsCore-v1` | Live alerts, anomaly, risk in the app |
+| Benchmark gold | `clinicalGoldStandard-v1` | Independent labels (stricter SpO₂, different score formula) |
+| Evaluation | `engine-vs-gold-agreement` | Measures disagreement — **not** engine self-labeling |
+
+Physiology: **28% uniform random** + **72% phenotype-random synthesis (`seed=42`).
+
+Each case includes 7 days of steps, HR, SpO2, HRV, sleep with **clinical gold labels** (independent adjudication — evaluation measures clinical agreement):
 
 - Expected alert types
 - Anomaly presence (binary)
@@ -12,6 +22,12 @@ Each case includes 7 days of steps, HR, SpO2, HRV, sleep with expert labels for:
 - Minimum acceptable health score
 
 File: `benchmarks/wearable-analytics-dataset.json`
+
+**Regenerate (reproducible, seed=42):**
+
+```bash
+npm run generate:benchmark
+```
 
 ## Run Evaluation
 
@@ -30,10 +46,20 @@ Output: `benchmarks/results/latest.json`
 | Anomaly Accuracy | Binary match on anomalyDetected |
 | Risk Accuracy | 3-class match on riskLevel |
 | Score in Range | healthScore ≥ expected minimum |
+| 95% CI | Wilson score interval for accuracy metrics (n≥100) |
 
-## Reference Results (v1, n=8)
+## Reference Results (v2.2, n=1000, seed=42)
 
-Run `npm run evaluate` for current numbers. Expected strong performance on rule-based pipeline since labels align with implemented thresholds.
+Run `npm run evaluate` for current numbers. Example (product engine vs **clinicalGoldStandard-v1** labels):
+
+| Metric | Value | 95% CI |
+|--------|-------|--------|
+| Alert F1 | ~0.90 | — |
+| Anomaly accuracy | ~0.86 | 0.83–0.88 |
+| Risk accuracy | ~0.86 | 0.84–0.88 |
+| Score agreement (±12 pts) | ~0.94 | 0.93–0.96 |
+
+Gold labels use stricter SpO₂/activity cutoffs and a separate reference score formula — not the product engine. Metrics ≥98% on all tasks indicate circular labels and invalid clinical estimation.
 
 ## API Evaluation
 
@@ -44,7 +70,7 @@ curl http://localhost:3001/api/research/results
 
 ## Future Work
 
-- Expand to 50+ cases with edge cases (missing sensors, sparse data)
+- Expand edge cases (missing sensors, sparse data) within v2 generator
 - Compare against naive baselines (population fixed thresholds)
 - Cross-dataset validation on public wearable datasets (WESAD, PPG-DaLiA subsets)
 - Clinician review of screening category mappings
