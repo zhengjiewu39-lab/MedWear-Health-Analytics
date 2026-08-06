@@ -62,15 +62,19 @@ function evaluateDayAlerts(dayData, thresholds = {}, patient = 'Bench') {
   const hrMin = thresholds.heartRateMin ?? 50;
   const spo2Min = thresholds.spo2Min ?? 93;
 
-  const hrAvg = avg(d.heartRate);
-  if (hrAvg && hrAvg > hrMax) {
+  const hrReadings = d.heartRate || [];
+  const hrAvg = avg(hrReadings);
+  const hrPeak = hrReadings.length ? Math.max(...hrReadings) : null;
+  const hrNadir = hrReadings.length ? Math.min(...hrReadings) : null;
+
+  // Consumer wearables often flag peak/nadir readings, not only daily mean.
+  if ((hrAvg && hrAvg > hrMax) || (hrPeak != null && hrPeak > hrMax)) {
     alerts.push({ type: '心率偏高', severity: 'high' });
   }
-  if (hrAvg && hrAvg < hrMin) {
+  if ((hrAvg && hrAvg < hrMin) || (hrNadir != null && hrNadir < hrMin)) {
     alerts.push({ type: '心率偏低', severity: 'medium' });
   }
-  const spo2 = avg(d.spo2);
-  if (spo2 && spo2 < spo2Min) {
+  if ((d.spo2 || []).some((s) => s < spo2Min)) {
     alerts.push({ type: '血氧偏低', severity: 'high' });
   }
   if (d.steps > 0 && d.steps < 3000) {

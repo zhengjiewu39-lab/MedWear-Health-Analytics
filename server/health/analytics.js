@@ -57,51 +57,64 @@ function getTodayOrLatest(store) {
 }
 
 function detectAlerts(store, thresholds) {
-  const alerts = [];
   const day = getTodayOrLatest(store);
-  if (!day) return alerts;
+  if (!day) return [];
   const d = store.daily[day];
   const patient = store.meta?.userLabel || '我';
-
+  const { evaluateDayAlerts } = require('../services/analyticsCore');
   const hrMax = thresholds?.heartRateMax || 100;
   const hrMin = thresholds?.heartRateMin || 50;
   const spo2Min = thresholds?.spo2Min || 93;
-
   const hrAvg = avg(d.heartRate);
-  if (hrAvg && hrAvg > hrMax) {
-    alerts.push({
-      id: alerts.length + 1, patient, type: '心率偏高', type_en: 'High heart rate', severity: 'high',
-      message: `今日平均心率 ${Math.round(hrAvg)} bpm，超过阈值 ${hrMax} bpm`,
-      message_en: `Today's average heart rate ${Math.round(hrAvg)} bpm exceeds threshold ${hrMax} bpm`,
-      time: day, status: 'pending', device: getPrimarySource(store),
-    });
-  }
-  if (hrAvg && hrAvg < hrMin) {
-    alerts.push({
-      id: alerts.length + 1, patient, type: '心率偏低', type_en: 'Low heart rate', severity: 'medium',
-      message: `今日平均心率 ${Math.round(hrAvg)} bpm，低于阈值 ${hrMin} bpm`,
-      message_en: `Today's average heart rate ${Math.round(hrAvg)} bpm is below threshold ${hrMin} bpm`,
-      time: day, status: 'pending', device: getPrimarySource(store),
-    });
-  }
-  const spo2 = avg(d.spo2);
-  if (spo2 && spo2 < spo2Min) {
-    alerts.push({
-      id: alerts.length + 1, patient, type: '血氧偏低', type_en: 'Low blood oxygen', severity: 'high',
-      message: `今日平均血氧 ${spo2.toFixed(1)}%，低于 ${spo2Min}%`,
-      message_en: `Today's average SpO₂ ${spo2.toFixed(1)}% is below ${spo2Min}%`,
-      time: day, status: 'pending', device: getPrimarySource(store),
-    });
-  }
-  if (d.steps > 0 && d.steps < 3000) {
-    alerts.push({
-      id: alerts.length + 1, patient, type: '活动量不足', type_en: 'Insufficient activity', severity: 'low',
+  const hrPeak = d.heartRate?.length ? Math.max(...d.heartRate) : null;
+  const hrNadir = d.heartRate?.length ? Math.min(...d.heartRate) : null;
+  const spo2Avg = avg(d.spo2);
+
+  return evaluateDayAlerts(d, { heartRateMax: hrMax, heartRateMin: hrMin, spo2Min }, patient).map((a, i) => {
+    const base = {
+      id: i + 1,
+      patient,
+      type: a.type,
+      severity: a.severity,
+      time: day,
+      status: 'pending',
+      device: getPrimarySource(store),
+    };
+    if (a.type === '心率偏高') {
+      return {
+        ...base,
+        type_en: 'High heart rate',
+        message: hrPeak && hrPeak > hrMax
+          ? `今日心率峰值 ${Math.round(hrPeak)} bpm（均值 ${Math.round(hrAvg || hrPeak)}），超过阈值 ${hrMax} bpm`
+          : `今日平均心率 ${Math.round(hrAvg)} bpm，超过阈值 ${hrMax} bpm`,
+        message_en: hrPeak && hrPeak > hrMax
+          ? `Today's peak heart rate ${Math.round(hrPeak)} bpm (mean ${Math.round(hrAvg || hrPeak)}) exceeds threshold ${hrMax} bpm`
+          : `Today's average heart rate ${Math.round(hrAvg)} bpm exceeds threshold ${hrMax} bpm`,
+      };
+    }
+    if (a.type === '心率偏低') {
+      return {
+        ...base,
+        type_en: 'Low heart rate',
+        message: `今日心率 ${hrNadir != null ? `最低 ${Math.round(hrNadir)} / 均值 ${Math.round(hrAvg)}` : Math.round(hrAvg)} bpm，低于阈值 ${hrMin} bpm`,
+        message_en: `Today's heart rate below threshold ${hrMin} bpm`,
+      };
+    }
+    if (a.type === '血氧偏低') {
+      return {
+        ...base,
+        type_en: 'Low blood oxygen',
+        message: `检测到血氧读数低于 ${spo2Min}%（均值 ${spo2Avg?.toFixed(1) ?? '—'}%）`,
+        message_en: `SpO₂ reading below ${spo2Min}% detected (mean ${spo2Avg?.toFixed(1) ?? '—'}%)`,
+      };
+    }
+    return {
+      ...base,
+      type_en: 'Insufficient activity',
       message: `今日步数 ${Math.round(d.steps)} 步，活动量偏低`,
       message_en: `Today's steps ${Math.round(d.steps)}, activity is low`,
-      time: day, status: 'pending', device: getPrimarySource(store),
-    });
-  }
-  return alerts;
+    };
+  });
 }
 
 function getPrimarySource(store) {

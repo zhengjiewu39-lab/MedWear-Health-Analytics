@@ -49,6 +49,8 @@ export default function EvaluationIntegrityBanner({
       {m && (
         <Typography variant="body2" component="div">
           {t('引擎 vs 金标准', 'Engine vs gold')}: F1 {pct(m.alerts?.f1)}
+          {' · '}{t('精确率', 'Precision')} {pct(m.alerts?.precision)}
+          {' · '}{t('召回率', 'Recall')} {pct(m.alerts?.recall)}
           {' · '}{t('异常', 'Anomaly')} {pct(m.anomalyAccuracy)}
           {' · '}{t('风险', 'Risk')} {pct(m.riskAccuracy)}
           {' · '}{t('评分', 'Score')} {pct(m.healthScoreAgreementRate ?? m.healthScoreInRangeRate)}

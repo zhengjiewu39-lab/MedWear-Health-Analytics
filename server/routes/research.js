@@ -93,6 +93,11 @@ function loadWearableBenchmarkSummary() {
     latestEvaluation: fs.existsSync(WEARABLE_RESULTS_PATH)
       ? summarizeWearableResults(JSON.parse(fs.readFileSync(WEARABLE_RESULTS_PATH, 'utf8')))
       : null,
+    alertMetrics: (() => {
+      if (!fs.existsSync(WEARABLE_RESULTS_PATH)) return null;
+      const summary = summarizeWearableResults(JSON.parse(fs.readFileSync(WEARABLE_RESULTS_PATH, 'utf8')));
+      return summary?.alertMetrics || summary?.metrics?.alerts || null;
+    })(),
   };
 }
 
@@ -175,7 +180,8 @@ router.get('/methods', (_, res) => {
       expansionMethod: wearable.expansionMethod,
       labelSource: wearable.labelSource,
       archetypes: wearable.phenotypeDistribution?.length || 8,
-      metrics: ['alert F1', 'anomaly accuracy', 'risk accuracy', 'score agreement (±8)', 'Wilson 95% CI'],
+      metrics: ['alert F1', 'alert precision', 'alert recall', 'anomaly accuracy', 'risk accuracy', 'score agreement (±8)', 'Wilson 95% CI'],
+      latestAlertMetrics: wearable.latestEvaluation?.alertMetrics || wearable.latestEvaluation?.metrics?.alerts || null,
       evaluationModel: wearablePolicy.evaluationModel,
       goldStandard: wearablePolicy.goldStandard,
       productEngine: wearablePolicy.productEngine,

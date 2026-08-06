@@ -212,11 +212,13 @@ function ResearchCenter() {
       <Grid container spacing={2} sx={{ mb: 2 }}>
         {[
           { label: t('告警 F1', 'Alert F1'), value: wm?.alerts?.f1 ?? '—', icon: <CheckCircle />, color: IV },
+          { label: t('告警精确率', 'Alert precision'), value: wm ? pct(wm.alerts?.precision) : '—', icon: <Security />, color: IV },
+          { label: t('告警召回率', 'Alert recall'), value: wm ? pct(wm.alerts?.recall) : '—', icon: <MonitorHeart />, color: IV },
           { label: t('异常准确率', 'Anomaly acc'), value: wm ? pct(wm.anomalyAccuracy) : '—', icon: <Timeline />, color: IV, ci: wci?.anomalyAccuracy },
-          { label: t('风险准确率', 'Risk acc'), value: wm ? pct(wm.riskAccuracy) : '—', icon: <MonitorHeart />, color: IV, ci: wci?.riskAccuracy },
-          { label: t('评分一致', 'Score agree'), value: wm ? pct(wm.healthScoreAgreementRate ?? wm.healthScoreInRangeRate) : '—', icon: <Groups />, color: IV, ci: wci?.healthScoreAgreement || wci?.healthScoreInRange },
+          { label: t('风险准确率', 'Risk acc'), value: wm ? pct(wm.riskAccuracy) : '—', icon: <Groups />, color: IV, ci: wci?.riskAccuracy },
+          { label: t('评分一致', 'Score agree'), value: wm ? pct(wm.healthScoreAgreementRate ?? wm.healthScoreInRangeRate) : '—', icon: <Biotech />, color: IV, ci: wci?.healthScoreAgreement || wci?.healthScoreInRange },
         ].map((item) => (
-          <Grid item xs={6} md={3} key={item.label}>
+          <Grid item xs={6} md={4} lg={2} key={item.label}>
             <Card sx={{ height: '100%', borderTop: 3, borderColor: item.color }}>
               <CardContent sx={{ textAlign: 'center', py: 2 }}>
                 <Box sx={{ color: item.color, mb: 0.5 }}>{item.icon}</Box>
@@ -316,7 +318,7 @@ function ResearchCenter() {
                       {wearableDataset?.dataset || 'MedWear-Wearable-Analytics-Clinical-v2'}
                     </Typography>
                     <Typography variant="body2" color="text.secondary" paragraph>
-                      {t('版本', 'Version')} {wearableDataset?.version || evalFramework?.wearable?.version || '2.4.0'}
+                      {t('版本', 'Version')} {wearableDataset?.version || evalFramework?.wearable?.version || '2.5.0'}
                       {' · '}{wearableDataset?.labelSource || 'clinical-gold-standard-v1'}
                       {' · '}seed={wearableDataset?.seed ?? 42}
                       {' · '}{wearableDataset?.rng || 'mulberry32'}
@@ -343,6 +345,8 @@ function ResearchCenter() {
                         <TableBody>
                           {[
                             [t('告警 F1', 'Alert F1'), wm.alerts?.f1, null],
+                            [t('告警精确率', 'Alert precision'), pct(wm.alerts?.precision), null],
+                            [t('告警召回率', 'Alert recall'), pct(wm.alerts?.recall), null],
                             [t('异常准确率', 'Anomaly acc'), pct(wm.anomalyAccuracy), ciRange(wci?.anomalyAccuracy)],
                             [t('风险准确率', 'Risk acc'), pct(wm.riskAccuracy), ciRange(wci?.riskAccuracy)],
                             [t('评分一致率', 'Score agreement'), pct(wm.healthScoreAgreementRate ?? wm.healthScoreInRangeRate), ciRange(wci?.healthScoreAgreement || wci?.healthScoreInRange)],

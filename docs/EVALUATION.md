@@ -12,7 +12,9 @@
 | Benchmark gold | `clinicalGoldStandard-v1` | Independent labels (stricter SpO₂, different score formula) |
 | Evaluation | `engine-vs-gold-agreement` | Measures disagreement — **not** engine self-labeling |
 
-Physiology: **28% uniform random** + **72% phenotype-random synthesis (`seed=42`).
+Physiology: **28% clinical-random adults** + **72% phenotype-random synthesis** (`seed=42`), including exercise/SpO₂-artifact/rest-day false-positive scenarios.
+
+Product alerts use **peak/single-reading sensitivity** (wearable-style); gold labels apply **contextual clinical suppression** (exercise tachycardia, motion SpO₂ artifact, planned rest day).
 
 Each case includes 7 days of steps, HR, SpO2, HRV, sleep with **clinical gold labels** (independent adjudication — evaluation measures clinical agreement):
 
@@ -42,22 +44,26 @@ Output: `benchmarks/results/latest.json`
 
 | Metric | Definition |
 |--------|------------|
-| Alert F1 | Micro-F1 over alert type sets (exact match per case also reported) |
+| Alert F1 | Micro-F1 over alert type sets (precision/recall also reported) |
 | Anomaly Accuracy | Binary match on anomalyDetected |
 | Risk Accuracy | 3-class match on riskLevel |
 | Score in Range | healthScore ≥ expected minimum |
 | 95% CI | Wilson score interval for accuracy metrics (n≥100) |
 
-## Reference Results (v2.3, n=5000, seed=42)
+## Reference Results (v2.5, n=5000, seed=42)
 
 Run `npm run evaluate` for current numbers. Example (product engine vs **clinicalGoldStandard-v1** labels):
 
 | Metric | Value | 95% CI |
 |--------|-------|--------|
-| Alert F1 | 0.893 | — |
-| Anomaly accuracy | 0.861 | 0.851–0.870 |
-| Risk accuracy | 0.855 | 0.845–0.864 |
-| Score agreement (±8 pts) | 0.874 | 0.865–0.883 |
+| Alert F1 | 0.844 | — |
+| Alert precision | 0.758 | — |
+| Alert recall | 0.953 | — |
+| Anomaly accuracy | 0.769 | 0.757–0.781 |
+| Risk accuracy | 0.875 | 0.865–0.884 |
+| Score agreement (±8 pts) | 0.909 | 0.901–0.917 |
+
+Alert precision &lt; 1 reflects realistic wearable false positives (exercise HR peaks, single SpO₂ dips, recovery-day low steps). Gold labels use contextual adjudication — not the product engine.
 
 Gold labels use stricter SpO₂/activity cutoffs and a separate reference score formula — not the product engine. Metrics ≥98% on all tasks indicate circular labels and invalid clinical estimation.
 

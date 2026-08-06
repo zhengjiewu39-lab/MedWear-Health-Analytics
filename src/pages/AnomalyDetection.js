@@ -42,11 +42,16 @@ function AnomalyDetection() {
   const [analysis, setAnalysis] = useState(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [evalFramework, setEvalFramework] = useState(null);
+  const [wearableEval, setWearableEval] = useState(null);
 
   useEffect(() => {
-    researchApi.getEvaluationFramework()
-      .then((res) => setEvalFramework(res.data))
-      .catch(() => {});
+    Promise.allSettled([
+      researchApi.getEvaluationFramework(),
+      researchApi.getWearableResults(),
+    ]).then(([fw, wRes]) => {
+      if (fw.status === 'fulfilled') setEvalFramework(fw.value.data);
+      if (wRes.status === 'fulfilled') setWearableEval(wRes.value.data);
+    });
   }, []);
 
   const anomalies = useMemo(
@@ -106,7 +111,7 @@ function AnomalyDetection() {
     <Box>
       <InterventionPathway />
       <AiGovernanceBanner compact />
-      <EvaluationIntegrityBanner framework={evalFramework} compact />
+      <EvaluationIntegrityBanner framework={evalFramework} wearableResults={wearableEval} compact />
       <Typography variant="h5" gutterBottom fontWeight={600}>
         {t('个体异常检测（代理信号）', 'Individual Anomaly Detection (Proxy Signals)')}
       </Typography>

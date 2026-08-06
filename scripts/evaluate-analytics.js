@@ -141,7 +141,7 @@ if (require.main === module) {
   fs.mkdirSync(path.dirname(out), { recursive: true });
   fs.writeFileSync(out, JSON.stringify(results, null, 2));
   console.log(`MedWear Analytics Evaluation — n=${results.n}`);
-  console.log(`  Alert F1:        ${results.metrics.alerts.f1}`);
+  console.log(`  Alert F1:        ${results.metrics.alerts.f1} (P=${results.metrics.alerts.precision} R=${results.metrics.alerts.recall})`);
   console.log(`  Anomaly Acc:     ${results.metrics.anomalyAccuracy}`);
   console.log(`  Risk Acc:        ${results.metrics.riskAccuracy}`);
   console.log(`  Score agreement: ${results.metrics.healthScoreAgreementRate}`);

@@ -66,15 +66,32 @@ function referenceRiskLevel(score) {
   return 'high';
 }
 
+/**
+ * Clinician-style alerts with contextual false-positive suppression
+ * (exercise tachycardia, single SpO₂ artifact, planned rest day, athlete bradycardia).
+ */
 function expertAlerts(day, t = EXPERT_THRESHOLDS) {
-  const alerts = [];
   const hr = avg(day.heartRate);
+  const rhr = day.restingHeartRate || hr;
+  const spo2Readings = day.spo2 || [];
+  const spo2 = avg(spo2Readings);
+  const sh = sleepHours(day.sleepMinutes);
+  const hrv = avg(day.hrv);
+  const lowSpo2Count = spo2Readings.filter((s) => s < t.spo2Min).length;
+
+  const alerts = [];
   if (hr && hr > t.heartRateMax) alerts.push('心率偏高');
   if (hr && hr < t.heartRateMin) alerts.push('心率偏低');
-  const spo2 = avg(day.spo2);
   if (spo2 && spo2 < t.spo2Min) alerts.push('血氧偏低');
   if (day.steps > 0 && day.steps < t.stepsLow) alerts.push('活动量不足');
-  return alerts;
+
+  return alerts.filter((type) => {
+    if (type === '心率偏高' && day.steps >= 6500 && rhr <= 78) return false;
+    if (type === '血氧偏低' && lowSpo2Count <= 1 && spo2 >= 94.5) return false;
+    if (type === '活动量不足' && day.steps >= 2800 && sh >= 7) return false;
+    if (type === '心率偏低' && rhr >= 50 && hrv > 48 && day.steps >= 6000) return false;
+    return true;
+  });
 }
 
 function expertAnomaly(daysMap, targetDay) {

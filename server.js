@@ -23,7 +23,7 @@ const { getProvider } = require('./server/data/provider');
 const { registerDataRoutes } = require('./server/routes/data');
 const { registerAdminRoutes } = require('./server/routes/admin');
 const researchRoutes = require('./server/routes/research');
-const { getFrameworkPayload, wearable: wearablePolicy } = require('./server/config/evaluationFramework');
+const { getFrameworkPayload, wearable: wearablePolicy, summarizeWearableResults } = require('./server/config/evaluationFramework');
 const {
   generateInterventions, getInterventions, getApprovedInterventions,
   getSummary, approveIntervention, rejectIntervention,
@@ -154,6 +154,13 @@ app.get('/api/health', (_, res) => {
         version: wearablePolicy.version,
         labelSource: wearablePolicy.labelSource,
         evaluationModel: wearablePolicy.evaluationModel,
+        alertMetrics: (() => {
+          try {
+            const p = path.join(__dirname, 'benchmarks/results/latest.json');
+            if (!fs.existsSync(p)) return null;
+            return summarizeWearableResults(JSON.parse(fs.readFileSync(p, 'utf8')))?.alertMetrics;
+          } catch { return null; }
+        })(),
       },
       screening: { name: 'MedWear-Screening-Outcome-Cohort-v1', n: 5000 },
     },

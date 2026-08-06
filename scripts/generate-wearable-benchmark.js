@@ -94,7 +94,7 @@ const PHENOTYPES = [
   {
     key: 'healthy',
     label: 'Healthy baseline',
-    weight: 0.28,
+    weight: 0.22,
     expected: { alerts: [], anomaly: false, riskLevel: 'low', healthScoreMin: 75 },
     baseline: {
       steps: [7600, 8800], hr: [65, 73], spo2: [97, 98.5], hrv: [45, 56], rhr: [58, 66],
@@ -105,7 +105,7 @@ const PHENOTYPES = [
   {
     key: 'tachycardia',
     label: 'Tachycardia alert',
-    weight: 0.12,
+    weight: 0.10,
     expected: { alerts: ['心率偏高'], anomaly: false, riskLevel: 'moderate', healthScoreMin: 50 },
     baseline: {
       steps: [5000, 6200], hr: [70, 78], spo2: [96, 97.5], hrv: [34, 42], rhr: [68, 74],
@@ -120,7 +120,7 @@ const PHENOTYPES = [
   {
     key: 'bradycardia',
     label: 'Bradycardia alert',
-    weight: 0.10,
+    weight: 0.08,
     expected: { alerts: ['心率偏低'], anomaly: false, riskLevel: 'moderate', healthScoreMin: 60 },
     baseline: {
       steps: [6500, 7400], hr: [54, 58], spo2: [97.5, 99], hrv: [52, 60], rhr: [52, 56],
@@ -134,7 +134,7 @@ const PHENOTYPES = [
   {
     key: 'hypoxemia',
     label: 'Hypoxemia alert',
-    weight: 0.12,
+    weight: 0.10,
     expected: { alerts: ['血氧偏低'], anomaly: true, riskLevel: 'high', healthScoreMin: 40 },
     baseline: {
       steps: [5800, 7200], hr: [72, 78], spo2: [94, 97], hrv: [34, 42], rhr: [70, 76],
@@ -149,7 +149,7 @@ const PHENOTYPES = [
   {
     key: 'sedentary',
     label: 'Sedentary alert',
-    weight: 0.12,
+    weight: 0.10,
     expected: { alerts: ['活动量不足'], anomaly: false, riskLevel: 'moderate', healthScoreMin: 55 },
     baseline: {
       steps: [7400, 8600], hr: [66, 72], spo2: [97, 98], hrv: [44, 52], rhr: [62, 68],
@@ -163,7 +163,7 @@ const PHENOTYPES = [
   {
     key: 'hr_spike',
     label: 'HR spike anomaly',
-    weight: 0.10,
+    weight: 0.08,
     expected: { alerts: [], anomaly: true, riskLevel: 'moderate', healthScoreMin: 60 },
     baseline: {
       steps: [6500, 7400], hr: [66, 72], hrN: 4, spo2: [97, 98], hrv: [44, 50], rhr: [65, 70],
@@ -185,7 +185,7 @@ const PHENOTYPES = [
   {
     key: 'poor_sleep',
     label: 'Poor sleep high risk',
-    weight: 0.08,
+    weight: 0.06,
     expected: { alerts: ['活动量不足'], anomaly: true, riskLevel: 'high', healthScoreMin: 30 },
     baseline: {
       steps: [2800, 4200], hr: [78, 84], spo2: [93, 96], hrv: [20, 30], rhr: [76, 82],
@@ -200,7 +200,7 @@ const PHENOTYPES = [
   {
     key: 'multi_alert',
     label: 'Multi-alert compound',
-    weight: 0.08,
+    weight: 0.06,
     expected: { alerts: ['心率偏高', '血氧偏低', '活动量不足'], anomaly: true, riskLevel: 'high', healthScoreMin: 25 },
     baseline: {
       steps: [4400, 5800], hr: [74, 80], spo2: [92, 95], hrv: [28, 36], rhr: [72, 78],
@@ -212,6 +212,60 @@ const PHENOTYPES = [
       spo2: randArr(rng, 2, 86, 91, 1),
       restingHeartRate: randInt(rng, 88, 94),
       activeEnergy: randInt(rng, 110, 160),
+    }),
+  },
+  {
+    key: 'exercise_fp',
+    label: 'Exercise-induced HR (product FP)',
+    weight: 0.10,
+    expected: { alerts: [], anomaly: false, riskLevel: 'low', healthScoreMin: 70 },
+    baseline: {
+      steps: [7200, 8400], hr: [68, 76], spo2: [97, 98.5], hrv: [46, 54], rhr: [58, 66],
+      sleep: [88, 98, 195, 16], energy: [400, 480],
+    },
+    target: (rng) => ({
+      steps: randInt(rng, 7800, 11200),
+      restingHeartRate: randInt(rng, 58, 72),
+      heartRate: [
+        randInt(rng, 68, 74),
+        randInt(rng, 70, 76),
+        randInt(rng, 108, 128),
+        randInt(rng, 105, 122),
+        randInt(rng, 69, 75),
+      ],
+      activeEnergy: randInt(rng, 480, 620),
+    }),
+  },
+  {
+    key: 'spo2_artifact_fp',
+    label: 'Single SpO₂ artifact (product FP)',
+    weight: 0.06,
+    expected: { alerts: [], anomaly: false, riskLevel: 'low', healthScoreMin: 72 },
+    baseline: {
+      steps: [6800, 8200], hr: [66, 74], spo2: [96.5, 98], hrv: [44, 52], rhr: [60, 68],
+      sleep: [85, 95, 200, 18], energy: [360, 430],
+    },
+    target: (rng) => ({
+      spo2: [97.2, 96.8, round(88 + rng() * 3, 1), 97.5],
+      heartRate: randArr(rng, 4, 64, 74),
+      steps: randInt(rng, 7000, 9000),
+    }),
+  },
+  {
+    key: 'recovery_rest_fp',
+    label: 'Planned recovery day (product FP)',
+    weight: 0.04,
+    expected: { alerts: [], anomaly: false, riskLevel: 'low', healthScoreMin: 68 },
+    baseline: {
+      steps: [7600, 8800], hr: [64, 72], spo2: [97, 98], hrv: [48, 56], rhr: [58, 65],
+      sleep: [90, 105, 205, 12], energy: [380, 450],
+    },
+    target: (rng) => ({
+      steps: randInt(rng, 2500, 2950),
+      sleepMinutes: sleepBlock(rng, 95, 110, 220, 10),
+      heartRate: randArr(rng, 4, 58, 68),
+      restingHeartRate: randInt(rng, 56, 64),
+      activeEnergy: randInt(rng, 140, 220),
     }),
   },
 ];
@@ -346,9 +400,9 @@ function main() {
 
   const dataset = {
     dataset: 'MedWear-Wearable-Analytics-Clinical-v2',
-    version: '2.4.0',
+    version: '2.5.0',
     license: 'CC-BY-4.0',
-    description: 'Synthetic multi-day wearable cases. Physiology: 72% weighted-random phenotypes + 28% clinically correlated random adults (fitness/age/sex + day autocorrelation). Gold labels: independent clinical adjudication (clinicalGoldStandard-v1), NOT the product analytics engine.',
+    description: 'Synthetic multi-day wearable cases. Physiology: 72% weighted-random phenotypes (incl. exercise/SpO₂ artifact/rest-day FP scenarios) + 28% clinically correlated random adults. Gold labels: contextual clinical adjudication (clinicalGoldStandard-v1), NOT the product analytics engine.',
     labelSource: 'clinical-gold-standard-v1',
     superseded: 'MedWear-Wearable-Analytics-Mini-v1',
     generatedAt: new Date().toISOString(),
@@ -356,7 +410,7 @@ function main() {
     rng: 'mulberry32',
     n: cases.length,
     daysPerCase: opts.days,
-    expansionMethod: 'clinical-random-physiology-adjudication',
+    expansionMethod: 'clinical-random-physiology-fp-adjudication',
     physiologyMix: { clinicalRandom: 0.28, phenotypeRandom: 0.72 },
     phenotypeDistribution: distribution,
     clinicalCharacteristics,

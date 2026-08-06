@@ -35,6 +35,16 @@ describe('alerts', () => {
     assert.ok(alerts.some(a => a.type === '心率偏高'));
   });
 
+  test('detects peak HR false positive pattern (wearable-style)', () => {
+    const alerts = evaluateDayAlerts({ heartRate: [70, 72, 118, 71], steps: 9000, spo2: [97] });
+    assert.ok(alerts.some(a => a.type === '心率偏高'));
+  });
+
+  test('detects single low SpO2 reading', () => {
+    const alerts = evaluateDayAlerts({ heartRate: [75], steps: 5000, spo2: [97, 96, 89, 98] });
+    assert.ok(alerts.some(a => a.type === '血氧偏低'));
+  });
+
   test('detects hypoxemia', () => {
     const alerts = evaluateDayAlerts({ heartRate: [75], steps: 5000, spo2: [89, 90] });
     assert.ok(alerts.some(a => a.type === '血氧偏低'));
@@ -80,6 +90,7 @@ describe('benchmark dataset integrity', () => {
     assert.equal(results.integrity, 'independent-gold');
     assert.ok(!results.circularLabelWarning);
     assert.ok(results.metrics.anomalyAccuracy < 0.98);
+    assert.ok(results.metrics.alerts.precision < 1, 'expected realistic alert false positives');
     assert.ok(results.metrics.riskAccuracy < 0.98);
   });
 });

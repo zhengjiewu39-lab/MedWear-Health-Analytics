@@ -9,14 +9,17 @@ const CIRCULAR_THRESHOLD = 0.98;
 
 const wearable = {
   dataset: 'MedWear-Wearable-Analytics-Clinical-v2',
-  version: '2.4.0',
+  version: '2.5.0',
   n: 5000,
   seed: 42,
   rng: 'mulberry32',
   labelSource: 'clinical-gold-standard-v1',
-  expansionMethod: 'clinical-random-physiology-adjudication',
+  expansionMethod: 'clinical-random-physiology-fp-adjudication',
   physiologyMix: { clinicalRandom: 0.28, phenotypeRandom: 0.72 },
   clinicalPhysiologyModule: 'clinicalPhysiology-v1',
+  alertFalsePositiveScenarios: ['exercise_fp', 'spo2_artifact_fp', 'recovery_rest_fp'],
+  productAlertModel: 'peak-and-single-reading (wearable-style)',
+  goldAdjudication: 'contextual-clinical-suppression',
   productEngine: PRODUCT_ENGINE,
   goldStandard: GOLD_STANDARD,
   evaluationModel: 'engine-vs-gold-agreement',
@@ -27,9 +30,9 @@ const wearable = {
     evaluate: 'npm run evaluate',
   },
   description_zh:
-    '临床相关随机生理合成（年龄/性别/体能相关 + 日间自相关）；金标准由独立临床裁决模块生成。评测=引擎 vs 金标准一致率，非自评。',
+    '临床随机生理 + 误报场景（运动心率峰值/SpO₂ 伪影/恢复日）；产品用峰值/单点触发，金标准经临床上下文抑制。评测=引擎 vs 金标准，非自评。',
   description_en:
-    'Clinically correlated random physiology (age/sex/fitness + day autocorrelation); gold labels from independent clinical adjudication. Metrics = engine vs gold agreement — not self-test.',
+    'Clinical random physiology with FP scenarios (exercise HR peaks, SpO₂ artifact, rest day). Product uses peak/single-reading triggers; gold applies contextual suppression. Engine vs gold — not self-test.',
   invalidIf_zh: '若告警/异常/风险/评分四项均≥98%，说明金标准与引擎同源，临床性能估计无效。',
   invalidIf_en:
     'If alert/anomaly/risk/score metrics are all ≥98%, gold labels are likely engine-derived — invalid for clinical estimation.',
@@ -64,12 +67,19 @@ function isCircularMetrics(metrics) {
 
 function summarizeWearableResults(raw) {
   if (!raw?.metrics) return null;
+  const alerts = raw.metrics.alerts || {};
   return {
     evaluatedAt: raw.evaluatedAt,
     n: raw.n,
     engine: raw.engine,
     goldStandard: GOLD_STANDARD,
     metrics: raw.metrics,
+    alertMetrics: {
+      f1: alerts.f1,
+      precision: alerts.precision,
+      recall: alerts.recall,
+      exactMatchRate: raw.metrics.alertExactMatchRate,
+    },
     mismatchCount: (raw.mismatches || []).length,
     circularLabelWarning: raw.circularLabelWarning || (isCircularMetrics(raw.metrics)
       ? wearable.invalidIf_en
