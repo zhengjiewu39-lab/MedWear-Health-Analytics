@@ -66,6 +66,8 @@ describe('benchmark dataset integrity', () => {
     assert.ok(ds.cases.length >= 100, `expected n≥100 for clinical estimation, got ${ds.cases.length}`);
     assert.ok(ds.n >= 100 || ds.cases.length >= 100);
     assert.equal(ds.labelSource, 'clinical-gold-standard-v1');
+    assert.ok(ds.clinicalCharacteristics?.targetDayVitals, 'expected clinical cohort summary');
+    assert.ok(ds.physiologyMix?.clinicalRandom != null, 'expected random physiology mix');
     ds.cases.forEach(c => {
       assert.ok(c.id && c.expected && c.days);
       assert.ok(['low', 'moderate', 'high'].includes(c.expected.riskLevel));

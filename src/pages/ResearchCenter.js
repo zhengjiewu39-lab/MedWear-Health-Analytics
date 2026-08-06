@@ -133,7 +133,7 @@ function ResearchCenter() {
   const headline = dataset?.headline || results?.headline;
   const comparison = dataset?.comparison || results?.comparison;
   const n = dataset?.meta?.n || dataset?.totalPatients || results?.n || 5000;
-  const wn = wearableDataset?.n || wearableResults?.n || 1000;
+  const wn = wearableDataset?.n || wearableResults?.n || 5000;
   const wm = wearableResults?.metrics;
   const wci = wm?.confidence95;
 
@@ -316,11 +316,21 @@ function ResearchCenter() {
                       {wearableDataset?.dataset || 'MedWear-Wearable-Analytics-Clinical-v2'}
                     </Typography>
                     <Typography variant="body2" color="text.secondary" paragraph>
-                      {t('版本', 'Version')} {wearableDataset?.version || '2.2.0'}
+                      {t('版本', 'Version')} {wearableDataset?.version || evalFramework?.wearable?.version || '2.4.0'}
                       {' · '}{wearableDataset?.labelSource || 'clinical-gold-standard-v1'}
                       {' · '}seed={wearableDataset?.seed ?? 42}
-                      {' · '}{wearableDataset?.expansionMethod || 'random-physiology-clinical-adjudication'}
+                      {' · '}{wearableDataset?.rng || 'mulberry32'}
+                      {' · '}{wearableDataset?.expansionMethod || 'clinical-random-physiology-adjudication'}
                     </Typography>
+                    {wearableDataset?.physiologyMix && (
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                        {t('生理混合', 'Physiology mix')}: {t('临床随机', 'clinical-random')} {(wearableDataset.physiologyMix.clinicalRandom * 100).toFixed(0)}%
+                        {' · '}{t('表型随机', 'phenotype-random')} {(wearableDataset.physiologyMix.phenotypeRandom * 100).toFixed(0)}%
+                        {wearableDataset.clinicalCharacteristics?.withinReferencePct != null && (
+                          <> · {t('参考区间内', 'Within ref band')} {(wearableDataset.clinicalCharacteristics.withinReferencePct * 100).toFixed(1)}%</>
+                        )}
+                      </Typography>
+                    )}
                     {wm && (
                       <Table size="small">
                         <TableHead>
@@ -358,10 +368,43 @@ function ResearchCenter() {
                     </Typography>
                     <Typography variant="subtitle1" fontWeight={700}>{t('复现命令', 'Reproduction')}</Typography>
                     <Typography component="pre" variant="body2" sx={{ bgcolor: 'grey.50', p: 2, borderRadius: 2, fontSize: '0.8rem' }}>
-                      npm run generate:benchmark{'\n'}npm run evaluate{'\n'}npm run test:server
+                      npm run generate:benchmark{'\n'}npm run evaluate
                     </Typography>
                   </Grid>
                 </Grid>
+                {wearableDataset?.clinicalCharacteristics?.targetDayVitals && (
+                  <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
+                    <Typography variant="subtitle1" fontWeight={700} gutterBottom>
+                      {t('临床数据特征（目标日汇总）', 'Clinical vitals profile (target day)')}
+                    </Typography>
+                    <Table size="small">
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>{t('指标', 'Metric')}</TableCell>
+                          <TableCell>{t('均值', 'Mean')}</TableCell>
+                          <TableCell>{t('中位数', 'Median')}</TableCell>
+                          <TableCell>P5–P95</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {Object.entries(wearableDataset.clinicalCharacteristics.targetDayVitals).map(([key, stats]) => (
+                          <TableRow key={key}>
+                            <TableCell>{key}</TableCell>
+                            <TableCell>{stats.mean}</TableCell>
+                            <TableCell>{stats.median}</TableCell>
+                            <TableCell>{stats.p5}–{stats.p95}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                    {wearableDataset.clinicalCharacteristics.correlations && (
+                      <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1 }}>
+                        {t('相关', 'Corr')}: steps↔energy {wearableDataset.clinicalCharacteristics.correlations.stepsEnergy}
+                        {' · '}RHR↔HRV {wearableDataset.clinicalCharacteristics.correlations.rhrHrv}
+                      </Typography>
+                    )}
+                  </Paper>
+                )}
                 <Table size="small">
                   <TableHead>
                     <TableRow>

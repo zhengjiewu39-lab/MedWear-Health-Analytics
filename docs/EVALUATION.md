@@ -2,7 +2,7 @@
 
 ## Benchmark Dataset
 
-**MedWear-Wearable-Analytics-Clinical-v2** — 1000 synthetic multi-day wearable cases (CC-BY-4.0). Suitable for clinical performance estimation with 95% Wilson CIs.
+**MedWear-Wearable-Analytics-Clinical-v2** — 5000 synthetic multi-day wearable cases (CC-BY-4.0). Suitable for clinical performance estimation with 95% Wilson CIs.
 
 ### Dual-engine architecture (prevents self-test inflation)
 
@@ -48,16 +48,16 @@ Output: `benchmarks/results/latest.json`
 | Score in Range | healthScore ≥ expected minimum |
 | 95% CI | Wilson score interval for accuracy metrics (n≥100) |
 
-## Reference Results (v2.2, n=1000, seed=42)
+## Reference Results (v2.3, n=5000, seed=42)
 
 Run `npm run evaluate` for current numbers. Example (product engine vs **clinicalGoldStandard-v1** labels):
 
 | Metric | Value | 95% CI |
 |--------|-------|--------|
-| Alert F1 | ~0.90 | — |
-| Anomaly accuracy | ~0.86 | 0.83–0.88 |
-| Risk accuracy | ~0.86 | 0.84–0.88 |
-| Score agreement (±12 pts) | ~0.94 | 0.93–0.96 |
+| Alert F1 | 0.893 | — |
+| Anomaly accuracy | 0.861 | 0.851–0.870 |
+| Risk accuracy | 0.855 | 0.845–0.864 |
+| Score agreement (±8 pts) | 0.874 | 0.865–0.883 |
 
 Gold labels use stricter SpO₂/activity cutoffs and a separate reference score formula — not the product engine. Metrics ≥98% on all tasks indicate circular labels and invalid clinical estimation.
 

@@ -68,34 +68,48 @@ function mapLlmError(err, providerLabel) {
   return msg || 'AI 调用失败';
 }
 
+function resolveHostV4(hostname) {
+  return new Promise((resolve, reject) => {
+    dns.lookup(hostname, { family: 4, hints: dns.ADDRCONFIG }, (err, address) => {
+      if (err) reject(err);
+      else resolve(address);
+    });
+  });
+}
+
 function httpsPostJson(url, headers, payload) {
   return new Promise((resolve, reject) => {
     const body = JSON.stringify(payload);
     const u = new URL(url);
-    const req = https.request(
-      {
-        hostname: u.hostname,
-        port: 443,
-        path: `${u.pathname}${u.search}`,
-        method: 'POST',
-        family: 4,
-        headers: { ...headers, 'Content-Length': Buffer.byteLength(body) },
-        timeout: LLM_TIMEOUT_MS,
-      },
-      (res) => {
-        let data = '';
-        res.on('data', (chunk) => { data += chunk; });
-        res.on('end', () => {
-          let parsed = data;
-          try { parsed = JSON.parse(data); } catch { /* string */ }
-          resolve({ status: res.statusCode || 0, data: parsed, raw: data });
-        });
-      },
-    );
-    req.on('error', reject);
-    req.on('timeout', () => { req.destroy(); reject(Object.assign(new Error('timeout'), { code: 'ETIMEDOUT' })); });
-    req.write(body);
-    req.end();
+    resolveHostV4(u.hostname)
+      .then((address) => {
+        const req = https.request(
+          {
+            host: address,
+            servername: u.hostname,
+            port: 443,
+            path: `${u.pathname}${u.search}`,
+            method: 'POST',
+            family: 4,
+            headers: { ...headers, 'Content-Length': Buffer.byteLength(body), Host: u.hostname },
+            timeout: LLM_TIMEOUT_MS,
+          },
+          (res) => {
+            let data = '';
+            res.on('data', (chunk) => { data += chunk; });
+            res.on('end', () => {
+              let parsed = data;
+              try { parsed = JSON.parse(data); } catch { /* string */ }
+              resolve({ status: res.statusCode || 0, data: parsed, raw: data });
+            });
+          },
+        );
+        req.on('error', reject);
+        req.on('timeout', () => { req.destroy(); reject(Object.assign(new Error('timeout'), { code: 'ETIMEDOUT' })); });
+        req.write(body);
+        req.end();
+      })
+      .catch(reject);
   });
 }
 
@@ -116,7 +130,7 @@ async function postWithRetry(url, headers, payload) {
       throw err;
     } catch (err) {
       lastErr = err;
-      if (i < LLM_RETRIES && /fetch failed|ECONNRESET|ETIMEDOUT|timeout|EAI_AGAIN/i.test(`${err.code} ${err.message}`)) {
+      if (i < LLM_RETRIES && /fetch failed|ECONNRESET|ETIMEDOUT|timeout|EAI_AGAIN|ENOTFOUND/i.test(`${err.code} ${err.message}`)) {
         await sleep(800 * (i + 1));
         continue;
       }

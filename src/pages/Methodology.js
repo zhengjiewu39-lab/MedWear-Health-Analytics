@@ -250,8 +250,8 @@ function Methodology() {
             size="small"
             color="secondary"
             label={isEn
-              ? `${doc.framework.benchmark_name || 'Clinical-v2'} · n=${doc.framework.benchmark_n || 1000}`
-              : `${doc.framework.benchmark_name_zh || doc.framework.benchmark_name || 'Clinical-v2'} · n=${doc.framework.benchmark_n || 1000}`}
+              ? `${doc.framework.benchmark_name || 'Clinical-v2'} · n=${doc.framework.benchmark_n || 5000}`
+              : `${doc.framework.benchmark_name_zh || doc.framework.benchmark_name || 'Clinical-v2'} · n=${doc.framework.benchmark_n || 5000}`}
           />
           <Chip size="small" color="primary" label={`${t('开放基准', 'Open benchmark')} ${doc.framework.benchmark_license}`} />
           <Chip

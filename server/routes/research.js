@@ -75,6 +75,9 @@ function loadWearableBenchmarkSummary() {
     generatedAt: raw.generatedAt,
     phenotypeDistribution: raw.phenotypeDistribution || raw.archetypeDistribution,
     archetypeDistribution: raw.archetypeDistribution,
+    physiologyMix: raw.physiologyMix,
+    clinicalCharacteristics: raw.clinicalCharacteristics,
+    rng: raw.rng,
     thresholds: raw.thresholds,
     labelDistribution: { riskLevel, anomaly },
     sampleCases: (raw.cases || []).slice(0, 16).map((c) => ({

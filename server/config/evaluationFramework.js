@@ -9,12 +9,14 @@ const CIRCULAR_THRESHOLD = 0.98;
 
 const wearable = {
   dataset: 'MedWear-Wearable-Analytics-Clinical-v2',
-  version: '2.2.0',
-  n: 1000,
+  version: '2.4.0',
+  n: 5000,
   seed: 42,
+  rng: 'mulberry32',
   labelSource: 'clinical-gold-standard-v1',
-  expansionMethod: 'random-physiology-clinical-adjudication',
-  physiologyMix: { uniformRandom: 0.28, phenotypeRandom: 0.72 },
+  expansionMethod: 'clinical-random-physiology-adjudication',
+  physiologyMix: { clinicalRandom: 0.28, phenotypeRandom: 0.72 },
+  clinicalPhysiologyModule: 'clinicalPhysiology-v1',
   productEngine: PRODUCT_ENGINE,
   goldStandard: GOLD_STANDARD,
   evaluationModel: 'engine-vs-gold-agreement',
@@ -25,9 +27,9 @@ const wearable = {
     evaluate: 'npm run evaluate',
   },
   description_zh:
-    '生理信号随机合成；金标准由独立临床裁决模块生成，与产品引擎阈值/公式分离。评测指标=引擎输出 vs 金标准一致率，非自评。',
+    '临床相关随机生理合成（年龄/性别/体能相关 + 日间自相关）；金标准由独立临床裁决模块生成。评测=引擎 vs 金标准一致率，非自评。',
   description_en:
-    'Random physiology synthesis; gold labels from an independent clinical adjudication module (separate thresholds/formulas). Metrics = product engine vs gold agreement — not self-test.',
+    'Clinically correlated random physiology (age/sex/fitness + day autocorrelation); gold labels from independent clinical adjudication. Metrics = engine vs gold agreement — not self-test.',
   invalidIf_zh: '若告警/异常/风险/评分四项均≥98%，说明金标准与引擎同源，临床性能估计无效。',
   invalidIf_en:
     'If alert/anomaly/risk/score metrics are all ≥98%, gold labels are likely engine-derived — invalid for clinical estimation.',

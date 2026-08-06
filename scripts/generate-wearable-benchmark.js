@@ -6,7 +6,7 @@
  * Preserves hand-crafted WA-001…WA-008 seeds; remaining cases are randomly generated.
  *
  * Usage:
- *   node scripts/generate-wearable-benchmark.js [--n 1000] [--seed 42]
+ *   node scripts/generate-wearable-benchmark.js [--n 5000] [--seed 42]
  *   node scripts/generate-wearable-benchmark.js --output benchmarks/wearable-analytics-dataset.json
  */
 
@@ -14,6 +14,11 @@ const fs = require('fs');
 const path = require('path');
 const { evaluateCase } = require('../server/services/analyticsCore');
 const { adjudicateCase } = require('../server/services/clinicalGoldStandard');
+const {
+  buildClinicalRandomDays,
+  enforceClinicalPlausibility,
+  computeCohortClinicalStats,
+} = require('../server/services/clinicalPhysiology');
 
 const DEFAULT_OUT = path.join(__dirname, '../benchmarks/wearable-analytics-dataset.json');
 const SEED_FILE = path.join(__dirname, '../benchmarks/wearable-analytics-seed-v1.json');
@@ -21,7 +26,7 @@ const THRESHOLDS = { heartRateMax: 100, heartRateMin: 50, spo2Min: 93 };
 
 function parseArgs() {
   const args = process.argv.slice(2);
-  const opts = { n: 1000, seed: 42, output: DEFAULT_OUT, days: 7 };
+  const opts = { n: 5000, seed: 42, output: DEFAULT_OUT, days: 7 };
   for (let i = 0; i < args.length; i++) {
     if (args[i] === '--n' || args[i] === '--cases') opts.n = Math.max(8, +args[++i]);
     else if (args[i] === '--seed') opts.seed = +args[++i];
@@ -56,7 +61,7 @@ function sleepBlock(rng, deep, rem, light, awake) {
 }
 
 function dayRecord(rng, profile) {
-  return {
+  return enforceClinicalPlausibility({
     steps: randInt(rng, profile.steps[0], profile.steps[1]),
     heartRate: randArr(rng, profile.hrN || 4, profile.hr[0], profile.hr[1]),
     spo2: randArr(rng, profile.spo2N || 2, profile.spo2[0], profile.spo2[1], 1),
@@ -64,7 +69,7 @@ function dayRecord(rng, profile) {
     restingHeartRate: randInt(rng, profile.rhr[0], profile.rhr[1]),
     sleepMinutes: sleepBlock(rng, ...profile.sleep),
     activeEnergy: randInt(rng, profile.energy[0], profile.energy[1]),
-  };
+  });
 }
 
 function buildDays(rng, days, baseline, targetOverride) {
@@ -229,36 +234,9 @@ function alertsEqual(a, b) {
   return true;
 }
 
-function randomDay(rng) {
-  return {
-    steps: randInt(rng, 800, 12000),
-    heartRate: randArr(rng, randInt(rng, 2, 6), 48, 132),
-    spo2: randArr(rng, randInt(rng, 2, 4), 88, 100, 1),
-    hrv: randArr(rng, 2, 10, 90),
-    restingHeartRate: randInt(rng, 45, 108),
-    sleepMinutes: sleepBlock(
-      rng,
-      randInt(rng, 12, 95),
-      randInt(rng, 15, 105),
-      randInt(rng, 110, 260),
-      randInt(rng, 5, 85),
-    ),
-    activeEnergy: randInt(rng, 80, 680),
-  };
-}
-
 function buildRandomDays(rng, days) {
-  const start = new Date('2026-06-08');
-  const daysMap = {};
-  let targetKey = null;
-  for (let i = 0; i < days; i++) {
-    const dt = new Date(start);
-    dt.setDate(start.getDate() + i);
-    const key = dt.toISOString().slice(0, 10);
-    if (i === days - 1) targetKey = key;
-    daysMap[key] = randomDay(rng);
-  }
-  return { days: daysMap, targetDay: targetKey };
+  const { days: daysMap, targetDay } = buildClinicalRandomDays(rng, days);
+  return { days: daysMap, targetDay };
 }
 
 function labelCase(caseData, phenotypeKey) {
@@ -292,10 +270,10 @@ function generateUniformRandomCase(id, rng, days) {
   const { days: daysMap, targetDay } = buildRandomDays(rng, days);
   return labelCase({
     id,
-    label: 'Random adult wearable profile',
+    label: 'Clinical-random adult wearable profile',
     targetDay,
     days: daysMap,
-  }, 'uniform_random');
+  }, 'clinical_random');
 }
 
 function generateRandomBenchmark(targetN, seed, daysPerCase) {
@@ -309,7 +287,7 @@ function generateRandomBenchmark(targetN, seed, daysPerCase) {
     const useUniform = rng() < 0.28;
     if (useUniform) {
       cases.push(generateUniformRandomCase(id, rng, daysPerCase));
-      counts.uniform_random = (counts.uniform_random || 0) + 1;
+      counts.clinical_random = (counts.clinical_random || 0) + 1;
     } else {
       const phenotype = pickPhenotype(rng);
       cases.push(generateCase(id, phenotype, rng, daysPerCase));
@@ -364,19 +342,24 @@ function main() {
   const { cases, distribution } = generateRandomBenchmark(opts.n, opts.seed, opts.days);
   const preview = previewEngineAgreement(cases);
 
+  const clinicalCharacteristics = computeCohortClinicalStats(cases);
+
   const dataset = {
     dataset: 'MedWear-Wearable-Analytics-Clinical-v2',
-    version: '2.2.0',
+    version: '2.4.0',
     license: 'CC-BY-4.0',
-    description: 'Synthetic multi-day wearable cases. Physiology: 72% weighted-random phenotypes + 28% uniform random vitals. Gold labels: independent clinical adjudication (clinicalGoldStandard-v1), NOT the product analytics engine.',
+    description: 'Synthetic multi-day wearable cases. Physiology: 72% weighted-random phenotypes + 28% clinically correlated random adults (fitness/age/sex + day autocorrelation). Gold labels: independent clinical adjudication (clinicalGoldStandard-v1), NOT the product analytics engine.',
     labelSource: 'clinical-gold-standard-v1',
     superseded: 'MedWear-Wearable-Analytics-Mini-v1',
     generatedAt: new Date().toISOString(),
     seed: opts.seed,
+    rng: 'mulberry32',
     n: cases.length,
     daysPerCase: opts.days,
-    expansionMethod: 'random-physiology-clinical-adjudication',
+    expansionMethod: 'clinical-random-physiology-adjudication',
+    physiologyMix: { clinicalRandom: 0.28, phenotypeRandom: 0.72 },
     phenotypeDistribution: distribution,
+    clinicalCharacteristics,
     thresholds: THRESHOLDS,
     cases: cases.map(({ _phenotype, ...rest }) => rest),
   };
