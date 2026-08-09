@@ -50,18 +50,31 @@ For real-mode demo: export Apple Health zip from iPhone → upload at `/import`.
 
 ## CI
 
-GitHub Actions runs on push (see `.github/workflows/ci.yml`):
+GitHub Actions (`.github/workflows/ci.yml`) runs on **push** and **pull_request** to `main` / `master`.
+
+### Job: `test-and-evaluate`
+
+Node 22 · Ubuntu latest:
 
 1. `npm ci`
-2. `npm run docs:verify`
+2. `npm run docs:verify` — METHODS EN/ZH parity with `methodologyTransparency.js`
 3. `npm run test:server`
-4. `npm run evaluate`
-5. Python setup + `npm run evaluate:supplement`
-6. `npm run build`
+4. `npm audit --audit-level=high` (informational; `continue-on-error: true`)
+5. `npm run evaluate`
+6. Python 3.11 → `pip install -r experiments/medwear/requirements-min.txt`
+7. `npm run evaluate:supplement` — scenarios, FP burden, ML compare, EVALUATION sync
+8. `npm run build`
 
-Separate job: Docker image build after tests pass.
+### Job: `docker`
+
+Runs after `test-and-evaluate` passes:
+
+```bash
+docker build -t medwear-api .
+```
 
 ## Version Pinning
 
-- Node.js 18+ recommended
+- Node.js **22** in CI; **18+** recommended locally
+- Python **3.11** for supplement / experiment scripts
 - Lockfile: `package-lock.json`
