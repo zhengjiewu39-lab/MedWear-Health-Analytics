@@ -216,7 +216,7 @@ function ResearchCenter() {
           { label: t('告警召回率', 'Alert recall'), value: wm ? pct(wm.alerts?.recall) : '—', icon: <MonitorHeart />, color: IV },
           { label: t('异常准确率', 'Anomaly acc'), value: wm ? pct(wm.anomalyAccuracy) : '—', icon: <Timeline />, color: IV, ci: wci?.anomalyAccuracy },
           { label: t('风险准确率', 'Risk acc'), value: wm ? pct(wm.riskAccuracy) : '—', icon: <Groups />, color: IV, ci: wci?.riskAccuracy },
-          { label: t('评分一致', 'Score agree'), value: wm ? pct(wm.healthScoreAgreementRate ?? wm.healthScoreInRangeRate) : '—', icon: <Biotech />, color: IV, ci: wci?.healthScoreAgreement || wci?.healthScoreInRange },
+          { label: t('BHI 一致', 'BHI agree'), value: wm ? pct(wm.healthScoreAgreementRate ?? wm.healthScoreInRangeRate) : '—', icon: <Biotech />, color: IV, ci: wci?.healthScoreAgreement || wci?.healthScoreInRange },
         ].map((item) => (
           <Grid item xs={6} md={4} lg={2} key={item.label}>
             <Card sx={{ height: '100%', borderTop: 3, borderColor: item.color }}>
@@ -349,7 +349,7 @@ function ResearchCenter() {
                             [t('告警召回率', 'Alert recall'), pct(wm.alerts?.recall), null],
                             [t('异常准确率', 'Anomaly acc'), pct(wm.anomalyAccuracy), ciRange(wci?.anomalyAccuracy)],
                             [t('风险准确率', 'Risk acc'), pct(wm.riskAccuracy), ciRange(wci?.riskAccuracy)],
-                            [t('评分一致率', 'Score agreement'), pct(wm.healthScoreAgreementRate ?? wm.healthScoreInRangeRate), ciRange(wci?.healthScoreAgreement || wci?.healthScoreInRange)],
+                            [t('BHI 一致率', 'BHI agreement'), pct(wm.healthScoreAgreementRate ?? wm.healthScoreInRangeRate), ciRange(wci?.healthScoreAgreement || wci?.healthScoreInRange)],
                           ].map(([label, val, ci]) => (
                             <TableRow key={label}>
                               <TableCell>{label}</TableCell>

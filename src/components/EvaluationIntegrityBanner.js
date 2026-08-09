@@ -53,7 +53,7 @@ export default function EvaluationIntegrityBanner({
           {' · '}{t('召回率', 'Recall')} {pct(m.alerts?.recall)}
           {' · '}{t('异常', 'Anomaly')} {pct(m.anomalyAccuracy)}
           {' · '}{t('风险', 'Risk')} {pct(m.riskAccuracy)}
-          {' · '}{t('评分', 'Score')} {pct(m.healthScoreAgreementRate ?? m.healthScoreInRangeRate)}
+          {' · '}{t('BHI 一致', 'BHI agree')} {pct(m.healthScoreAgreementRate ?? m.healthScoreInRangeRate)}
           {wearableResults?.mismatchCount != null && (
             <> · {t('分歧', 'Disagree')} {wearableResults.mismatchCount}/{wearableResults.n || w?.n}</>
           )}

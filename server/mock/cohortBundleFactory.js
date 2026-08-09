@@ -138,8 +138,8 @@ function buildDetailedScreeningInsights(stats, cohort, record) {
 
   items.push({
     type: cohort.riskTier === 'low' ? 'positive' : 'warning',
-    text: `【风险分层】综合风险指数 ${riskPct}/100（${tierZh}）· 健康分 ${stats.healthScore} · 队列类别：${cohort.categoryLabel}`,
-    text_en: `[Risk stratification] composite index ${riskPct}/100 (${tierEn}) · health score ${stats.healthScore} · cohort: ${cohort.categoryLabel_en}`,
+    text: `【风险分层】综合风险指数 ${riskPct}/100（${tierZh}）· BHI ${stats.healthScore} · 队列类别：${cohort.categoryLabel}`,
+    text_en: `[Risk stratification] composite index ${riskPct}/100 (${tierEn}) · BHI ${stats.healthScore} · cohort: ${cohort.categoryLabel_en}`,
   });
 
   if (di.primaryDevice) {

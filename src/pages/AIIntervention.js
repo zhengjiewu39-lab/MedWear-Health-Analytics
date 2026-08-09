@@ -119,8 +119,8 @@ function AIIntervention() {
         <Alert severity="info" sx={{ mb: 2 }} variant="outlined">
           {summary.patient.id === 'real'
             ? t(
-              `当前用户：${summary.patient.name} · Apple Health 真实数据 · 健康评分 ${summary.patient.healthScore ?? '—'}`,
-              `Current user: ${summary.patient.name} · Apple Health real data · health score ${summary.patient.healthScore ?? '—'}`,
+              `当前用户：${summary.patient.name} · Apple Health 真实数据 · BHI ${summary.patient.healthScore ?? '—'}`,
+              `Current user: ${summary.patient.name} · Apple Health real data · BHI ${summary.patient.healthScore ?? '—'}`,
             )
             : t(
               `当前演示者：${summary.patient.name}（${summary.patient.id}）· ${summary.patient.scenario || ''} · 以下干预建议均基于该患者筛查/异常/预测信号生成`,
@@ -296,7 +296,7 @@ function AIIntervention() {
 
       <Divider sx={{ my: 3 }} />
       <Typography variant="caption" color="text.secondary">
-        {t('AI 模型', 'AI models')}: {(summary?.models || []).join(' · ')}
+        {t('规则引擎模块', 'Rule engine modules')}: {(summary?.models || []).join(' · ')}
       </Typography>
     </Box>
   );

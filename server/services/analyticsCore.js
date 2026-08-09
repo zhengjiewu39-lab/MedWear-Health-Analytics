@@ -1,4 +1,4 @@
-const { computeBHIWithTrend, computeBehavioralHealthIndex } = require('./behavioralHealthIndex');
+const { computeBHIWithTrend, computeBehavioralHealthIndex, SCORE_FIELD } = require('./behavioralHealthIndex');
 const { detectRobustAnomalies } = require('./robustAnomaly');
 
 function avg(arr) {
@@ -114,7 +114,9 @@ function evaluateCase(caseData, thresholds) {
     alerts: alerts.map(a => a.type),
     anomalyDetected: anomalies.length > 0,
     anomalyTypes: anomalies.map(a => a.type),
-    healthScore: score,
+    healthScore: score, // SCORE_FIELD.apiField — Behavioral Health Index (BHI)
+    scoreKind: SCORE_FIELD.kind,
+    scoreLabel: SCORE_FIELD.label_en,
     riskLevel,
   };
 }

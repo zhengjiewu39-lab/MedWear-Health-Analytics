@@ -286,7 +286,7 @@ function DoctorReport() {
             ['BMI', p.bmi ?? (t('待录入', 'Pending entry'))],
             [t('联系电话', 'Phone'), p.phone || '—'],
             [t('监测设备', 'Device'), p.device || '—'],
-            [isHealthScore ? t('健康评分', 'Health score') : t('综合风险', 'Overall risk'),
+            [isHealthScore ? t('BHI 行为健康指数', 'BHI (behavioral health index)') : t('综合风险', 'Overall risk'),
               isHealthScore ? `${report.overallScore}/100 · ${rl(report.overallRisk)}` : rl(report.overallRisk)],
           ].map(([k, v]) => (
             <Grid item xs={6} sm={4} md={3} key={k}>
@@ -435,7 +435,7 @@ function DoctorReport() {
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
                   {s.healthScore != null
-                    ? t('类别健康分', 'Category health score')
+                    ? t('类别 BHI', 'Category BHI')
                     : t('风险指数', 'Risk index')}
                 </Typography>
                 <Typography variant="body2" sx={{ mt: 1 }}>{s.topItems.join(' · ')}</Typography>

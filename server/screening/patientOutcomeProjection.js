@@ -373,7 +373,7 @@ function buildNarrative(patient, withIntervention, withoutIntervention, delta) {
   ].filter(Boolean).join('\n');
 
   const en = [
-    `Patient ${name} (${patient.id}) — health score ${hs}, category "${patient.categoryLabel_en || cat}".`,
+    `Patient ${name} (${patient.id}) — BHI ${hs}, category "${patient.categoryLabel_en || cat}".`,
     'With MedWear AI-assisted intervention: continuous monitoring → AI stratification → exam → early treatment.',
     `Projected 5-year outcome: intervention ${outcomeIv != null ? `${(outcomeIv * 100).toFixed(1)}%` : '—'} vs no intervention ${outcomeUc != null ? `${(outcomeUc * 100).toFixed(1)}%` : '—'}`
       + (outcomeGain != null ? ` (absolute gain +${(outcomeGain * 100).toFixed(1)} pp)` : '') + '.',

@@ -99,7 +99,7 @@ function Dashboard() {
       <Grid container spacing={3} sx={{ mb: 3 }}>
         <Grid item xs={12} md={3}>
           <Paper sx={{ p: 3, textAlign: 'center', height: '100%' }}>
-            <ScoreRing score={stats.healthScore} />
+            <ScoreRing score={stats.healthScore} label={t('BHI 行为健康指数', 'BHI (behavioral health index)')} />
             <Chip label={t(`等级 ${stats.healthGrade}`, `Grade ${stats.healthGrade}`)} color="success" size="small" sx={{ mt: 1 }} />
             <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-around' }}>
               <Box>
@@ -204,7 +204,7 @@ function Dashboard() {
                 <Tooltip contentStyle={{ borderRadius: 8 }} />
                 <Legend />
                 <Bar yAxisId="left" dataKey="steps" name={t('步数', 'Steps')} fill={CHART.intervention} radius={[6, 6, 0, 0]} opacity={0.85} />
-                <Line yAxisId="right" type="monotone" dataKey="score" name={t('健康分', 'Health Score')} stroke={CHART.positive} strokeWidth={2.5} dot={{ r: 4, fill: CHART.positive }} />
+                <Line yAxisId="right" type="monotone" dataKey="score" name={t('BHI', 'BHI')} stroke={CHART.positive} strokeWidth={2.5} dot={{ r: 4, fill: CHART.positive }} />
               </BarChart>
             </ChartContainer>
           </Paper>
@@ -245,7 +245,7 @@ function Dashboard() {
         {/* 月度评分趋势 */}
         <Grid item xs={12}>
           <Paper sx={{ p: 3 }}>
-            <Typography variant="subtitle1" fontWeight={600} gutterBottom>{t('月度健康评分趋势', 'Monthly Health Score Trend')}</Typography>
+            <Typography variant="subtitle1" fontWeight={600} gutterBottom>{t('月度 BHI 趋势', 'Monthly BHI trend')}</Typography>
             <ChartContainer width="100%" height={200}>
               <AreaChart data={healthTrend}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />

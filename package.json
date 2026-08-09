@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "main": "electron/main.js",
-  "description": "MedWear Health Analytics — 人机协同慢病与肿瘤早筛研究平台",
+  "description": "MedWear — local-first wearable health analytics & decision-support research prototype",
   "author": "MedWear Research",
   "dependencies": {
     "@emotion/react": "^11.14.0",
@@ -110,7 +110,7 @@
     },
     "afterPack": "scripts/after-pack-mac.js",
     "mac": {
-      "category": "public.app-category.medical",
+      "category": "public.app-category.healthcare-fitness",
       "target": [
         "dmg",
         "zip"

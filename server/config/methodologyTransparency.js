@@ -6,15 +6,18 @@
 
 const fs = require('fs');
 const path = require('path');
-const { WEIGHTS, SCORE_KIND } = require('../services/behavioralHealthIndex');
+const { SCORE_FIELD, WEIGHTS } = require('../services/behavioralHealthIndex');
 const { SENSITIVITY_PRESETS } = require('../services/robustAnomaly');
 
 const SOURCE_FILE = 'server/config/methodologyTransparency.js';
 
 const healthScore = {
-  kind: SCORE_KIND,
-  label_en: 'Behavioral Health Index (BHI)',
-  label_zh: '行为健康指数（BHI）',
+  kind: SCORE_FIELD.kind,
+  apiField: SCORE_FIELD.apiField,
+  label_en: SCORE_FIELD.label_en,
+  label_zh: SCORE_FIELD.label_zh,
+  fieldNote_en: SCORE_FIELD.note_en,
+  fieldNote_zh: SCORE_FIELD.note_zh,
   notDiseaseRisk: true,
   implementation: 'server/services/behavioralHealthIndex.js → analyticsCore.computeDayScore()',
   weights: WEIGHTS,
@@ -179,9 +182,11 @@ Transparent, reproducible pipeline for real mode and benchmark evaluation. **No 
 |-----------|--------|----------|
 ${Object.entries(hs.weights).map(([k, v]) => `| ${k} | ${(v * 100).toFixed(0)}% | see formulas below |`).join('\n')}
 
-Formulas:
+**Formulas:**
 
 ${hs.formulas_en.map((f) => `- ${f}`).join('\n')}
+
+**API field:** \`${hs.apiField}\` = ${hs.label_en}. ${hs.fieldNote_en}
 
 Implementation: \`${hs.implementation}\`
 
@@ -265,6 +270,8 @@ ${Object.entries(hs.weights).map(([k, v]) => `| ${k} | ${(v * 100).toFixed(0)}% 
 公式：
 
 ${hs.formulas_zh.map((f) => `- ${f}`).join('\n')}
+
+**API 字段：** \`${hs.apiField}\` = ${hs.label_zh}。${hs.fieldNote_zh}
 
 实现：\`${hs.implementation}\`
 

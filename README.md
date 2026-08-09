@@ -65,6 +65,8 @@ macOS 也可 **双击** 项目根目录下的 `启动 MedWear.command`。
 
 账号：`admin` / `admin123` · `demo` / `demo123`
 
+> **⚠ Security — local demo only:** Default accounts and sample secrets in `.env.example` are for local research prototyping. **Production deployments must** set `MEDWEAR_JWT_SECRET`, `MEDWEAR_ENCRYPTION_KEY`, strong passwords, `NODE_ENV=production`, and `ALLOW_DEMO_AUTH=false`. See [docs/ETHICS.md](docs/ETHICS.md).
+
 **常见错误：**
 
 | 报错 | 原因 | 解决 |

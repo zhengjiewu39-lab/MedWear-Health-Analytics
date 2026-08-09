@@ -25,8 +25,19 @@ MedWear is a **research and education prototype** for consumer wearable analytic
 ## Screening & AI Outputs
 
 - Disease screening scores are **risk stratification aids**, not diagnoses
+- Core analytics use **BHI** (behavioral health index) — API field `healthScore` is a backward-compatible name
 - LLM responses include non-diagnostic disclaimers
 - All outputs require human clinician review in any real-world use
+
+## Default Credentials & Production Security
+
+**⚠ Local demo only:** README documents default accounts (`admin/admin123`, `demo/demo123`) and sample secrets in `.env.example`. These are **not** safe for any network-exposed or production deployment.
+
+Before production use you **must**:
+
+- Set strong `MEDWEAR_JWT_SECRET` and `MEDWEAR_ENCRYPTION_KEY`
+- Disable demo auth (`ALLOW_DEMO_AUTH=false`, `NODE_ENV=production`)
+- Change all default passwords and rotate keys regularly
 
 ## Research & Citation
 

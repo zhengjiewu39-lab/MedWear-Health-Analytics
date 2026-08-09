@@ -18,7 +18,7 @@ Transparent, reproducible pipeline for real mode and benchmark evaluation. **No 
 | spo2 | 16% | see formulas below |
 | hrv | 12% | see formulas below |
 
-Formulas:
+**Formulas:**
 
 - Steps (28%): sigmoid — `1 / (1 + exp(-(steps - 5500) / 1800))`
 - Sleep (24%): Gaussian peak ~7.25 h — `(deep + rem + light + awake) / 60`
@@ -27,6 +27,8 @@ Formulas:
 - HRV (12%): age-adjusted cap — `min(1, hrv / ref)` where ref declines with age
 - Trend (optional): ±3 pts max vs prior 7-day BHI mean
 - Missing data: re-normalize over available components; median-imputation sensitivity via `missingDataSensitivity()`
+
+**API field:** `healthScore` = Behavioral Health Index (BHI). Field name healthScore is kept for backward compatibility; values are BHI (behavioral wellness index), not a calibrated disease-risk score.
 
 Implementation: `server/services/behavioralHealthIndex.js → analyticsCore.computeDayScore()`
 

@@ -28,6 +28,8 @@
 - 趋势（可选）：相对前 7 日 BHI 均值 ±3 分
 - 缺失数据：对可用分量重新归一化；中位数插补敏感性见 `missingDataSensitivity()`
 
+**API 字段：** `healthScore` = 行为健康指数（BHI）。字段名 healthScore 为向后兼容保留；数值为 BHI（行为健康指数），非经临床校准的疾病风险评分。
+
 实现：`server/services/behavioralHealthIndex.js → analyticsCore.computeDayScore()`
 
 **局限：** 未在临床结局上校准；无合并症/用药调整；仅可穿戴代理信号。

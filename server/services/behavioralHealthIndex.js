@@ -5,6 +5,18 @@
 
 const SCORE_KIND = 'behavioral-health-index';
 
+/** API compatibility: JSON field `healthScore` holds BHI (not disease risk). */
+const SCORE_FIELD = {
+  apiField: 'healthScore',
+  kind: SCORE_KIND,
+  label_en: 'Behavioral Health Index (BHI)',
+  label_zh: '行为健康指数（BHI）',
+  note_en:
+    'Field name healthScore is kept for backward compatibility; values are BHI (behavioral wellness index), not a calibrated disease-risk score.',
+  note_zh:
+    '字段名 healthScore 为向后兼容保留；数值为 BHI（行为健康指数），非经临床校准的疾病风险评分。',
+};
+
 const WEIGHTS = { steps: 0.28, sleep: 0.24, rhr: 0.20, spo2: 0.16, hrv: 0.12 };
 
 function avg(arr) {
@@ -144,6 +156,7 @@ function missingDataSensitivity(dayData, opts = {}) {
 
 module.exports = {
   SCORE_KIND,
+  SCORE_FIELD,
   WEIGHTS,
   computeBehavioralHealthIndex,
   computeBHIWithTrend,

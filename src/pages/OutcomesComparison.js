@@ -261,7 +261,7 @@ function OutcomesComparison() {
               <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
                 {pc.patient.name} · {pc.patient.id}
                 {pc.patient.age != null && ` · ${pc.patient.age}${t('岁', 'y')}`}
-                {` · ${t('健康评分', 'Health score')} ${pc.patient.healthScore ?? '—'}`}
+                {` · ${t('BHI', 'BHI')} ${pc.patient.healthScore ?? '—'}`}
                 {` · ${isEn ? pc.patient.categoryLabel_en : pc.patient.categoryLabel}`}
               </Typography>
             </Box>

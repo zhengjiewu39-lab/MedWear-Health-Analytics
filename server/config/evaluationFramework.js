@@ -3,6 +3,8 @@
  * Prevents circular self-evaluation (engine-labeled gold standards → fake 100%).
  */
 
+const { SCORE_FIELD } = require('../services/behavioralHealthIndex');
+
 const PRODUCT_ENGINE = 'MedWear-AnalyticsCore-v1';
 const GOLD_STANDARD = 'clinicalGoldStandard-v1';
 const CIRCULAR_THRESHOLD = 0.98;
@@ -98,6 +100,12 @@ module.exports = {
   isCircularMetrics,
   summarizeWearableResults,
   getFrameworkPayload() {
-    return { wearable, screening, clinicalValidation, productEngine: PRODUCT_ENGINE };
+    return {
+      wearable,
+      screening,
+      clinicalValidation,
+      productEngine: PRODUCT_ENGINE,
+      scoreField: SCORE_FIELD,
+    };
   },
 };

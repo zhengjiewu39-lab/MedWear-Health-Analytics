@@ -1,3 +1,4 @@
+const { SCORE_FIELD } = require('../services/behavioralHealthIndex');
 const { getStore, hasData } = require('./store');
 const { CATEGORY_META } = require('../data/predictionsCatalog');
 const {
@@ -171,11 +172,11 @@ function buildPredictions(store) {
     if (score > 0 && score < 80) {
       add({
         ...cat('training'),
-        patient, risk: '综合健康评分偏低', risk_en: 'Low composite health score',
+        patient, risk: 'BHI 偏低', risk_en: 'Low BHI (behavioral health index)',
         probability: Math.min(65, Math.round(100 - score)),
         timeframe: '7天内', timeframe_en: 'Within 7 days', horizon: 'short', level: score < 60 ? 'medium' : 'low',
         factors: [`健康评分 ${score} 分`, `${store.meta?.dayCount || days.length} 天真实数据`],
-        factors_en: [`Health score ${score}`, `${store.meta?.dayCount || days.length} days of real data`],
+        factors_en: [`BHI ${score}`, `${store.meta?.dayCount || days.length} days of real data`],
         recommendation: '建议改善睡眠与活动量，必要时咨询全科医生',
         recommendation_en: 'Improve sleep and activity; see a GP if needed',
       });
@@ -703,6 +704,9 @@ function buildUiDashboardStats(store) {
   return {
     hasData: true,
     healthScore: score,
+    scoreKind: SCORE_FIELD.kind,
+    scoreLabel: SCORE_FIELD.label_en,
+    scoreFieldNote: SCORE_FIELD.note_en,
     healthGrade: gradeFromScore(score),
     heartRate: hr ? Math.round(hr) : null,
     restingHR: rhr ? Math.round(rhr) : null,

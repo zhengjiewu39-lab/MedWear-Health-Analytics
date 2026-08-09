@@ -64,7 +64,9 @@ function makeRng(seed) {
   };
 }
 
-// ── Clinical parameters (documented, literature-anchored) ──────────────────
+// ── Scenario parameters (PUBLIC — directly encode intervention-vs-control deltas) ──
+// STAGE_DISTRIBUTION, TREATMENT_INITIATION_RATE, CHRONIC_CONTROL_RATE, TIME_TO_TREATMENT
+// are preset arm parameters for exploratory scenario simulation only — NOT observed outcomes.
 
 /**
  * Disease categories with prevalence in a 40–80 screening-eligible population,

@@ -51,7 +51,7 @@ npm run evaluate
 | 告警 F1 | 告警类型集合 micro-F1（同时报告精确率/召回率） |
 | 异常准确率 | `anomalyDetected` 二分类一致率 |
 | 风险准确率 | `riskLevel` 三分类一致率 |
-| 评分一致 | BHI 与金标准参考值相差 ≤8 分 |
+| 评分一致 | BHI 与金标准参考值相差 ≤8 分（`healthScore` 字段 = BHI） |
 | 95% CI | Wilson 区间（n≥100 时可用于临床报告） |
 
 ## 参考结果（v2.5，n=5000，seed=42，BHI + MAD 引擎）

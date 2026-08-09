@@ -50,7 +50,7 @@ Output: `benchmarks/results/latest.json`
 | Alert F1 | Micro-F1 over alert type sets (precision/recall also reported) |
 | Anomaly Accuracy | Binary match on anomalyDetected |
 | Risk Accuracy | 3-class match on riskLevel |
-| Score agreement | BHI within ±8 pts of gold reference |
+| Score agreement | BHI within ±8 pts of gold reference (`healthScore` field = BHI) |
 | 95% CI | Wilson score interval for accuracy metrics (n≥100) |
 
 ## Reference Results (v2.5, n=5000, seed=42, BHI + MAD engine)

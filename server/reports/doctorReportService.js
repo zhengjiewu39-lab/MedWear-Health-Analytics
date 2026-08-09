@@ -94,7 +94,7 @@ function buildRiskFactors(patient, report) {
         ? `综合健康评分 ${report.overallScore}/100（${riskZh === '低' ? '良好' : riskZh === '高' ? '需重点随访' : '中等，建议加强监测'}）`
         : `综合风险指数 ${report.overallScore}/100（${riskZh}风险）`,
       factor_en: isHealthScore
-        ? `Overall health score ${report.overallScore}/100 (${risk} tier)`
+        ? `Overall BHI ${report.overallScore}/100 (${risk} tier)`
         : `Composite risk index ${report.overallScore}/100 (${risk} risk)`,
       level: risk === 'high' ? 'high' : risk === 'low' ? 'low' : 'moderate',
       source: 'composite',
@@ -430,7 +430,7 @@ function enrichReport(baseReport, profile, { useAi = false } = {}) {
       ? '健康评分（越高越好）'
       : '综合风险指数（越低越好）',
     overallScoreLabel_en: baseReport.overallScoreType === 'health' || baseReport.mode === 'real'
-      ? 'Health score (higher is better)'
+      ? 'BHI — behavioral health index (higher is better)'
       : 'Risk index (lower is better)',
     demographicsNote: '姓名、性别、年龄、身高、体重由接诊医师录入；Apple Health 无法自动提供这些字段',
     demographicsNote_en: 'Name, sex, age, height and weight are entered by the clinician; Apple Health does not supply these fields',

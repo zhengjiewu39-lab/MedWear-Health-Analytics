@@ -61,7 +61,7 @@ export default function DemoPatientSelector() {
             <Typography variant="caption" color="text.secondary">
               {isEn ? (p.scenario_en || p.scenario) : p.scenario}
               {' · '}
-              {t('健康分', 'Score')} {p.healthScore}
+              {t('BHI', 'BHI')} {p.healthScore}
               {' · '}
               {p.arm === 'intervention' ? t('干预组', 'IV') : t('对照组', 'UC')}
               {p.primaryDevice && (

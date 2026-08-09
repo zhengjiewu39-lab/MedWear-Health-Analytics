@@ -8,6 +8,7 @@ const fs = require('fs');
 const path = require('path');
 const { evaluateCase } = require('../server/services/analyticsCore');
 const { isCircularMetrics, wearable: wearablePolicy } = require('../server/config/evaluationFramework');
+const { SCORE_FIELD } = require('../server/services/behavioralHealthIndex');
 
 const DATASET = path.join(__dirname, '../benchmarks/wearable-analytics-dataset.json');
 const DEFAULT_OUT = path.join(__dirname, '../benchmarks/results/latest.json');
@@ -53,6 +54,7 @@ function run() {
     evaluatedAt: new Date().toISOString(),
     n: dataset.cases.length,
     engine: 'MedWear-AnalyticsCore-v1',
+    scoreField: SCORE_FIELD,
     metrics: {},
     cases: [],
     mismatches: [],
@@ -144,7 +146,7 @@ if (require.main === module) {
   console.log(`  Alert F1:        ${results.metrics.alerts.f1} (P=${results.metrics.alerts.precision} R=${results.metrics.alerts.recall})`);
   console.log(`  Anomaly Acc:     ${results.metrics.anomalyAccuracy}`);
   console.log(`  Risk Acc:        ${results.metrics.riskAccuracy}`);
-  console.log(`  Score agreement: ${results.metrics.healthScoreAgreementRate}`);
+  console.log(`  Score agreement: ${results.metrics.healthScoreAgreementRate} (field \`${SCORE_FIELD.apiField}\` = ${SCORE_FIELD.label_en})`);
   if (results.metrics.confidence95) {
     const c = results.metrics.confidence95;
     console.log(`  95% CI anomaly:  ${c.anomalyAccuracy.lower}–${c.anomalyAccuracy.upper}`);
