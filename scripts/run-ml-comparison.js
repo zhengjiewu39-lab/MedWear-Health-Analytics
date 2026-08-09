@@ -60,6 +60,17 @@ function nodeBaselinesFromFeatures() {
   ];
 }
 
+function ensurePythonDeps() {
+  const r = spawnSync('python3', ['-c', 'import sklearn, pandas, joblib'], { encoding: 'utf8' });
+  if (r.status === 0) return true;
+  console.log('[ML] Installing minimal Python deps...');
+  const pip = spawnSync('python3', ['-m', 'pip', 'install', '-q', '-r', path.join(__dirname, '../experiments/medwear/requirements-min.txt')], {
+    stdio: 'inherit',
+    cwd: path.join(__dirname, '..'),
+  });
+  return pip.status === 0;
+}
+
 function ensureFeatures() {
   spawnSync(process.execPath, [
     path.join(__dirname, 'export_features.js'),
@@ -83,6 +94,7 @@ function runPythonModel(model) {
 
 function main() {
   ensureFeatures();
+  ensurePythonDeps();
   const evalResults = runEvaluate();
   const ruleEngine = {
     name: 'MedWear-RuleEngine-v1 + AnalyticsCore',
@@ -121,7 +133,9 @@ function main() {
     pythonRequired: mlResults.length === 0,
     pythonSetup: 'pip install -r experiments/medwear/requirements.txt',
     disclosure:
-      'ML models trained on same synthetic export — not independent external validation. Compares interpretable rules vs simple ML baselines.',
+      'ML models trained on same synthetic export — features include engine-derived health_score_norm/anomaly_flag, so high sklearn scores do NOT imply independent validation. Compares interpretability vs simple ML on portable schema.',
+    featureLeakageWarning:
+      'Exported features include BHI/anomaly flags from the product engine — sklearn CV on this export can appear inflated vs engine-vs-gold evaluation.',
   };
 
   fs.mkdirSync(path.dirname(OUT), { recursive: true });

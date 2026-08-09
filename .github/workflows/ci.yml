@@ -22,6 +22,11 @@ jobs:
         run: npm audit --audit-level=high
         continue-on-error: true
       - run: npm run evaluate
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install -r experiments/medwear/requirements-min.txt
+      - run: npm run evaluate:supplement
       - run: npm run build
 
   docker:

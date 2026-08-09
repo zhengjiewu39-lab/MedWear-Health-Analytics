@@ -33,7 +33,7 @@ function getEvaluationSupplement() {
       scenarios: 'npm run freeze:scenarios',
       fpBurden: 'npm run analyze:fp-burden',
       mlComparison: 'npm run experiment:compare',
-      externalDescriptive: 'npm run evaluate:external',
+      externalDescriptive: 'npm run evaluate:public',
       all: 'npm run evaluate:supplement',
     },
   };
@@ -85,10 +85,10 @@ function renderSupplementMarkdown(isEn = true) {
 
   if (isEn) {
     lines.push('## Rule engine vs simple ML (exported features)\n');
-    lines.push('> Same synthetic export — compares interpretability vs sklearn baselines. `npm run experiment:compare`.\n');
+    lines.push('> Same synthetic export — **features include engine-derived BHI/anomaly flags**; high sklearn CV does not replace engine-vs-gold. `npm run experiment:compare-all`.\n');
   } else {
     lines.push('## 规则引擎 vs 简单 ML（导出特征）\n');
-    lines.push('> 同一合成导出 — 可解释性 vs sklearn 基线。`npm run experiment:compare`。\n');
+    lines.push('> 同一合成导出 — **特征含引擎衍生 BHI/异常标记**；sklearn CV 高不代表独立验证。`npm run experiment:compare-all`。\n');
   }
 
   if (s.mlComparison?.ruleEngine) {
@@ -115,7 +115,12 @@ function renderSupplementMarkdown(isEn = true) {
 
   if (s.externalDescriptive) {
     const e = s.externalDescriptive;
-    lines.push(`- n=${e.n} · heuristic BHI-tier accuracy=${e.heuristicBhiTierAccuracy}`);
+    if (e.wesadStressProxy) {
+      lines.push(`- WESAD stress proxy: n=${e.wesadStressProxy.n} · BHI-tier acc=${e.wesadStressProxy.heuristicBhiTierAccuracy} · anomaly flag agree=${e.wesadStressProxy.anomalyFlagAgreement ?? '—'}`);
+    }
+    if (e.internalExport) {
+      lines.push(`- Internal export: n=${e.internalExport.n} · BHI-tier acc=${e.internalExport.heuristicBhiTierAccuracy}`);
+    }
     lines.push(`- Planned external: ${(e.externalDatasetsPlanned || []).join(', ')}`);
     lines.push('');
   }

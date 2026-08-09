@@ -16,6 +16,7 @@ const {
   wearable: wearablePolicy,
 } = require('../config/evaluationFramework');
 const { attachScoreMeta } = require('../config/scoreFieldMeta');
+const { getEvaluationSupplement } = require('../config/evaluationSupplement');
 const DATASET_PATH = path.join(__dirname, '../../benchmarks/screening-outcome-dataset.json');
 const RESULTS_PATH = path.join(__dirname, '../../benchmarks/results/screening-outcomes-latest.json');
 const VALIDATION_PATH = path.join(__dirname, '../../benchmarks/results/clinical-validation-latest.json');
@@ -274,11 +275,26 @@ router.post('/analyze', (req, res) => {
   const core = require('../services/analyticsCore');
   const caseData = { id: 'live', days, targetDay: targetDay || Object.keys(days).sort().pop() };
   const result = core.evaluateCase(caseData, thresholds || {});
-  res.json({
+  res.json(attachScoreMeta({
     ...result,
     healthScoreFormula: 'BHI (behavioral-health-index): sigmoid/Gaussian components — see GET /api/methodology/transparency',
     engine: 'MedWear-AnalyticsCore-v1',
-  });
+  }, 'en'));
+});
+
+router.get('/evaluation-supplement', (_, res) => {
+  res.json(getEvaluationSupplement());
+});
+
+router.post('/evaluation-supplement/regenerate', (_, res) => {
+  const { spawnSync } = require('child_process');
+  const script = path.join(__dirname, '../../scripts/sync-evaluation-supplement.js');
+  const r = spawnSync(process.execPath, [script], { cwd: path.join(__dirname, '../..'), encoding: 'utf8' });
+  if (r.status !== 0) {
+    return res.status(500).json({ success: false, message: r.stderr || 'Regenerate failed' });
+  }
+  const { getEvaluationSupplement } = require('../config/evaluationSupplement');
+  return res.json({ success: true, supplement: getEvaluationSupplement() });
 });
 
 module.exports = router;

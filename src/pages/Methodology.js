@@ -7,6 +7,7 @@ import { MenuBook, Refresh } from '@mui/icons-material';
 import { methodologyApi, researchApi, outcomesApi } from '../services/api';
 import EvaluationIntegrityBanner from '../components/EvaluationIntegrityBanner';
 import MethodologyTransparency from '../components/MethodologyTransparency';
+import EvaluationSupplementPanel from '../components/EvaluationSupplementPanel';
 import { useLang } from '../contexts/LanguageContext';
 
 /** Split a line into React nodes, handling `code` and **bold**. */
@@ -203,6 +204,7 @@ function Methodology() {
   const [wearableEval, setWearableEval] = useState(null);
   const [transparency, setTransparency] = useState(null);
   const [scenarios, setScenarios] = useState(null);
+  const [evalSupplement, setEvalSupplement] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -214,7 +216,8 @@ function Methodology() {
       researchApi.getEvaluationFramework(),
       methodologyApi.getTransparency(),
       outcomesApi.getScenarios(),
-    ]).then(([docRes, fwRes, trRes, scRes]) => {
+      researchApi.getEvaluationSupplement(),
+    ]).then(([docRes, fwRes, trRes, scRes, supRes]) => {
       if (docRes.status === 'fulfilled') setDoc(docRes.value.data);
       else setError(docRes.reason?.response?.data?.message || t('方法学文档加载失败，请确认后端 API 已启动', 'Failed to load methodology doc — please ensure the backend API is running'));
       if (fwRes.status === 'fulfilled') {
@@ -223,6 +226,7 @@ function Methodology() {
       }
       if (trRes.status === 'fulfilled') setTransparency(trRes.value.data);
       if (scRes.status === 'fulfilled') setScenarios(scRes.value.data);
+      if (supRes.status === 'fulfilled') setEvalSupplement(supRes.value.data);
     }).finally(() => setLoading(false));
   }, [t, isEn]);
 
@@ -253,6 +257,8 @@ function Methodology() {
       <EvaluationIntegrityBanner framework={evalFramework || doc?.framework} wearableResults={wearableEval} compact />
 
       <MethodologyTransparency data={transparency || doc?.transparency} scenarios={scenarios} />
+
+      <EvaluationSupplementPanel data={evalSupplement} />
 
       {doc?.framework && (
         <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', mb: 2 }}>

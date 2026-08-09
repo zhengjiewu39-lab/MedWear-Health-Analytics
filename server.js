@@ -35,7 +35,6 @@ const {
 } = require('./server/screening/outcomeModel');
 const { attachScoreMeta } = require('./server/config/scoreFieldMeta');
 const { getMethodologyTransparency, renderMethodsMarkdown } = require('./server/config/methodologyTransparency');
-const { getEvaluationSupplement } = require('./server/config/evaluationSupplement');
 const { missingDataSensitivity } = require('./server/services/behavioralHealthIndex');
 const { geolocate, withSearchCoords } = require('./server/geo/location');
 const {
@@ -669,10 +668,6 @@ app.get('/api/doctor-report/export', async (req, res) => {
 
 app.get('/api/methodology/transparency', (_, res) => {
   res.json(getMethodologyTransparency());
-});
-
-app.get('/api/research/evaluation-supplement', (_, res) => {
-  res.json(getEvaluationSupplement());
 });
 
 // ── Screening-outcome cohort (screened vs unscreened) ──

@@ -191,19 +191,23 @@ curl http://localhost:3001/api/research/validate
 
 ## Rule engine vs simple ML (exported features)
 
-> Same synthetic export — compares interpretability vs sklearn baselines. `npm run experiment:compare`.
+> Same synthetic export — **features include engine-derived BHI/anomaly flags**; high sklearn CV does not replace engine-vs-gold. `npm run experiment:compare-all`.
 
 | Model | Risk accuracy / Macro F1 | Notes |
 |-------|--------------------------|-------|
 | Rule engine | risk 0.787, alert F1 0.8441 | vs clinical gold |
 | majority-class | acc 0.6432, F1 0.261 | node baseline |
 | bhi-threshold-heuristic | acc 0.7932, F1 0.736 | node baseline |
+| lr (sklearn) | acc 0.9446, F1 0.9364173036358509 | 5-fold CV |
+| dt (sklearn) | acc 0.9827999999999999, F1 0.9794665527307297 | 5-fold CV |
+| rf (sklearn) | acc 0.9858, F1 0.9834401404422785 | 5-fold CV |
 
 ## Portable feature / external dataset baseline
 
 > Descriptive check on exported 17-dim rows; WESAD/PPG-DaLiA require separate adapters. See [EXTERNAL-VALIDATION.md](./EXTERNAL-VALIDATION.md).
 
-- n=5000 · heuristic BHI-tier accuracy=0.7932
+- WESAD stress proxy: n=120 · BHI-tier acc=0.5583 · anomaly flag agree=0.6333
+- Internal export: n=5000 · BHI-tier acc=0.7932
 - Planned external: WESAD (stress/arousal proxy), PPG-DaLiA (activity HR proxy)
 
 <!-- EVAL-SUPPLEMENT-END -->

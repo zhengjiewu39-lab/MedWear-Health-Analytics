@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-09T20:59:52.921Z",
+  "generatedAt": "2026-08-09T21:20:11.472Z",
   "source": "server/screening/outcomeModel.js → getScenarioSensitivity()",
   "disclosure": "Exploratory scenario simulation — highly parameter-driven, no p-values.",
   "baseSummary": {
@@ -12,7 +12,7 @@
       "nIntervention": 2500,
       "nControl": 2500,
       "synthetic": true,
-      "generatedAt": "2026-08-09T20:59:52.934Z"
+      "generatedAt": "2026-08-09T21:20:11.484Z"
     },
     "headline": {
       "earlyDiagnosisRate": {

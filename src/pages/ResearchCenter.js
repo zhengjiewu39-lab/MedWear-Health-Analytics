@@ -15,6 +15,7 @@ import {
 } from 'recharts';
 import ChartContainer from '../components/ChartContainer';
 import EvaluationIntegrityBanner from '../components/EvaluationIntegrityBanner';
+import EvaluationSupplementPanel from '../components/EvaluationSupplementPanel';
 import InterventionPathway from '../components/InterventionPathway';
 import PageHeader from '../components/PageHeader';
 import { researchApi } from '../services/api';
@@ -54,13 +55,15 @@ function ResearchCenter() {
   const [evaluating, setEvaluating] = useState(false);
   const [wearableEvaluating, setWearableEvaluating] = useState(false);
   const [validating, setValidating] = useState(false);
+  const [supplementRegenerating, setSupplementRegenerating] = useState(false);
+  const [evalSupplement, setEvalSupplement] = useState(null);
   const [apiError, setApiError] = useState('');
 
   const load = useCallback(async () => {
     setLoading(true);
     setApiError('');
     try {
-      const [res, ds, m, val, wDs, wRes, fw] = await Promise.allSettled([
+      const [res, ds, m, val, wDs, wRes, fw, sup] = await Promise.allSettled([
         researchApi.getResults(),
         researchApi.getDataset(),
         researchApi.getMethods(),
@@ -68,6 +71,7 @@ function ResearchCenter() {
         researchApi.getWearableDataset(),
         researchApi.getWearableResults(),
         researchApi.getEvaluationFramework(),
+        researchApi.getEvaluationSupplement(),
       ]);
       if (res.status === 'fulfilled') setResults(res.value.data);
       if (ds.status === 'fulfilled') setDataset(ds.value.data);
@@ -76,6 +80,7 @@ function ResearchCenter() {
       if (wDs.status === 'fulfilled') setWearableDataset(wDs.value.data);
       if (wRes.status === 'fulfilled') setWearableResults(wRes.value.data);
       if (fw.status === 'fulfilled') setEvalFramework(fw.value.data);
+      if (sup.status === 'fulfilled') setEvalSupplement(sup.value.data);
       if (ds.status !== 'fulfilled') {
         setApiError(t('无法连接 API，请确认 npm run dev 已启动', 'Cannot reach API — ensure npm run dev is running'));
       }
@@ -111,6 +116,16 @@ function ResearchCenter() {
       setValidation(res.data);
     } finally {
       setValidating(false);
+    }
+  };
+
+  const runSupplementRegenerate = async () => {
+    setSupplementRegenerating(true);
+    try {
+      const res = await researchApi.regenerateEvaluationSupplement();
+      setEvalSupplement(res.data?.supplement || res.data);
+    } finally {
+      setSupplementRegenerating(false);
     }
   };
 
@@ -172,6 +187,8 @@ function ResearchCenter() {
         framework={evalFramework}
         wearableResults={wearableResults || wearableDataset?.latestEvaluation}
       />
+
+      <EvaluationSupplementPanel data={evalSupplement} />
 
       <Alert severity="info" icon={<MonitorHeart />} sx={{ mb: 2 }}>
         <strong>MedWear-Wearable-Analytics-Clinical-v2</strong>
@@ -266,6 +283,9 @@ function ResearchCenter() {
         </Button>
         <Button variant="outlined" color="secondary" startIcon={<Gavel />} onClick={runValidation} disabled={validating}>
           {validating ? t('验证中…', 'Validating…') : t('临床队列验证', 'Clinical validation')}
+        </Button>
+        <Button variant="outlined" color="secondary" startIcon={<Refresh />} onClick={runSupplementRegenerate} disabled={supplementRegenerating}>
+          {supplementRegenerating ? t('生成中…', 'Generating…') : t('刷新评测补充', 'Refresh eval supplement')}
         </Button>
         <Button variant="outlined" startIcon={<MenuBook />} onClick={() => navigate('/methodology')}>
           {t('方法学文档', 'Methodology')}

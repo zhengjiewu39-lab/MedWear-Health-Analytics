@@ -186,19 +186,23 @@ curl http://localhost:3001/api/research/validate
 
 ## 规则引擎 vs 简单 ML（导出特征）
 
-> 同一合成导出 — 可解释性 vs sklearn 基线。`npm run experiment:compare`。
+> 同一合成导出 — **特征含引擎衍生 BHI/异常标记**；sklearn CV 高不代表独立验证。`npm run experiment:compare-all`。
 
 | Model | Risk accuracy / Macro F1 | Notes |
 |-------|--------------------------|-------|
 | Rule engine | risk 0.787, alert F1 0.8441 | vs clinical gold |
 | majority-class | acc 0.6432, F1 0.261 | node baseline |
 | bhi-threshold-heuristic | acc 0.7932, F1 0.736 | node baseline |
+| lr (sklearn) | acc 0.9446, F1 0.9364173036358509 | 5-fold CV |
+| dt (sklearn) | acc 0.9827999999999999, F1 0.9794665527307297 | 5-fold CV |
+| rf (sklearn) | acc 0.9858, F1 0.9834401404422785 | 5-fold CV |
 
 ## 可移植特征 / 外部数据集基线
 
 > 17 维导出特征描述性检查；WESAD/PPG-DaLiA 需单独适配。见 [EXTERNAL-VALIDATION.zh.md](./EXTERNAL-VALIDATION.zh.md)。
 
-- n=5000 · heuristic BHI-tier accuracy=0.7932
+- WESAD stress proxy: n=120 · BHI-tier acc=0.5583 · anomaly flag agree=0.6333
+- Internal export: n=5000 · BHI-tier acc=0.7932
 - Planned external: WESAD (stress/arousal proxy), PPG-DaLiA (activity HR proxy)
 
 <!-- EVAL-SUPPLEMENT-END -->

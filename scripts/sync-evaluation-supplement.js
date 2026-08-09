@@ -8,7 +8,7 @@ const root = path.join(__dirname, '..');
 const steps = [
   'freeze-scenario-results.js',
   'analyze-fp-burden.js',
-  'evaluate-external-descriptive.js',
+  'evaluate-public-datasets.js',
   'run-ml-comparison.js',
 ];
 
