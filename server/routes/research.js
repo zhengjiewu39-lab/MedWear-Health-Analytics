@@ -23,6 +23,8 @@ const VALIDATION_PATH = path.join(__dirname, '../../benchmarks/results/clinical-
 const WEARABLE_DATASET_PATH = path.join(__dirname, '../../benchmarks/wearable-analytics-dataset.json');
 const WEARABLE_RESULTS_PATH = path.join(__dirname, '../../benchmarks/results/latest.json');
 
+const router = express.Router();
+
 function loadDatasetSummary() {
   const summary = getOutcomeSummary();
   const { patients } = getCohort();
