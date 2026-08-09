@@ -50,11 +50,16 @@ For real-mode demo: export Apple Health zip from iPhone → upload at `/import`.
 
 ## CI
 
-GitHub Actions runs on push:
+GitHub Actions runs on push (see `.github/workflows/ci.yml`):
 
-1. `npm run test:server`
-2. `npm run evaluate`
-3. `npm run build`
+1. `npm ci`
+2. `npm run docs:verify`
+3. `npm run test:server`
+4. `npm run evaluate`
+5. Python setup + `npm run evaluate:supplement`
+6. `npm run build`
+
+Separate job: Docker image build after tests pass.
 
 ## Version Pinning
 

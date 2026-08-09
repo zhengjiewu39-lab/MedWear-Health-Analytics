@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-09T21:20:19.888Z",
+  "generatedAt": "2026-08-09T21:22:05.487Z",
   "task": "risk-tier classification (low/moderate/high) on exported 17-dim features",
   "ruleEngine": {
     "name": "MedWear-RuleEngine-v1 + AnalyticsCore",

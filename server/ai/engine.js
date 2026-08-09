@@ -5,6 +5,9 @@
 const { mockData, PROFILE } = require('../mock/clinicalData');
 const { getReference, getAllReferences, EVIDENCE_LABELS } = require('../data/researchReferences');
 
+const RULE_ENGINE_DISCLAIMER =
+  'Evidence-weighted rule engine — domain weights and legacy field names (models, modelVotes, ensembleConfidence) are placeholders, not trained ML outputs.';
+
 /** Configurable domain weight placeholders (not trained models). */
 const DOMAIN_WEIGHTS = [
   { id: 'cardio-rules', domain: '心血管', domain_en: 'Cardiovascular', weight: 0.28, role: 'rule-placeholder' },
@@ -28,27 +31,28 @@ const ITEM_RESEARCH_MAP = {
   '结直肠肿瘤': 'colorectal_cancer',
   '甲状腺结节': 'thyroid',
   '肝胆胰肿瘤': 'liver_cancer',
-  '乳腺癌': 'colorectal_cancer',
-  '胃癌': 'liver_cancer',
   '肝癌': 'liver_cancer',
-  '前列腺癌': 'colorectal_cancer',
-  '宫颈癌': 'thyroid',
+  '乳腺癌': 'breast_cancer',
+  '胃癌': 'gastric_cancer',
+  '前列腺癌': 'prostate_cancer',
+  '宫颈癌': 'cervical_cancer',
   '高血压': 'hypertension',
   '2 型糖尿病': 'diabetes',
   '血脂异常': 'dyslipidemia',
   '慢性阻塞性肺病': 'copd',
-  '慢性肾病': 'hypertension',
+  '慢性肾病': 'chronic_kidney_disease',
   '睡眠呼吸暂停': 'sleep_apnea',
   '冠心病/心梗': 'coronary',
   '脑卒中': 'stroke',
   '心律失常': 'arrhythmia',
   '心力衰竭风险': 'coronary',
-  '普通感冒': 'copd',
-  '流行性感冒': 'copd',
-  '急性上呼吸道感染': 'copd',
-  '过敏性鼻炎': 'copd',
-  '社区获得性肺炎': 'copd',
-  '支气管哮喘': 'copd',
+  // Acute/allergic respiratory — shared respiratory key (COPD/asthma/influenza guidelines as approximate proxy)
+  '普通感冒': 'respiratory',
+  '流行性感冒': 'respiratory',
+  '急性上呼吸道感染': 'respiratory',
+  '过敏性鼻炎': 'respiratory',
+  '社区获得性肺炎': 'respiratory',
+  '支气管哮喘': 'respiratory',
 };
 
 function evidenceAdjustedRisk(risk, evidenceLevel) {
@@ -90,12 +94,14 @@ function analyzeCondition(name, risk, level) {
     evidenceLabel: EVIDENCE_LABELS[evidenceLevel],
     confidence: heuristicConfidence(risk, evidenceLevel),
     engine: 'MedWear-RuleEngine-v1',
-    model: ref?.model || 'MedWear-RuleEngine',
+    engineType: 'evidence-weighted-rule-engine',
+    model: ref?.model || 'MedWear-RuleEngine-v1',
+    aiModel: ref?.model || 'MedWear-RuleEngine-v1',
     metrics: ref?.metrics || [],
     thresholds: ref?.thresholds || {},
     references: ref?.references || [],
     evidenceChain: researchId ? buildEvidenceChain(researchId) : [],
-    disclaimer: 'Rule-based risk blend — not ML model inference',
+    disclaimer: RULE_ENGINE_DISCLAIMER,
   };
 }
 
@@ -119,9 +125,12 @@ function runFullAnalysis(patientData) {
     engineType: 'evidence-weighted-rule-engine',
     generatedAt: new Date().toISOString(),
     patient: profile,
+    /** @deprecated legacy alias — heuristic confidence, not ML ensemble */
     ensembleConfidence: heuristicConfidence(scr.overallScore, 'A'),
     domainWeights: DOMAIN_WEIGHTS,
+    /** @deprecated legacy alias — domain weight placeholders */
     models: MODELS,
+    /** @deprecated legacy alias — weighted rule votes, not model inference */
     modelVotes: domainVotes,
     conditions,
     summary: scr.summary,
@@ -129,7 +138,9 @@ function runFullAnalysis(patientData) {
     overallScore: scr.overallScore,
     fusionWeights: { wearable: 0.55, clinical: 0.30, behavioral: 0.15 },
     dataQuality: scr.dataCoverage.quality,
-    disclaimer: 'Domain weights are placeholders — not trained ensemble model votes.',
+    disclaimer: RULE_ENGINE_DISCLAIMER,
+    legacyFieldsNote:
+      'Fields models, modelVotes, ensembleConfidence, and aiModel are compatibility aliases — not trained ML ensemble outputs.',
     vitalsUsed: {
       heartRate: d.heartRate, restingHR: d.restingHR, spo2: d.spo2,
       hrv: d.hrv, steps: d.steps, sleep: d.sleepHours, bmi: profile.bmi,
@@ -138,25 +149,17 @@ function runFullAnalysis(patientData) {
 }
 
 function enrichScreeningData(screening) {
-  const itemKeyMap = {
-    '肺结节/肺癌': 'lung_cancer', '结直肠肿瘤': 'colorectal_cancer', '甲状腺结节': 'thyroid',
-    '肝胆胰肿瘤': 'liver_cancer', '乳腺癌': 'colorectal_cancer', '胃癌': 'liver_cancer',
-    '肝癌': 'liver_cancer', '前列腺癌': 'colorectal_cancer', '宫颈癌': 'thyroid',
-    '高血压': 'hypertension', '2 型糖尿病': 'diabetes', '血脂异常': 'dyslipidemia',
-    '慢性阻塞性肺病': 'copd', '慢性肾病': 'hypertension', '睡眠呼吸暂停': 'sleep_apnea',
-    '冠心病/心梗': 'coronary', '脑卒中': 'stroke', '心律失常': 'arrhythmia',
-    '心力衰竭风险': 'coronary', '普通感冒': 'copd', '流行性感冒': 'copd',
-    '急性上呼吸道感染': 'copd', '过敏性鼻炎': 'copd', '社区获得性肺炎': 'copd',
-    '支气管哮喘': 'copd',
-  };
   return {
     ...screening,
     aiVersion: 'MedWear-RuleEngine-v1',
     engineType: 'evidence-weighted-rule-engine',
+    disclaimer: RULE_ENGINE_DISCLAIMER,
+    legacyFieldsNote:
+      'aiModel names label rule-engine reference domains — not trained neural networks.',
     categories: screening.categories.map(cat => ({
       ...cat,
       items: cat.items.map(item => {
-        const rid = itemKeyMap[item.name];
+        const rid = ITEM_RESEARCH_MAP[item.name];
         const ref = rid ? getReference(rid) : null;
         if (!ref) return item;
         return {
@@ -164,12 +167,14 @@ function enrichScreeningData(screening) {
           researchId: rid,
           evidenceLevel: ref.evidenceLevel,
           evidenceLabel: EVIDENCE_LABELS[ref.evidenceLevel],
-          aiModel: 'MedWear-RuleEngine',
+          engineType: 'evidence-weighted-rule-engine',
+          aiModel: ref.model,
           measuredMetrics: ref.metrics,
           clinicalThresholds: ref.thresholds,
           calibratedRisk: evidenceAdjustedRisk(item.risk, ref.evidenceLevel),
           confidence: heuristicConfidence(item.risk, ref.evidenceLevel),
           references: ref.references,
+          disclaimer: RULE_ENGINE_DISCLAIMER,
         };
       }),
     })),
@@ -179,6 +184,8 @@ function enrichScreeningData(screening) {
 module.exports = {
   DOMAIN_WEIGHTS,
   MODELS,
+  ITEM_RESEARCH_MAP,
+  RULE_ENGINE_DISCLAIMER,
   runFullAnalysis,
   enrichScreeningData,
   analyzeCondition,

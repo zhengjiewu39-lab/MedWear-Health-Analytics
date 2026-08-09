@@ -159,7 +159,7 @@ function buildPredictions(store) {
   const stats = buildUiDashboardStats(store);
   const patient = store.meta?.userLabel || '我';
   let id = 1;
-  const add = (p) => predictions.push({ id: id++, dataSource: 'real', model: 'MedWear-Predict-v2', ...p });
+  const add = (p) => predictions.push({ id: id++, dataSource: 'real', model: 'MedWear-RuleEngine (predictive-heuristic)', ...p });
   const cat = (key) => {
     const m = CATEGORY_META[key] || {};
     return { category: key, categoryLabel: m.label || key, categoryLabel_en: m.label_en || m.label };

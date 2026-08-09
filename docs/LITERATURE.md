@@ -17,7 +17,7 @@ MedWear screening and analytics cite evidence from:
 ## Anomaly Detection
 
 7. **Chandola et al. (2009)** — Anomaly detection survey (ACM Computing Surveys)
-8. **Personal baseline methods** — Intra-individual vs population reference ranges in mHealth
+8. **Robust individual-baseline heuristics (MAD)** — Intra-individual vs population reference ranges in mHealth
 
 ## Digital Health Ethics
 
