@@ -1,0 +1,26 @@
+{
+  "generatedAt": "2026-08-09T20:59:52.975Z",
+  "source": "/Users/wuzhengjie/Desktop/医用可穿戴设备数据分析平台/benchmarks/results/latest.json",
+  "n": 5000,
+  "alertMetrics": {
+    "precision": 0.7576,
+    "recall": 0.9529,
+    "f1": 0.8441,
+    "tp": 2410,
+    "fp": 771,
+    "fn": 119
+  },
+  "assumptions": {
+    "populationPer1000": 1000,
+    "followUpRatePerFpAlert": 0.35,
+    "visitsPerWorkup": 1.2,
+    "disclaimer_en": "Illustrative burden model using evaluation alert precision — not observed healthcare utilization.",
+    "disclaimer_zh": "基于评测告警精确率的说明性负担模型 — 非真实医疗利用数据。"
+  },
+  "per1000": {
+    "individualsWithAnyAlert": 636,
+    "falsePositiveAlerts": 154,
+    "estimatedFollowUpWorkups": 54,
+    "estimatedExtraOutpatientVisits": 64.8
+  }
+}

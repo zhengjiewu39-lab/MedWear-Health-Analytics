@@ -179,9 +179,12 @@ async function main() {
     console.log('\n╔══════════════════════════════════════════════════════════╗');
     console.log('║  MedWear 已启动 — 请保持本终端窗口打开（勿按 Ctrl+C）    ║');
     console.log(`║  浏览器访问: ${url.padEnd(43)}║`);
+    console.log('╠══════════════════════════════════════════════════════════╣');
+    console.log('║  ⚠ 默认账号 admin/admin123 仅用于本地演示               ║');
+    console.log('║  生产环境必须更换 JWT 密钥、加密密钥与管理员密码         ║');
     console.log('╚══════════════════════════════════════════════════════════╝');
     console.log(`[MedWear] 服务 PID: ${server.pid}`);
-    console.log('[MedWear] 账号: admin / admin123');
+    console.log('[MedWear] 演示账号: admin / admin123 （勿用于生产）');
     console.log('[MedWear] 诊断 AI: npm run test:ai');
     console.log('[MedWear] 按 Ctrl+C 停止\n');
     openBrowser(url);

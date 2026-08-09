@@ -109,6 +109,7 @@ Supported: HeartRate, OxygenSaturation, StepCount, SleepAnalysis, HRV, ActiveEne
 npm run generate:benchmark   # random physiology + independent gold labels (n=5000)
 npm run test:server
 npm run evaluate             # → benchmarks/results/latest.json
+npm run evaluate:supplement    # scenarios + FP burden + ML compare + EVALUATION sync
 ```
 
 | Metric (n=5000, seed=42, BHI + MAD engine) | Value | 95% CI |
@@ -128,7 +129,8 @@ npm run evaluate             # → benchmarks/results/latest.json
 | [docs/EVALUATION.md](docs/EVALUATION.md) | Benchmark protocol |
 | [docs/ETHICS.md](docs/ETHICS.md) | Privacy & limitations |
 | [docs/REPRODUCIBILITY.md](docs/REPRODUCIBILITY.md) | Docker, CI |
-| [docs/LITERATURE.md](docs/LITERATURE.md) | References |
+| [CHANGELOG.md](CHANGELOG.md) | Version history |
+| [docs/EXTERNAL-VALIDATION.md](docs/EXTERNAL-VALIDATION.md) | Public dataset validation plan |
 
 **Single source of truth:** `GET /api/methodology/transparency` · in-app Methodology page · `docs/METHODS*.md` (regenerate with `npm run docs:sync`).
 

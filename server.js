@@ -33,7 +33,9 @@ const {
 const {
   getOutcomeSummary, getFunnel, getSurvivalReference, getCohort, getScenarioSensitivity,
 } = require('./server/screening/outcomeModel');
+const { attachScoreMeta } = require('./server/config/scoreFieldMeta');
 const { getMethodologyTransparency, renderMethodsMarkdown } = require('./server/config/methodologyTransparency');
+const { getEvaluationSupplement } = require('./server/config/evaluationSupplement');
 const { missingDataSensitivity } = require('./server/services/behavioralHealthIndex');
 const { geolocate, withSearchCoords } = require('./server/geo/location');
 const {
@@ -209,10 +211,14 @@ app.get('/api/methodology', (req, res) => {
   });
 });
 
+function apiLang(req) {
+  return req.query.lang === 'en' || String(req.headers['x-medwear-lang'] || '').toLowerCase() === 'en' ? 'en' : 'zh';
+}
+
 // ── Profile & Dashboard ──
 app.get('/api/profile', (req, res) => res.json(provider(req).getProfile()));
 app.get('/api/standards', (req, res) => res.json(provider(req).getStandards()));
-app.get('/api/dashboard/stats', (req, res) => res.json(provider(req).getDashboardStats()));
+app.get('/api/dashboard/stats', (req, res) => res.json(attachScoreMeta(provider(req).getDashboardStats(), apiLang(req))));
 app.get('/api/dashboard/vitals-trend', (req, res) => res.json(provider(req).getVitalsTrend()));
 app.get('/api/dashboard/week-trend', (req, res) => res.json(provider(req).getWeekTrend()));
 app.get('/api/dashboard/device-distribution', (req, res) => res.json(provider(req).getHeartRateZones()));
@@ -663,6 +669,10 @@ app.get('/api/doctor-report/export', async (req, res) => {
 
 app.get('/api/methodology/transparency', (_, res) => {
   res.json(getMethodologyTransparency());
+});
+
+app.get('/api/research/evaluation-supplement', (_, res) => {
+  res.json(getEvaluationSupplement());
 });
 
 // ── Screening-outcome cohort (screened vs unscreened) ──

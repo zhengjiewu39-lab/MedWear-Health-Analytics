@@ -15,8 +15,7 @@ const {
   summarizeWearableResults,
   wearable: wearablePolicy,
 } = require('../config/evaluationFramework');
-
-const router = express.Router();
+const { attachScoreMeta } = require('../config/scoreFieldMeta');
 const DATASET_PATH = path.join(__dirname, '../../benchmarks/screening-outcome-dataset.json');
 const RESULTS_PATH = path.join(__dirname, '../../benchmarks/results/screening-outcomes-latest.json');
 const VALIDATION_PATH = path.join(__dirname, '../../benchmarks/results/clinical-validation-latest.json');
@@ -141,7 +140,9 @@ router.get('/wearable/dataset', (_, res) => {
 });
 
 router.get('/wearable/results', (_, res) => {
-  res.json(loadWearableResults());
+  const raw = loadWearableResults();
+  if (!raw) return res.json({ message: 'No results. Run POST /research/wearable/evaluate' });
+  res.json(attachScoreMeta({ ...summarizeWearableResults(raw), rawMetrics: raw.metrics }, 'en'));
 });
 
 router.post('/wearable/evaluate', (_, res) => {
@@ -149,7 +150,7 @@ router.post('/wearable/evaluate', (_, res) => {
   const results = run();
   fs.mkdirSync(path.dirname(WEARABLE_RESULTS_PATH), { recursive: true });
   fs.writeFileSync(WEARABLE_RESULTS_PATH, JSON.stringify(results, null, 2));
-  const summary = summarizeWearableResults(results);
+  const summary = attachScoreMeta(summarizeWearableResults(results), 'en');
   res.json(summary);
 });
 

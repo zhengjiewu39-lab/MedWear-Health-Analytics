@@ -1,0 +1,32 @@
+{
+  "generatedAt": "2026-08-09T20:59:53.304Z",
+  "task": "risk-tier classification (low/moderate/high) on exported 17-dim features",
+  "ruleEngine": {
+    "name": "MedWear-RuleEngine-v1 + AnalyticsCore",
+    "type": "rule-engine",
+    "riskAccuracy": 0.787,
+    "alertF1": 0.8441,
+    "alertPrecision": 0.7576,
+    "alertRecall": 0.9529,
+    "bhiAgreement": 0.7604,
+    "note": "Engine vs clinicalGoldStandard-v1 on n=5000 synthetic benchmark"
+  },
+  "nodeBaselines": [
+    {
+      "name": "majority-class",
+      "type": "node-baseline",
+      "accuracy": 0.6432,
+      "macroF1": 0.261
+    },
+    {
+      "name": "bhi-threshold-heuristic",
+      "type": "node-baseline",
+      "accuracy": 0.7932,
+      "macroF1": 0.736
+    }
+  ],
+  "mlModels": [],
+  "pythonRequired": true,
+  "pythonSetup": "pip install -r experiments/medwear/requirements.txt",
+  "disclosure": "ML models trained on same synthetic export — not independent external validation. Compares interpretable rules vs simple ML baselines."
+}

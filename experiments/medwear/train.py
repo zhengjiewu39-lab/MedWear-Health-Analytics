@@ -19,6 +19,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.tree import DecisionTreeClassifier
 
 FEATURE_COLS = [
     "steps_norm", "avg_hr", "std_hr", "resting_hr", "avg_spo2", "min_spo2", "avg_hrv",
@@ -42,6 +43,8 @@ def load_data(path: str) -> tuple[pd.DataFrame, np.ndarray]:
 def build_model(name: str, seed: int):
     if name == "lr":
         return LogisticRegression(max_iter=2000, random_state=seed, class_weight="balanced")
+    if name == "dt":
+        return DecisionTreeClassifier(max_depth=6, random_state=seed, class_weight="balanced")
     if name == "rf":
         return RandomForestClassifier(n_estimators=200, random_state=seed, class_weight="balanced")
     if name == "xgb":
@@ -102,7 +105,7 @@ def build_model(name: str, seed: int):
 def main():
     p = argparse.ArgumentParser(description="Train MedWear wearable risk models")
     p.add_argument("--data", default="experiments/data/medwear/features_v1.csv")
-    p.add_argument("--model", default="xgb", choices=["lr", "rf", "xgb", "lgbm", "mlp", "transformer"])
+    p.add_argument("--model", default="xgb", choices=["lr", "dt", "rf", "xgb", "lgbm", "mlp", "transformer"])
     p.add_argument("--cv", type=int, default=5)
     p.add_argument("--seed", type=int, default=42)
     p.add_argument("--out", default=None)

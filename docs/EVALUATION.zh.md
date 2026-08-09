@@ -159,3 +159,46 @@ curl http://localhost:3001/api/research/references/clinical
 curl -X POST http://localhost:3001/api/research/validate
 curl http://localhost:3001/api/research/validate
 ```
+
+---
+
+<!-- EVAL-SUPPLEMENT-START -->
+## 固化情景敏感性（conservative / neutral / optimistic）
+
+> 参数驱动的探索性模拟 — 无 p 值。重新生成：`npm run freeze:scenarios`。
+
+| Scenario | Early dx Δ | Treatment Δ | 5y survival Δ |
+|----------|------------|-------------|---------------|
+| conservative | 0.2348 | 0.1483 | 0.1602 |
+| neutral | 0.3612 | 0.2281 | 0.2464 |
+| optimistic | 0.4515 | 0.2851 | 0.308 |
+
+## 假阳性下游负担（情景估算）
+
+> 说明性估算 — 非真实利用数据。重新生成：`npm run analyze:fp-burden`。
+
+| Per 1000 individuals | Value |
+|----------------------|-------|
+| False-positive alerts | 154 |
+| Est. follow-up workups (35% of FP) | 54 |
+| Est. extra outpatient visits | 64.8 |
+| Alert precision (eval) | 0.7576 |
+
+## 规则引擎 vs 简单 ML（导出特征）
+
+> 同一合成导出 — 可解释性 vs sklearn 基线。`npm run experiment:compare`。
+
+| Model | Risk accuracy / Macro F1 | Notes |
+|-------|--------------------------|-------|
+| Rule engine | risk 0.787, alert F1 0.8441 | vs clinical gold |
+| majority-class | acc 0.6432, F1 0.261 | node baseline |
+| bhi-threshold-heuristic | acc 0.7932, F1 0.736 | node baseline |
+
+## 可移植特征 / 外部数据集基线
+
+> 17 维导出特征描述性检查；WESAD/PPG-DaLiA 需单独适配。见 [EXTERNAL-VALIDATION.zh.md](./EXTERNAL-VALIDATION.zh.md)。
+
+- n=5000 · heuristic BHI-tier accuracy=0.7932
+- Planned external: WESAD (stress/arousal proxy), PPG-DaLiA (activity HR proxy)
+
+<!-- EVAL-SUPPLEMENT-END -->

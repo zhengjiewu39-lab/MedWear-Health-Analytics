@@ -1,0 +1,18 @@
+{
+  "generatedAt": "2026-08-09T20:59:53.005Z",
+  "featureFile": "/Users/wuzhengjie/Desktop/医用可穿戴设备数据分析平台/experiments/data/medwear/features_v1.csv",
+  "n": 5000,
+  "labelDistribution": {
+    "low": 3216,
+    "moderate": 1159,
+    "high": 625
+  },
+  "heuristicBhiTierAccuracy": 0.7932,
+  "portableSchema": true,
+  "externalDatasetsPlanned": [
+    "WESAD (stress/arousal proxy)",
+    "PPG-DaLiA (activity HR proxy)"
+  ],
+  "note_en": "Descriptive check on exported 17-dim feature rows. External public datasets require separate download adapters — not included in repo.",
+  "note_zh": "对已导出 17 维特征行的描述性检查。公开数据集需单独下载适配器。"
+}

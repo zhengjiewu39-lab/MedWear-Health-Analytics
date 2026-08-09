@@ -11,5 +11,6 @@ if [ ! -d node_modules ]; then
   echo "首次运行，正在安装依赖..."
   npm install || { read -p "安装失败，按回车关闭..."; exit 1; }
 fi
+echo "⚠  默认账号 admin/admin123 仅用于本地演示；生产环境必须更换 JWT/加密密钥与密码"
 npm run app
 read -p "已退出。按回车键关闭窗口..."
