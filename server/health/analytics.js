@@ -1,6 +1,11 @@
 const { getStore, hasData } = require('./store');
 const { CATEGORY_META } = require('../data/predictionsCatalog');
 const {
+  computeDayScore,
+  computeDayScoreDetail,
+} = require('../services/analyticsCore');
+const { detectRobustAnomalies, runSensitivityAnalysis } = require('../services/robustAnomaly');
+const {
   buildRealScreeningCategories,
   buildRealTrendData,
   getRecommendedExams,
@@ -30,19 +35,16 @@ function todayKey() {
   return new Date().toISOString().slice(0, 10);
 }
 
-function computeDayScore(dayData) {
-  let score = 0;
-  let weight = 0;
-  if (dayData.steps > 0) { score += Math.min(dayData.steps / 10000, 1) * 30; weight += 30; }
-  const sleepH = (dayData.sleepMinutes.deep + dayData.sleepMinutes.rem + dayData.sleepMinutes.light) / 60;
-  if (sleepH > 0) { score += Math.min(sleepH / 8, 1) * 25; weight += 25; }
-  const rhr = dayData.restingHeartRate || avg(dayData.heartRate);
-  if (rhr) { score += (rhr >= 50 && rhr <= 75 ? 1 : rhr < 50 ? 0.7 : 0.5) * 20; weight += 20; }
-  const spo2 = avg(dayData.spo2);
-  if (spo2) { score += (spo2 >= 95 ? 1 : spo2 >= 90 ? 0.6 : 0.3) * 15; weight += 15; }
-  const hrv = avg(dayData.hrv);
-  if (hrv) { score += Math.min(hrv / 60, 1) * 10; weight += 10; }
-  return weight > 0 ? Math.round((score / weight) * 100) : null;
+function computeDayScoreLocal(dayData, opts = {}) {
+  return computeDayScore({
+    steps: dayData.steps,
+    heartRate: dayData.heartRate,
+    restingHeartRate: dayData.restingHeartRate,
+    spo2: dayData.spo2,
+    hrv: dayData.hrv,
+    sleepMinutes: dayData.sleepMinutes,
+    activeEnergy: dayData.activeEnergy,
+  }, opts);
 }
 
 function getLatestDay(store) {
@@ -124,49 +126,30 @@ function getPrimarySource(store) {
 }
 
 function detectAnomalies(store) {
-  const anomalies = [];
-  const days = lastNDays(store, 14);
-  const allHR = days.flatMap(d => store.daily[d].heartRate);
-  if (allHR.length < 10) return anomalies;
-
-  const mean = avg(allHR);
-  const sd = stdDev(allHR);
+  const result = detectRobustAnomalies(store);
   const patient = store.meta?.userLabel || '我';
   const source = getPrimarySource(store);
 
-  days.forEach(day => {
-    const hrs = store.daily[day].heartRate;
-    const spikes = hrs.filter(h => h > mean + 2 * sd);
-    if (spikes.length >= 3) {
-      anomalies.push({
-        id: anomalies.length + 1, patient, type: '心率异常波动', type_en: 'Abnormal heart rate fluctuation',
-        confidence: Math.min(95, Math.round(70 + spikes.length * 2)),
-        detectedAt: day, pattern: `${spikes.length} 次心率超过个人基线+2σ (${Math.round(mean + 2 * sd)} bpm)`,
-        pattern_en: `${spikes.length} HR readings above personal baseline +2σ (${Math.round(mean + 2 * sd)} bpm)`,
-        aiModel: '统计异常检测', aiModel_en: 'Statistical anomaly detection',
-        severity: spikes.length >= 5 ? 'high' : 'medium',
-        status: 'new',
-      });
-    }
-  });
-
-  days.forEach(day => {
-    const spo2s = store.daily[day].spo2;
-    const low = spo2s.filter(s => s < 93);
-    if (low.length >= 2) {
-      anomalies.push({
-        id: anomalies.length + 1, patient, type: '血氧偏低事件', type_en: 'Low blood oxygen events',
-        confidence: Math.round(75 + low.length * 3),
-        detectedAt: day, pattern: `${low.length} 次血氧低于 93%`,
-        pattern_en: `${low.length} SpO₂ readings below 93%`,
-        aiModel: '统计异常检测', aiModel_en: 'Statistical anomaly detection',
-        severity: low.length >= 4 ? 'high' : 'medium',
-        status: 'investigating',
-      });
-    }
-  });
-
-  return anomalies.slice(-10);
+  return result.anomalies.map((a, i) => ({
+    id: i + 1,
+    patient,
+    type: a.type,
+    type_en: a.type === '心率异常波动' ? 'Abnormal heart rate fluctuation' : 'Low blood oxygen events',
+    confidence: Math.min(88, Math.round(55 + (a.spikeCount || a.lowCount || 2) * 4)),
+    detectedAt: a.day,
+    pattern: a.type === '心率异常波动'
+      ? `${a.spikeCount} 次心率 > MAD 基线 ${a.threshold} bpm（已过滤高活动日 ≥${result.opts.activityStepsThreshold} 步）`
+      : `${a.lowCount} 次 SpO₂ < 个体基线 ${a.threshold}%（MAD）`,
+    pattern_en: a.type === '心率异常波动'
+      ? `${a.spikeCount} HR readings > MAD baseline ${a.threshold} bpm (high-activity days filtered)`
+      : `${a.lowCount} SpO₂ readings < individual baseline ${a.threshold}% (MAD)`,
+    aiModel: '稳健 MAD 启发式',
+    aiModel_en: 'Robust MAD heuristic',
+    severity: (a.spikeCount || a.lowCount || 0) >= 4 ? 'high' : 'medium',
+    status: a.type === '血氧偏低事件' ? 'investigating' : 'new',
+    device: source,
+    method: result.method,
+  })).slice(-10);
 }
 
 function buildPredictions(store) {
@@ -404,7 +387,7 @@ function buildDigitalTwin(store) {
     { name: '压力', status: hrv && hrv < 30 ? 'warning' : 'normal', score: hrv ? Math.min(100, Math.round(hrv)) : 50, metrics: { hrv } },
   ].filter(o => o.score > 0 || day);
 
-  const overallScore = day ? computeDayScore(d) || 0 : 0;
+  const overallScore = day ? computeDayScoreLocal(d) || 0 : 0;
   return { patient, age: null, organs, overallScore, dataSource: 'real' };
 }
 
@@ -483,7 +466,7 @@ function buildDevices(store) {
 function buildPatients(store) {
   const day = getTodayOrLatest(store);
   const d = day ? store.daily[day] : null;
-  const score = d ? computeDayScore(d) : null;
+  const score = d ? computeDayScoreLocal(d) : null;
   const alerts = detectAlerts(store);
   return [{
     id: 1,
@@ -505,7 +488,10 @@ function buildDashboardStats(store) {
   const totalRecords = store.meta?.parsedRecords || 0;
   const day = getTodayOrLatest(store);
   const d = day ? store.daily[day] : null;
-  const scores = days.map(dayKey => computeDayScore(store.daily[dayKey])).filter(Boolean);
+  const scores = days.map((dayKey, idx) => {
+    const prior = days.slice(Math.max(0, idx - 7), idx).map((k) => store.daily[k]);
+    return computeDayScoreLocal(store.daily[dayKey], { priorDays: prior });
+  }).filter(Boolean);
   return {
     totalDevices: (store.meta?.sourceList || []).length,
     activeDevices: (store.meta?.sourceList || []).length,
@@ -552,7 +538,7 @@ function buildHealthScoreTrend(store) {
   const byMonth = {};
   days.forEach(day => {
     const m = day.slice(0, 7);
-    const score = computeDayScore(store.daily[day]);
+    const score = computeDayScoreLocal(store.daily[day]);
     if (score) {
       if (!byMonth[m]) byMonth[m] = [];
       byMonth[m].push(score);
@@ -601,7 +587,7 @@ function buildAiSummary(store) {
   const day = getTodayOrLatest(store);
   const d = day ? store.daily[day] : null;
   if (!d) return '尚未导入健康数据。请从 iPhone 导出 Apple Health 数据并导入平台。';
-  const score = computeDayScore(d);
+  const score = computeDayScoreLocal(d);
   const hr = avg(d.heartRate);
   const spo2 = avg(d.spo2);
   const sleepH = (d.sleepMinutes.deep + d.sleepMinutes.rem + d.sleepMinutes.light) / 60;
@@ -706,7 +692,7 @@ function buildUiDashboardStats(store) {
   const day = getTodayOrLatest(store);
   const d = day ? store.daily[day] : null;
   if (!d) return getEmptyAnalytics().dashboard.stats;
-  const score = computeDayScore(d) || 0;
+  const score = computeDayScoreLocal(d) || 0;
   const hr = avg(d.heartRate);
   const rhr = d.restingHeartRate || hr;
   const spo2 = avg(d.spo2);
@@ -745,7 +731,7 @@ function buildWeekTrend(store) {
     return {
       day: DAY_NAMES[date.getDay()],
       date: dayKey,
-      healthScore: computeDayScore(d) || 0,
+      healthScore: computeDayScoreLocal(d) || 0,
       steps: Math.round(d.steps),
       sleep: +((d.sleepMinutes.deep + d.sleepMinutes.rem + d.sleepMinutes.light) / 60).toFixed(1),
       heartRate: d.restingHeartRate ? Math.round(d.restingHeartRate) : Math.round(avg(d.heartRate) || 0),
@@ -791,7 +777,7 @@ function buildRealAiReport(store) {
   const day = getTodayOrLatest(store);
   const d = day ? store.daily[day] : null;
   if (!d) return getEmptyAnalytics().aiReport;
-  const score = computeDayScore(d) || 0;
+  const score = computeDayScoreLocal(d) || 0;
   return {
     hasData: true,
     generatedAt: new Date().toISOString(),
@@ -986,6 +972,9 @@ module.exports = {
   buildRealScreening,
   buildRealDoctorReport,
   detectAlerts,
+  detectAnomalies,
   getPrimarySource,
-  computeDayScore,
+  computeDayScore: computeDayScoreLocal,
+  computeDayScoreDetail,
+  runAnomalySensitivity: (store) => runSensitivityAnalysis(store),
 };

@@ -183,10 +183,12 @@ export const geoApi = {
 
 export const methodologyApi = {
   get: (lang) => api.get('/methodology', { params: lang ? { lang } : undefined }),
+  getTransparency: () => api.get('/methodology/transparency'),
 };
 
 export const outcomesApi = {
   getSummary: () => api.get('/outcomes/summary'),
+  getScenarios: () => api.get('/outcomes/scenarios'),
   getFunnel: () => api.get('/outcomes/funnel'),
   getSurvivalReference: () => api.get('/outcomes/survival-reference'),
   getCohort: (params) => api.get('/outcomes/cohort', { params }),

@@ -1,7 +1,5 @@
-/**
- * Pure analytics functions for evaluation & research reproducibility.
- * Used by benchmarks, unit tests, and /api/research/* endpoints.
- */
+const { computeBHIWithTrend, computeBehavioralHealthIndex } = require('./behavioralHealthIndex');
+const { detectRobustAnomalies } = require('./robustAnomaly');
 
 function avg(arr) {
   if (!arr?.length) return null;
@@ -32,20 +30,17 @@ function normalizeDay(raw = {}) {
   };
 }
 
-function computeDayScore(dayData) {
+function computeDayScore(dayData, opts = {}) {
   const d = normalizeDay(dayData);
-  let score = 0;
-  let weight = 0;
-  if (d.steps > 0) { score += Math.min(d.steps / 10000, 1) * 30; weight += 30; }
-  const sleepH = (d.sleepMinutes.deep + d.sleepMinutes.rem + d.sleepMinutes.light) / 60;
-  if (sleepH > 0) { score += Math.min(sleepH / 8, 1) * 25; weight += 25; }
-  const rhr = d.restingHeartRate || avg(d.heartRate);
-  if (rhr) { score += (rhr >= 50 && rhr <= 75 ? 1 : rhr < 50 ? 0.7 : 0.5) * 20; weight += 20; }
-  const spo2 = avg(d.spo2);
-  if (spo2) { score += (spo2 >= 95 ? 1 : spo2 >= 90 ? 0.6 : 0.3) * 15; weight += 15; }
-  const hrv = avg(d.hrv);
-  if (hrv) { score += Math.min(hrv / 60, 1) * 10; weight += 10; }
-  return weight > 0 ? Math.round((score / weight) * 100) : null;
+  const prior = (opts.priorDays || []).map(normalizeDay);
+  const bhi = computeBHIWithTrend(d, prior, { age: opts.age, sex: opts.sex });
+  return bhi.score;
+}
+
+function computeDayScoreDetail(dayData, opts = {}) {
+  const d = normalizeDay(dayData);
+  const prior = (opts.priorDays || []).map(normalizeDay);
+  return computeBHIWithTrend(d, prior, { age: opts.age, sex: opts.sex });
 }
 
 function classifyRiskFromScore(score) {
@@ -96,41 +91,22 @@ function buildStoreFromDays(daysMap, targetDay) {
   };
 }
 
-function detectAnomaliesFromStore(store) {
-  const days = Object.keys(store.daily).sort();
-  const window = days.slice(-14);
-  const allHR = window.flatMap(d => store.daily[d].heartRate);
-  const anomalies = [];
-  if (allHR.length < 10) return anomalies;
-
-  const mean = avg(allHR);
-  const sd = stdDev(allHR);
-
-  window.forEach(day => {
-    const hrs = store.daily[day].heartRate;
-    const spikes = hrs.filter(h => h > mean + 2 * sd);
-    if (spikes.length >= 3) {
-      anomalies.push({ type: '心率异常波动', day });
-    }
-  });
-
-  window.forEach(day => {
-    const low = store.daily[day].spo2.filter(s => s < 93);
-    if (low.length >= 2) {
-      anomalies.push({ type: '血氧偏低事件', day });
-    }
-  });
-
-  return anomalies;
+function detectAnomaliesFromStore(store, opts) {
+  return detectRobustAnomalies(store, opts).anomalies;
 }
 
 function evaluateCase(caseData, thresholds) {
   const store = buildStoreFromDays(caseData.days, caseData.targetDay);
   const target = caseData.targetDay || Object.keys(caseData.days).sort().pop();
+  const dayKeys = Object.keys(caseData.days || {}).sort();
+  const targetIdx = dayKeys.indexOf(target);
+  const priorDays = targetIdx > 0
+    ? dayKeys.slice(Math.max(0, targetIdx - 7), targetIdx).map((k) => caseData.days[k])
+    : [];
   const dayData = store.daily[target];
   const alerts = evaluateDayAlerts(dayData, thresholds);
   const anomalies = detectAnomaliesFromStore(store);
-  const score = computeDayScore(dayData);
+  const score = computeDayScore(dayData, { priorDays });
   const riskLevel = classifyRiskFromScore(score);
 
   return {
@@ -148,6 +124,8 @@ module.exports = {
   stdDev,
   normalizeDay,
   computeDayScore,
+  computeDayScoreDetail,
+  computeBehavioralHealthIndex,
   classifyRiskFromScore,
   evaluateDayAlerts,
   buildStoreFromDays,

@@ -9,8 +9,8 @@ const {
   evaluateCase,
 } = require('../services/analyticsCore');
 
-describe('health score', () => {
-  test('scores healthy day above 75', () => {
+describe('behavioral health index', () => {
+  test('healthy day scores above 75 (BHI)', () => {
     const score = computeDayScore({
       steps: 8500,
       heartRate: [68, 70],
@@ -22,6 +22,22 @@ describe('health score', () => {
     assert.ok(score >= 75);
   });
 
+  test('BHI detail declares non-disease-risk kind', () => {
+    const { computeDayScoreDetail } = require('../services/analyticsCore');
+    const detail = computeDayScoreDetail({
+      steps: 8500,
+      heartRate: [68, 70],
+      spo2: [97, 98],
+      hrv: [50],
+      restingHeartRate: 62,
+      sleepMinutes: { deep: 90, rem: 100, light: 200, awake: 15 },
+    });
+    assert.equal(detail.kind, 'behavioral-health-index');
+    assert.ok(detail.disclaimer_zh);
+  });
+});
+
+describe('health score', () => {
   test('classifies risk tiers', () => {
     assert.equal(classifyRiskFromScore(85), 'low');
     assert.equal(classifyRiskFromScore(70), 'moderate');
@@ -57,13 +73,17 @@ describe('alerts', () => {
 });
 
 describe('anomaly detection', () => {
-  test('detects HR spikes beyond 2σ', () => {
+  test('detects HR spikes beyond robust MAD baseline', () => {
     const days = {};
     for (let i = 1; i <= 7; i++) {
       const d = `2026-06-${String(i).padStart(2, '0')}`;
-      days[d] = { heartRate: [68, 70, 69, 71], spo2: [97, 98], steps: 7000 };
+      days[d] = { heartRate: [68, 70, 69, 71], spo2: [97, 98], steps: 4000 };
     }
-    days['2026-06-07'].heartRate = [70, 72, 130, 128, 132, 71, 73];
+    days['2026-06-07'] = {
+      heartRate: [70, 72, 130, 128, 132, 71, 73],
+      spo2: [97, 98],
+      steps: 5000,
+    };
     const store = buildStoreFromDays(days, '2026-06-07');
     const anomalies = detectAnomaliesFromStore(store);
     assert.ok(anomalies.length > 0);

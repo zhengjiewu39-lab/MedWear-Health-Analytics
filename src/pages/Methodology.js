@@ -4,8 +4,9 @@ import {
   Table, TableBody, TableCell, TableHead, TableRow, Button,
 } from '@mui/material';
 import { MenuBook, Refresh } from '@mui/icons-material';
-import { methodologyApi, researchApi } from '../services/api';
+import { methodologyApi, researchApi, outcomesApi } from '../services/api';
 import EvaluationIntegrityBanner from '../components/EvaluationIntegrityBanner';
+import MethodologyTransparency from '../components/MethodologyTransparency';
 import { useLang } from '../contexts/LanguageContext';
 
 /** Split a line into React nodes, handling `code` and **bold**. */
@@ -200,6 +201,8 @@ function Methodology() {
   const [doc, setDoc] = useState(null);
   const [evalFramework, setEvalFramework] = useState(null);
   const [wearableEval, setWearableEval] = useState(null);
+  const [transparency, setTransparency] = useState(null);
+  const [scenarios, setScenarios] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -209,13 +212,17 @@ function Methodology() {
     Promise.allSettled([
       methodologyApi.get(isEn ? 'en' : 'zh'),
       researchApi.getEvaluationFramework(),
-    ]).then(([docRes, fwRes]) => {
+      methodologyApi.getTransparency(),
+      outcomesApi.getScenarios(),
+    ]).then(([docRes, fwRes, trRes, scRes]) => {
       if (docRes.status === 'fulfilled') setDoc(docRes.value.data);
       else setError(docRes.reason?.response?.data?.message || t('方法学文档加载失败，请确认后端 API 已启动', 'Failed to load methodology doc — please ensure the backend API is running'));
       if (fwRes.status === 'fulfilled') {
         setEvalFramework(fwRes.value.data);
         setWearableEval(fwRes.value.data?.wearable?.latestEvaluation || null);
       }
+      if (trRes.status === 'fulfilled') setTransparency(trRes.value.data);
+      if (scRes.status === 'fulfilled') setScenarios(scRes.value.data);
     }).finally(() => setLoading(false));
   }, [t, isEn]);
 
@@ -243,6 +250,8 @@ function Methodology() {
       </Box>
 
       <EvaluationIntegrityBanner framework={evalFramework || doc?.framework} wearableResults={wearableEval} compact />
+
+      <MethodologyTransparency data={transparency || doc?.transparency} scenarios={scenarios} />
 
       {doc?.framework && (
         <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', mb: 2 }}>

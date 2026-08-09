@@ -1,16 +1,27 @@
 /**
- * MedWear AI Engine v3 — 多模型融合 + 证据加权 + 置信度校准
+ * MedWear rule engine — evidence-weighted domain placeholders.
+ * NOT a trained multi-model ML ensemble; no declared validation accuracies.
  */
 const { mockData, PROFILE } = require('../mock/clinicalData');
 const { getReference, getAllReferences, EVIDENCE_LABELS } = require('../data/researchReferences');
 
-const MODELS = [
-  { id: 'CardioNet-v3', domain: '心血管', weight: 0.28, accuracy: 0.94 },
-  { id: 'VitalGuard-v2', domain: '生命体征', weight: 0.22, accuracy: 0.92 },
-  { id: 'OncoScreen-v1', domain: '肿瘤筛查', weight: 0.18, accuracy: 0.89 },
-  { id: 'GlucoPredict-v2', domain: '代谢', weight: 0.16, accuracy: 0.91 },
-  { id: 'SleepAI-v2', domain: '睡眠呼吸', weight: 0.16, accuracy: 0.90 },
+/** Configurable domain weight placeholders (not trained models). */
+const DOMAIN_WEIGHTS = [
+  { id: 'cardio-rules', domain: '心血管', domain_en: 'Cardiovascular', weight: 0.28, role: 'rule-placeholder' },
+  { id: 'vitals-rules', domain: '生命体征', domain_en: 'Vital signs', weight: 0.22, role: 'rule-placeholder' },
+  { id: 'oncology-rules', domain: '肿瘤筛查', domain_en: 'Oncology screening', weight: 0.18, role: 'rule-placeholder' },
+  { id: 'metabolic-rules', domain: '代谢', domain_en: 'Metabolic', weight: 0.16, role: 'rule-placeholder' },
+  { id: 'sleep-rules', domain: '睡眠呼吸', domain_en: 'Sleep & respiration', weight: 0.16, role: 'rule-placeholder' },
 ];
+
+/** @deprecated Use DOMAIN_WEIGHTS — kept for API compatibility without accuracy fields. */
+const MODELS = DOMAIN_WEIGHTS.map((m) => ({
+  id: m.id,
+  domain: m.domain,
+  weight: m.weight,
+  role: m.role,
+  disclaimer: 'Rule-engine placeholder — not a validated ML model',
+}));
 
 const ITEM_RESEARCH_MAP = {
   '肺结节/肺癌': 'lung_cancer',
@@ -40,18 +51,22 @@ const ITEM_RESEARCH_MAP = {
   '支气管哮喘': 'copd',
 };
 
-function calibrateConfidence(risk, evidenceLevel) {
-  const evidenceBoost = { A: 0.08, B: 0.05, C: 0.02 }[evidenceLevel] || 0;
-  const base = 0.82 + evidenceBoost - (risk / 500);
-  return Math.min(0.98, Math.max(0.75, +base.toFixed(3)));
+function evidenceAdjustedRisk(risk, evidenceLevel) {
+  const wSum = DOMAIN_WEIGHTS.reduce((s, m) => s + m.weight, 0);
+  const evidenceFactor = { A: 1.0, B: 0.97, C: 0.92 }[evidenceLevel] || 0.9;
+  return Math.round(risk * evidenceFactor * (wSum / DOMAIN_WEIGHTS.length) * 10) / 10;
 }
 
-function ensembleScore(risk, evidenceLevel) {
-  const weights = MODELS.map(m => m.weight * m.accuracy);
-  const wSum = weights.reduce((a, b) => a + b, 0);
-  const evidenceFactor = { A: 1.0, B: 0.95, C: 0.88 }[evidenceLevel] || 0.85;
-  return Math.round(risk * evidenceFactor * (wSum / MODELS.length) * 10) / 10;
+function heuristicConfidence(risk, evidenceLevel) {
+  const evidenceBoost = { A: 0.06, B: 0.03, C: 0.01 }[evidenceLevel] || 0;
+  const base = 0.55 + evidenceBoost - risk / 800;
+  return Math.min(0.85, Math.max(0.45, +base.toFixed(3)));
 }
+
+/** @deprecated */
+const ensembleScore = evidenceAdjustedRisk;
+/** @deprecated */
+const calibrateConfidence = heuristicConfidence;
 
 function buildEvidenceChain(researchId) {
   const ref = getReference(researchId);
@@ -69,16 +84,18 @@ function analyzeCondition(name, risk, level) {
   return {
     name,
     rawRisk: risk,
-    calibratedRisk: ensembleScore(risk, evidenceLevel),
+    calibratedRisk: evidenceAdjustedRisk(risk, evidenceLevel),
     level,
     evidenceLevel,
     evidenceLabel: EVIDENCE_LABELS[evidenceLevel],
-    confidence: calibrateConfidence(risk, evidenceLevel),
-    model: ref?.model || 'MedWear-Ensemble',
+    confidence: heuristicConfidence(risk, evidenceLevel),
+    engine: 'MedWear-RuleEngine-v1',
+    model: ref?.model || 'MedWear-RuleEngine',
     metrics: ref?.metrics || [],
     thresholds: ref?.thresholds || {},
     references: ref?.references || [],
     evidenceChain: researchId ? buildEvidenceChain(researchId) : [],
+    disclaimer: 'Rule-based risk blend — not ML model inference',
   };
 }
 
@@ -92,24 +109,27 @@ function runFullAnalysis(patientData) {
     c.items.map(item => analyzeCondition(item.name, item.risk, item.level))
   );
 
-  const modelVotes = MODELS.map(m => ({
+  const domainVotes = DOMAIN_WEIGHTS.map(m => ({
     ...m,
-    vote: conditions.reduce((s, c) => s + c.calibratedRisk * m.weight, 0) / conditions.length,
+    vote: conditions.reduce((s, c) => s + c.calibratedRisk * m.weight, 0) / Math.max(1, conditions.length),
   }));
 
   return {
-    version: 'MedWear-AI v3.0',
+    version: 'MedWear-RuleEngine-v1',
+    engineType: 'evidence-weighted-rule-engine',
     generatedAt: new Date().toISOString(),
     patient: profile,
-    ensembleConfidence: calibrateConfidence(scr.overallScore, 'A'),
+    ensembleConfidence: heuristicConfidence(scr.overallScore, 'A'),
+    domainWeights: DOMAIN_WEIGHTS,
     models: MODELS,
-    modelVotes,
+    modelVotes: domainVotes,
     conditions,
     summary: scr.summary,
     overallRisk: scr.overallRisk,
     overallScore: scr.overallScore,
     fusionWeights: { wearable: 0.55, clinical: 0.30, behavioral: 0.15 },
     dataQuality: scr.dataCoverage.quality,
+    disclaimer: 'Domain weights are placeholders — not trained ensemble model votes.',
     vitalsUsed: {
       heartRate: d.heartRate, restingHR: d.restingHR, spo2: d.spo2,
       hrv: d.hrv, steps: d.steps, sleep: d.sleepHours, bmi: profile.bmi,
@@ -131,7 +151,8 @@ function enrichScreeningData(screening) {
   };
   return {
     ...screening,
-    aiVersion: 'MedWear-AI v3.0',
+    aiVersion: 'MedWear-RuleEngine-v1',
+    engineType: 'evidence-weighted-rule-engine',
     categories: screening.categories.map(cat => ({
       ...cat,
       items: cat.items.map(item => {
@@ -143,11 +164,11 @@ function enrichScreeningData(screening) {
           researchId: rid,
           evidenceLevel: ref.evidenceLevel,
           evidenceLabel: EVIDENCE_LABELS[ref.evidenceLevel],
-          aiModel: ref.model,
+          aiModel: 'MedWear-RuleEngine',
           measuredMetrics: ref.metrics,
           clinicalThresholds: ref.thresholds,
-          calibratedRisk: ensembleScore(item.risk, ref.evidenceLevel),
-          confidence: calibrateConfidence(item.risk, ref.evidenceLevel),
+          calibratedRisk: evidenceAdjustedRisk(item.risk, ref.evidenceLevel),
+          confidence: heuristicConfidence(item.risk, ref.evidenceLevel),
           references: ref.references,
         };
       }),
@@ -156,6 +177,14 @@ function enrichScreeningData(screening) {
 }
 
 module.exports = {
-  MODELS, runFullAnalysis, enrichScreeningData,
-  analyzeCondition, calibrateConfidence, getAllReferences,
+  DOMAIN_WEIGHTS,
+  MODELS,
+  runFullAnalysis,
+  enrichScreeningData,
+  analyzeCondition,
+  evidenceAdjustedRisk,
+  heuristicConfidence,
+  ensembleScore,
+  calibrateConfidence,
+  getAllReferences,
 };

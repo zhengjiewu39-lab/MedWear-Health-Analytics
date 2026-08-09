@@ -490,6 +490,14 @@ function getOutcomeSummary(opts) {
       timeToTreatment: TIME_TO_TREATMENT,
       chronicControlRate: CHRONIC_CONTROL_RATE,
       untreatedSurvivalFactor: UNTREATED_SURVIVAL_FACTOR,
+      riskScoreFormula: 'logistic(linear proxy deviations) — coefficients in computeRiskScore',
+    },
+    simulationDisclosure: {
+      kind: 'scenario-simulation',
+      notRealWorldValidation: true,
+      noPValues: true,
+      disclaimer_en: 'Synthetic cohort with preset arm parameters — outcomes are partially parameter-driven scenario simulation, not independent system validation.',
+      disclaimer_zh: '合成队列含预设组间参数 — 结局为情景模拟，非系统能力的独立验证。',
     },
   };
 }
@@ -527,10 +535,43 @@ function getSurvivalReference() {
 
 function resetCache() { CACHE = null; }
 
+const SCENARIO_FACTORS = { conservative: 0.65, neutral: 1.0, optimistic: 1.25 };
+
+function scaleHeadlineMetric(h, factor) {
+  if (!h) return h;
+  return {
+    ...h,
+    absoluteDelta: h.absoluteDelta != null ? +(h.absoluteDelta * factor).toFixed(4) : null,
+    relativeImprovement: h.relativeImprovement != null ? +(h.relativeImprovement * factor).toFixed(4) : null,
+  };
+}
+
+/** Optimistic / neutral / conservative effect-size sensitivity (no p-values). */
+function getScenarioSensitivity(opts) {
+  const base = getOutcomeSummary(opts);
+  return {
+    simulationKind: 'scenario-sensitivity',
+    noPValues: true,
+    disclosure_en: 'Effect-size multipliers on synthetic cohort — not inferential statistics.',
+    disclosure_zh: '合成队列效应量情景乘数 — 非推断统计 p 值。',
+    publicParameters: base.params,
+    scenarios: Object.entries(SCENARIO_FACTORS).map(([name, factor]) => ({
+      scenario: name,
+      factor,
+      headline: {
+        earlyDiagnosisRate: scaleHeadlineMetric(base.headline.earlyDiagnosisRate, factor),
+        treatmentRate: scaleHeadlineMetric(base.headline.treatmentRate, factor),
+        survival5y: scaleHeadlineMetric(base.headline.survival5y, factor),
+      },
+    })),
+  };
+}
+
 module.exports = {
   generateCohort,
   getCohort,
   getOutcomeSummary,
+  getScenarioSensitivity,
   getFunnel,
   getSurvivalReference,
   resetCache,

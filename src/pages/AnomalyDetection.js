@@ -104,7 +104,7 @@ function AnomalyDetection() {
     { label: t('代理信号维度', 'Proxy signals'), value: PROXY_SIGNALS.length, sub: 'HR · HRV · SpO₂ · temp · steps' },
     { label: t('异常事件', 'Anomaly events'), value: anomalies.length, sub: t('个体×日 异常信号', 'Person-day anomaly signals') },
     { label: t('平均信号强度', 'Mean signal strength'), value: avgConfidence, sub: t('阈值偏离 / z-score 归一', 'Threshold deviation / z-score') },
-    { label: t('判定方式', 'Method'), value: t('透明', 'Transparent'), sub: t('阈值 + 滚动 2σ，公式公开', 'Thresholds + rolling 2σ, open formulas') },
+    { label: t('判定方式', 'Method'), value: t('稳健 MAD', 'Robust MAD'), sub: t('中位数+MAD 基线 · 活动量过滤 · 启发式', 'Median+MAD baseline · activity filter · heuristic') },
   ];
 
   return (

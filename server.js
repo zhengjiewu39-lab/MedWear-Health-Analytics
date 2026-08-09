@@ -31,8 +31,10 @@ const {
   resetStore,
 } = require('./server/ai/interventionService');
 const {
-  getOutcomeSummary, getFunnel, getSurvivalReference, getCohort,
+  getOutcomeSummary, getFunnel, getSurvivalReference, getCohort, getScenarioSensitivity,
 } = require('./server/screening/outcomeModel');
+const { getMethodologyTransparency } = require('./server/config/methodologyTransparency');
+const { missingDataSensitivity } = require('./server/services/behavioralHealthIndex');
 const { geolocate, withSearchCoords } = require('./server/geo/location');
 const {
   findNearbyHospitalsLive, rememberFacilities, recallFacilities,
@@ -191,6 +193,8 @@ app.get('/api/methodology', (req, res) => {
     filename: isEn ? 'docs/METHODS.md + docs/EVALUATION.md' : 'docs/METHODS.zh.md + docs/EVALUATION.zh.md',
     lang: isEn ? 'en' : 'zh',
     engine: 'MedWear-AnalyticsCore-v1',
+    scoreKind: 'behavioral-health-index',
+    transparency: getMethodologyTransparency(),
     framework: {
       ...getFrameworkPayload(),
       benchmark_license: 'CC-BY-4.0',
@@ -662,8 +666,13 @@ app.get('/api/doctor-report/export', async (req, res) => {
   res.json(report);
 });
 
+app.get('/api/methodology/transparency', (_, res) => {
+  res.json(getMethodologyTransparency());
+});
+
 // ── Screening-outcome cohort (screened vs unscreened) ──
 app.get('/api/outcomes/summary', (_, res) => res.json(getOutcomeSummary()));
+app.get('/api/outcomes/scenarios', (_, res) => res.json(getScenarioSensitivity()));
 app.get('/api/outcomes/funnel', (_, res) => res.json(getFunnel()));
 app.get('/api/outcomes/survival-reference', (_, res) => res.json(getSurvivalReference()));
 app.get('/api/outcomes/cohort', (req, res) => {
