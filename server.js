@@ -33,7 +33,7 @@ const {
 const {
   getOutcomeSummary, getFunnel, getSurvivalReference, getCohort, getScenarioSensitivity,
 } = require('./server/screening/outcomeModel');
-const { getMethodologyTransparency } = require('./server/config/methodologyTransparency');
+const { getMethodologyTransparency, renderMethodsMarkdown } = require('./server/config/methodologyTransparency');
 const { missingDataSensitivity } = require('./server/services/behavioralHealthIndex');
 const { geolocate, withSearchCoords } = require('./server/geo/location');
 const {
@@ -172,29 +172,24 @@ app.get('/api/health', (_, res) => {
 
 app.get('/api/methodology', (req, res) => {
   const isEn = req.query.lang === 'en' || String(req.headers['x-medwear-lang'] || '').toLowerCase() === 'en';
-  const methodsName = isEn ? 'METHODS.md' : 'METHODS.zh.md';
   const evalName = isEn ? 'EVALUATION.md' : 'EVALUATION.zh.md';
-  const methodsPath = path.join(__dirname, 'docs', methodsName);
   const evalPath = path.join(__dirname, 'docs', evalName);
-  const parts = [];
-  if (fs.existsSync(methodsPath)) parts.push(fs.readFileSync(methodsPath, 'utf8'));
+  const transparency = getMethodologyTransparency();
+  const parts = [renderMethodsMarkdown(isEn)];
   if (fs.existsSync(evalPath)) parts.push(fs.readFileSync(evalPath, 'utf8'));
-  if (!parts.length) {
-    const fallback = path.join(__dirname, 'docs', 'METHODS.md');
-    if (fs.existsSync(fallback)) parts.push(fs.readFileSync(fallback, 'utf8'));
-  }
-  if (!parts.length) {
+  if (parts.length < 1) {
     return res.status(404).json({
       success: false,
       message: isEn ? 'Methodology documents not found' : '方法学文档未找到',
     });
   }
   return res.json({
-    filename: isEn ? 'docs/METHODS.md + docs/EVALUATION.md' : 'docs/METHODS.zh.md + docs/EVALUATION.zh.md',
+    filename: isEn ? 'methodologyTransparency + docs/EVALUATION.md' : 'methodologyTransparency + docs/EVALUATION.zh.md',
     lang: isEn ? 'en' : 'zh',
     engine: 'MedWear-AnalyticsCore-v1',
-    scoreKind: 'behavioral-health-index',
-    transparency: getMethodologyTransparency(),
+    scoreKind: transparency.healthScore.kind,
+    scoreLabel: isEn ? transparency.healthScore.label_en : transparency.healthScore.label_zh,
+    transparency,
     framework: {
       ...getFrameworkPayload(),
       benchmark_license: 'CC-BY-4.0',

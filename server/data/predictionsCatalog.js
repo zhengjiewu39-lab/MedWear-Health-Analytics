@@ -24,7 +24,7 @@ function getDemoPredictions() {
       probability: 28, timeframe: '14天内', timeframe_en: 'Within 14 days', horizon: 'medium',
       factors: ['近7天 RHR 上升 4 bpm', '压力指数略升'], factors_en: ['RHR up 4 bpm over 7 days', 'Slightly elevated stress index'],
       recommendation: '减少咖啡因，增加睡眠，必要时查动态血压', recommendation_en: 'Reduce caffeine, improve sleep; consider ambulatory BP if needed',
-      level: 'low', model: 'CardioNet-v3',
+      level: 'low', model: 'MedWear-RuleEngine-v1',
     },
     {
       id: 4, category: 'metabolic', categoryLabel: '代谢', categoryLabel_en: 'Metabolic',

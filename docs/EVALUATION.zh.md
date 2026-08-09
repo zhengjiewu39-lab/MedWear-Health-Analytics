@@ -21,7 +21,7 @@
 - 预期告警类型
 - 是否存在异常（二分类）
 - 风险等级（低 / 中 / 高）
-- 健康评分下限
+- 健康评分下限（BHI，`healthScore` 字段）
 
 文件：`benchmarks/wearable-analytics-dataset.json`  
 原始 8 例种子：`benchmarks/wearable-analytics-seed-v1.json`
@@ -48,12 +48,23 @@ npm run evaluate
 | 告警 F1 | 告警类型集合 micro-F1（同时报告精确率/召回率） |
 | 异常准确率 | `anomalyDetected` 二分类一致率 |
 | 风险准确率 | `riskLevel` 三分类一致率 |
-| 分数达标 | healthScore ≥ 预期下限 |
+| 评分一致 | BHI 与金标准参考值相差 ≤8 分 |
 | 95% CI | Wilson 区间（n≥100 时可用于临床报告） |
 
-## 参考结果（v2.5，n=5000）
+## 参考结果（v2.5，n=5000，seed=42，BHI + MAD 引擎）
 
-运行 `npm run evaluate` 获取当前数值。示例（seed=42）：告警 F1 **0.844**，精确率 **0.758**，召回率 **0.953**；异常 **0.769**（95% CI 0.757–0.781）；风险 **0.875**；评分一致 **0.909**；分歧 **2266/5000**。
+运行 `npm run evaluate` 获取当前数值。示例（产品引擎 vs **clinicalGoldStandard-v1**）：
+
+| 指标 | 数值 | 95% CI |
+|------|------|--------|
+| 告警 F1 | 0.844 | — |
+| 告警精确率 | 0.758 | — |
+| 告警召回率 | 0.953 | — |
+| 异常准确率 | 0.700 | 0.688–0.713 |
+| 风险准确率（BHI 分层） | 0.787 | 0.775–0.798 |
+| BHI 一致（±8 分） | 0.760 | 0.748–0.772 |
+
+分歧：**3041 / 5000** 例在至少一项任务上与金标准不一致。
 
 告警精确率 &lt; 1 表示存在 realistic 误报（运动峰值心率、单次 SpO₂ 下跌、恢复日步数偏低），金标准经临床上下文裁决，非产品自评。
 
@@ -73,9 +84,11 @@ curl http://localhost:3001/api/research/results
 
 ---
 
-## 筛查-结局队列（筛查组 vs 对照组）
+## 探索性情景模拟（筛查组 vs 对照组）
 
-模拟基准，对应论文问题：*可穿戴驱动的早筛与干预是否较无早筛对照组改善慢病/肿瘤的分期、治疗启动与存活？*
+**探索性情景模拟框架** — 非前瞻性验证。展示预设组间参数（分期分布、治疗率、存活表）如何在保守 / 中性 / 乐观敏感性情景下产生干预 vs 对照差异。
+
+结果**高度依赖预设参数** — 仅用于方法论演示与敏感性分析（无 p 值）。见 `GET /api/methodology/transparency` → `cohortSimulation` 与 `GET /api/outcomes/scenarios`。
 
 **数据集：** `benchmarks/screening-outcome-dataset.json`
 （`MedWear-Screening-Outcome-Cohort-v1`，CC-BY-4.0）— 5000 例合成患者、
@@ -106,7 +119,7 @@ npm run evaluate:outcomes    # → benchmarks/results/screening-outcomes-latest.
 持续监测 → 异常标记 → 风险分层 → 预约体检 → 完成体检 →
 确诊分期 → 启动治疗（干预组）。
 
-> 所有结局均由已发表参数模拟，非前瞻性观察结果。仪表盘：`/outcomes`（需登录）。
+> 所有结局均由已发表参数模拟，非前瞻性观察结果。仅用于透明度演示与敏感性分析 — 不可作为已证实的临床获益。仪表盘：`/outcomes`（需登录）。
 
 ## 临床队列外部验证（SEER / NLST / 中国 NCCR）
 

@@ -119,7 +119,7 @@ const RESEARCH_DB = {
     id: 'coronary',
     name: '冠心病/心梗',
     evidenceLevel: 'A',
-    model: 'CardioNet-v3',
+    model: 'MedWear-RuleEngine-v1',
     references: [
       { title: '2023 ESC Guidelines for the management of acute coronary syndromes', org: 'ESC', year: 2023, type: 'guideline' },
       { title: 'Heart rate variability as predictor of cardiovascular events: Framingham offspring study', org: 'Circulation', year: 2015, type: 'cohort', doi: '10.1161/CIRCULATIONAHA.114.014467' },

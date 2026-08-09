@@ -21,7 +21,7 @@ Each case includes 7 days of steps, HR, SpO2, HRV, sleep with **clinical gold la
 - Expected alert types
 - Anomaly presence (binary)
 - Risk tier (low / moderate / high)
-- Minimum acceptable health score
+- Minimum acceptable BHI (`healthScore` field — behavioral health index)
 
 File: `benchmarks/wearable-analytics-dataset.json`
 
@@ -47,10 +47,10 @@ Output: `benchmarks/results/latest.json`
 | Alert F1 | Micro-F1 over alert type sets (precision/recall also reported) |
 | Anomaly Accuracy | Binary match on anomalyDetected |
 | Risk Accuracy | 3-class match on riskLevel |
-| Score in Range | healthScore ≥ expected minimum |
+| Score agreement | BHI within ±8 pts of gold reference |
 | 95% CI | Wilson score interval for accuracy metrics (n≥100) |
 
-## Reference Results (v2.5, n=5000, seed=42)
+## Reference Results (v2.5, n=5000, seed=42, BHI + MAD engine)
 
 Run `npm run evaluate` for current numbers. Example (product engine vs **clinicalGoldStandard-v1** labels):
 
@@ -59,13 +59,15 @@ Run `npm run evaluate` for current numbers. Example (product engine vs **clinica
 | Alert F1 | 0.844 | — |
 | Alert precision | 0.758 | — |
 | Alert recall | 0.953 | — |
-| Anomaly accuracy | 0.769 | 0.757–0.781 |
-| Risk accuracy | 0.875 | 0.865–0.884 |
-| Score agreement (±8 pts) | 0.909 | 0.901–0.917 |
+| Anomaly accuracy | 0.700 | 0.688–0.713 |
+| Risk accuracy (BHI tiers) | 0.787 | 0.775–0.798 |
+| BHI agreement (±8 pts) | 0.760 | 0.748–0.772 |
+
+Disagreements: **3041 / 5000** cases differ on at least one task (alert set, anomaly, risk, or BHI).
 
 Alert precision &lt; 1 reflects realistic wearable false positives (exercise HR peaks, single SpO₂ dips, recovery-day low steps). Gold labels use contextual adjudication — not the product engine.
 
-Gold labels use stricter SpO₂/activity cutoffs and a separate reference score formula — not the product engine. Metrics ≥98% on all tasks indicate circular labels and invalid clinical estimation.
+Gold labels use stricter SpO₂/activity cutoffs and a separate reference BHI formula — not the product engine. Metrics ≥98% on all tasks indicate circular labels and invalid clinical estimation.
 
 ## API Evaluation
 
@@ -83,11 +85,11 @@ curl http://localhost:3001/api/research/results
 
 ---
 
-## Screening-Outcome Cohort (Screened vs Unscreened)
+## Exploratory Scenario Simulation (Screened vs Unscreened)
 
-Simulation benchmark for the thesis question: *does wearable-driven early
-screening + intervention improve stage-at-diagnosis, treatment initiation and
-survival for chronic disease and cancer, versus an unscreened control arm?*
+**Exploratory scenario simulation framework** — not prospective validation. Demonstrates how preset arm parameters (stage distribution, treatment rates, survival tables) produce intervention-vs-control deltas under conservative / neutral / optimistic sensitivity scenarios.
+
+Results are **highly parameter-driven** — for methodology demonstration and sensitivity analysis only (no p-values). See `GET /api/methodology/transparency` → `cohortSimulation` and `GET /api/outcomes/scenarios`.
 
 **Dataset:** `benchmarks/screening-outcome-dataset.json`
 (`MedWear-Screening-Outcome-Cohort-v1`, CC-BY-4.0) — 5,000 synthetic patients,
@@ -122,7 +124,7 @@ Continuous monitoring → anomaly flag → risk stratification → exam booked �
 exam completed → diagnosed & staged → treatment started (intervention arm).
 
 > All outcomes are simulated from published parameters, not observed prospective
-> results. Dashboard: `/outcomes` (requires login).
+> results. Intended for transparency demos and sensitivity analysis — do not report as proven clinical benefit. Dashboard: `/outcomes` (requires login).
 
 ## Clinical Cohort Validation (SEER / NLST / China NCCR)
 

@@ -1,6 +1,6 @@
 /**
  * Individual patient intervention vs non-intervention projection,
- * calibrated against SEER / NLST / NCCR reference models and the MedWear ensemble.
+ * calibrated against SEER / NLST / NCCR reference models and MedWear rule-engine risk fusion.
  */
 
 'use strict';
@@ -380,7 +380,7 @@ function buildNarrative(patient, withIntervention, withoutIntervention, delta) {
     delta.daysToTreatment != null && delta.daysToTreatment > 0
       ? `Intervention arm may shorten dx-to-treatment by ~${delta.daysToTreatment} days.`
       : null,
-    'Counterfactual projection calibrated with SEER/NLST/NCCR and MedWear ensemble — not a guaranteed clinical prognosis.',
+    'Counterfactual projection calibrated with SEER/NLST/NCCR and MedWear rule engine — not a guaranteed clinical prognosis.',
   ].filter(Boolean).join('\n');
 
   return { zh, en };
@@ -440,7 +440,7 @@ function getPatientOutcomeComparison(patientId, opts = {}) {
     methodology: {
       summary: 'Counterfactual projection for the same patient profile: AI-assisted intervention pathway vs usual care without wearable screening.',
       summary_zh: '同一患者档案的反事实投影：AI 辅助干预路径 vs 无可穿戴筛查的常规照护。',
-      calibration: ['SEER', 'NLST', 'NCCR', 'MedWear-Ensemble'],
+      calibration: ['SEER', 'NLST', 'NCCR', 'MedWear-RuleEngine-v1'],
     },
   };
 }

@@ -275,7 +275,7 @@ router.post('/analyze', (req, res) => {
   const result = core.evaluateCase(caseData, thresholds || {});
   res.json({
     ...result,
-    healthScoreFormula: 'steps(30%)+sleep(25%)+RHR(20%)+SpO2(15%)+HRV(10%)',
+    healthScoreFormula: 'BHI (behavioral-health-index): sigmoid/Gaussian components — see GET /api/methodology/transparency',
     engine: 'MedWear-AnalyticsCore-v1',
   });
 });

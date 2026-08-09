@@ -32,6 +32,8 @@ MedWear is a **research and education prototype** for consumer wearable analytic
 
 When citing this work in academic contexts, state clearly: prototype / decision-support, not validated clinical tool. Describe dual-mode separation and local-only privacy model. Report benchmark metrics from `npm run evaluate` with dataset version.
 
+**Methodology transparency:** Live disclosure of BHI formulas, MAD rules, sensitivity presets, rule-engine weights, and cohort simulation disclaimers — `GET /api/methodology/transparency` (also rendered in the in-app Methodology page). Regenerate static docs: `npm run docs:sync`.
+
 ## Production Requirements (if extended)
 
 - IRB approval for human subjects research

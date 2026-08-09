@@ -434,10 +434,10 @@ function OutcomesComparison() {
       {hl && (
         <>
           <Alert severity="success" sx={{ mb: 2 }}>
-            <strong>{t('论文核心结论', 'Thesis headline findings')}</strong>
+            <strong>{t('情景模拟摘要', 'Scenario simulation summary')}</strong>
             {' — '}
-            {t('可穿戴早筛干预组在早诊率、治疗启动率与模拟存活率上均优于无早筛对照组（合成情景模拟，效应量见相对提升，无 p 值）。',
-              'Wearable early-screening arm shows higher early diagnosis, treatment initiation and simulated survival vs unscreened control (scenario simulation — relative gains, no p-values).')}
+            {t('干预组与对照组差异高度依赖预设参数，仅用于方法论演示与敏感性分析（相对变化，无 p 值）。',
+              'Intervention vs control deltas are highly parameter-driven — for methodology demo and sensitivity analysis only (relative changes, no p-values).')}
           </Alert>
           <Grid container spacing={2} sx={{ mb: 3 }}>
             <Grid item xs={12} md={4}>

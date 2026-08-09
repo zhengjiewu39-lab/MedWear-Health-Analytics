@@ -628,7 +628,7 @@ function ResearchCenter() {
       {apiError && <Alert severity="warning" sx={{ mt: 2 }}>{apiError}</Alert>}
 
       <Alert severity="info" icon={<OpenInNew fontSize="small" />} sx={{ mt: 2 }}>
-        {t('论文核心', 'Thesis core')}:{' '}
+        {t('探索性情景', 'Exploratory scenarios')}:{' '}
         <Button size="small" onClick={() => navigate('/outcomes')}>{t('结局对比', 'Outcomes')}</Button>
         {' · '}
         <Button size="small" onClick={() => navigate('/ai/intervention')}>{t('AI 干预', 'AI Intervention')}</Button>

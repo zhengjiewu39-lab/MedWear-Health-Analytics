@@ -5,14 +5,14 @@ import {
 import { Science } from '@mui/icons-material';
 import { useLang } from '../contexts/LanguageContext';
 
-function ListBlock({ title, items, isEn }) {
+function ListBlock({ title, items }) {
   if (!items?.length) return null;
   return (
     <Box sx={{ mb: 2 }}>
       <Typography variant="subtitle2" fontWeight={700} gutterBottom>{title}</Typography>
       <Typography component="ul" variant="body2" sx={{ pl: 2, m: 0 }}>
         {items.map((x) => (
-          <li key={x}>{isEn ? x : x}</li>
+          <li key={x}>{x}</li>
         ))}
       </Typography>
     </Box>
@@ -24,9 +24,11 @@ export default function MethodologyTransparency({ data, scenarios }) {
   if (!data) return null;
 
   const hs = data.healthScore;
+  const al = data.alerts;
   const an = data.anomalyDetection;
   const re = data.ruleEngine;
   const co = data.cohortSimulation;
+  const presetNames = an?.sensitivityPresets ? Object.keys(an.sensitivityPresets) : [];
 
   return (
     <Paper variant="outlined" sx={{ p: 2.5, mb: 2 }}>
@@ -38,9 +40,7 @@ export default function MethodologyTransparency({ data, scenarios }) {
       </Box>
 
       <Alert severity="info" sx={{ mb: 2 }}>
-        {t(hs?.label_zh, hs?.label_en)}
-        {' · '}
-        {t('非疾病风险评分', 'Not a disease-risk score')}
+        {t(hs?.disclaimer_zh, hs?.disclaimer_en)}
       </Alert>
 
       <Typography variant="subtitle1" fontWeight={700} gutterBottom>
@@ -51,24 +51,50 @@ export default function MethodologyTransparency({ data, scenarios }) {
           <Chip key={k} size="small" label={`${k} ${(v * 100).toFixed(0)}%`} />
         ))}
       </Box>
-      <ListBlock title={t('改进', 'Improvements')} items={hs?.features} isEn={isEn} />
-      <ListBlock title={t('局限', 'Limitations')} items={hs?.limitations_en} isEn={isEn} />
+      <ListBlock
+        title={t('公式', 'Formulas')}
+        items={isEn ? hs?.formulas_en : hs?.formulas_zh}
+      />
+      <ListBlock
+        title={t('局限', 'Limitations')}
+        items={isEn ? hs?.limitations_en : hs?.limitations_zh}
+      />
 
       <Typography variant="subtitle1" fontWeight={700} gutterBottom sx={{ mt: 2 }}>
-        2. {t('异常检测', 'Anomaly detection')}
+        2. {t('阈值告警', 'Threshold alerts')}
       </Typography>
+      <Typography variant="body2" paragraph>
+        {t(al?.label_zh, al?.label_en)}
+      </Typography>
+      <ListBlock
+        title={t('规则', 'Rules')}
+        items={isEn ? al?.rules_en : al?.rules_zh}
+      />
+
+      <Typography variant="subtitle1" fontWeight={700} gutterBottom sx={{ mt: 2 }}>
+        3. {t('异常检测（稳健 MAD）', 'Anomaly detection (robust MAD)')}
+      </Typography>
+      <Alert severity="warning" sx={{ mb: 1 }}>
+        {t(an?.disclaimer_zh, an?.disclaimer_en)}
+      </Alert>
       <Typography variant="body2" paragraph>
         {t(an?.label_zh, an?.label_en)}
       </Typography>
       <Typography variant="body2" color="text.secondary" paragraph>
-        HR: {an?.hrRule} · SpO₂: {an?.spo2Rule}
+        HR: {t(an?.hrRule_zh, an?.hrRule_en)}
+        {' · '}
+        SpO₂: {t(an?.spo2Rule_zh, an?.spo2Rule_en)}
       </Typography>
       <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>
-        {t('敏感性预设', 'Sensitivity presets')}: {(an?.sensitivityPresets || []).join(' · ')}
+        {t('敏感性预设', 'Sensitivity presets')}: {presetNames.join(' · ') || '—'}
       </Typography>
+      <ListBlock
+        title={t('局限', 'Limitations')}
+        items={isEn ? an?.limitations_en : an?.limitations_zh}
+      />
 
       <Typography variant="subtitle1" fontWeight={700} gutterBottom sx={{ mt: 2 }}>
-        3. {t('规则引擎（非 ML 集成）', 'Rule engine (not ML ensemble)')}
+        4. {t('规则引擎（非 ML 集成）', 'Rule engine (not ML ensemble)')}
       </Typography>
       <Typography variant="body2" paragraph>{t(re?.label_zh, re?.label_en)}</Typography>
       <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>
@@ -92,11 +118,14 @@ export default function MethodologyTransparency({ data, scenarios }) {
       </Table>
 
       <Typography variant="subtitle1" fontWeight={700} gutterBottom sx={{ mt: 2 }}>
-        4. {t('合成队列情景模拟', 'Synthetic cohort scenario simulation')}
+        5. {t('探索性情景模拟', 'Exploratory scenario simulation')}
       </Typography>
       <Alert severity="warning" sx={{ mb: 1 }}>
         {t(co?.label_zh, co?.label_en)} — {t('无 p 值', 'No p-values')}
       </Alert>
+      <Typography variant="body2" color="text.secondary" paragraph>
+        {t(co?.disclaimer_zh, co?.disclaimer_en)}
+      </Typography>
       {scenarios?.scenarios && (
         <Table size="small">
           <TableHead>

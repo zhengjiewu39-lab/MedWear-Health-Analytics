@@ -27,12 +27,12 @@ Modes are isolated via `X-MedWear-Mode` header — real mode never falls back to
 
 ## Core Analytics
 
-Documented in [METHODS.md](./METHODS.md):
+Documented in [METHODS.md](./METHODS.md) (auto-synced from `GET /api/methodology/transparency`):
 
-- Composite health score (steps, sleep, RHR, SpO2, HRV)
-- Threshold alerts
-- Personal-baseline 2σ anomaly detection
-- 3-tier risk stratification
+- **Behavioral Health Index (BHI)** — continuous sigmoid/Gaussian components (steps, sleep, RHR, SpO₂, HRV)
+- **Threshold alerts** — peak/single-reading wearable-style sensitivity
+- **Robust MAD anomaly heuristic** — personal baseline with activity context filter (not mean + 2σ)
+- **3-tier risk stratification** from BHI (≥80 / 60–79 / <60)
 
 ## Clinical Workflow
 

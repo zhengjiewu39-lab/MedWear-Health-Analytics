@@ -1,17 +1,13 @@
 /**
- * Screening-outcome cohort model.
+ * Exploratory scenario simulation framework for screening-outcome benchmarks.
  *
- * Simulates a large, physiologically realistic cohort to support the thesis:
- * "Early prediction/screening from consumer wearable proxy signals improves
- * stage-at-diagnosis, treatment initiation and simulated survival for chronic
- * disease and cancer, compared with a usual-care (unscreened) control arm."
+ * Generates a deterministic synthetic cohort (n=5000) to demonstrate methodology:
+ * how preset arm parameters (stage distribution, treatment rates, survival tables)
+ * produce intervention vs control deltas under conservative / neutral / optimistic
+ * sensitivity scenarios.
  *
- * The generator is DETERMINISTIC (seeded) so the served API and the exported
- * benchmark dataset are identical and reproducible.
- *
- * Physiological baselines and stage-specific survival are anchored to published
- * ranges / registry statistics (documented inline). All data are SYNTHETIC — no
- * real patients — and intended for methodology demonstration only.
+ * NOT prospective validation — outcomes are highly parameter-driven.
+ * Intended for transparency demos and sensitivity analysis only (no p-values).
  */
 
 'use strict';
@@ -401,7 +397,7 @@ function pctDelta(a, b) {
   return +(a - b).toFixed(4);
 }
 
-/** Relative improvement: (IV − UC) / UC — thesis headline effect size. */
+/** Relative improvement: (IV − UC) / UC — scenario headline effect size (parameter-driven). */
 function relativeImprovement(iv, uc) {
   if (iv == null || uc == null || uc === 0) return null;
   return +((iv - uc) / uc).toFixed(4);
@@ -421,7 +417,7 @@ function getOutcomeSummary(opts) {
     chronicControlRate: { intervention: iv.chronicControlRate, control: uc.chronicControlRate, delta: pctDelta(iv.chronicControlRate, uc.chronicControlRate) },
   };
 
-  /** Thesis-critical headline metrics (screened vs control). */
+  /** Scenario headline metrics (screened vs control) — exploratory simulation only. */
   const headline = {
     earlyDiagnosisRate: {
       label: '早期诊断率 (I/II 期)',

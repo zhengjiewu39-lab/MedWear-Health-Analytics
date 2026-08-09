@@ -56,7 +56,7 @@ function InterventionPathway({ compact = false }) {
         </Typography>
         <Chip
           icon={<CompareArrows sx={{ fontSize: 16 }} />}
-          label={t('论文主线：可穿戴早筛 → 临床干预 → 结局评估', 'Thesis flow: wearable screening → clinical intervention → outcome evaluation')}
+          label={t('研究路径：可穿戴监测 → 临床干预 → 情景模拟评估', 'Research path: wearable monitoring → clinical intervention → scenario simulation')}
           size="small"
           variant="outlined"
           color="primary"

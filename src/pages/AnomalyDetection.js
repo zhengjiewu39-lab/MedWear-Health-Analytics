@@ -116,8 +116,8 @@ function AnomalyDetection() {
         {t('个体异常检测（代理信号）', 'Individual Anomaly Detection (Proxy Signals)')}
       </Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
-        {t('消费级可穿戴代理信号 → 透明规则引擎（analyticsCore）：阈值 + 个人基线滚动 2σ，输出可解释的异常信号',
-          'Consumer-grade wearable proxy signals → transparent rule engine (analyticsCore): thresholds + personal-baseline rolling 2σ, producing explainable anomaly signals')}
+        {t('消费级可穿戴代理信号 → BHI + 稳健 MAD 启发式异常检测 + 规则引擎告警',
+          'Consumer wearable proxies → BHI + robust MAD heuristic anomalies + rule-engine alerts')}
       </Typography>
 
       <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', mb: 3 }}>

@@ -18,7 +18,7 @@ function Login() {
   const { t, lang, toggle: toggleLang } = useLang();
 
   const features = [
-    { icon: <Analytics />, title: t('透明分析', 'Transparent analytics'), desc: t('可解释的健康评分与预警', 'Explainable health scores & alerts') },
+    { icon: <Analytics />, title: t('透明分析', 'Transparent analytics'), desc: t('可解释的 BHI 与预警', 'Explainable BHI & alerts') },
     { icon: <Shield />, title: t('本地优先', 'Local-first'), desc: t('Apple Health 数据不上云', 'Apple Health data stays on device') },
     { icon: <Speed />, title: t('管理高效', 'Efficient ops'), desc: t('患者、设备、报告一站管理', 'Patients, devices & reports in one place') },
   ];

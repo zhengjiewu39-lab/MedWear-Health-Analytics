@@ -180,7 +180,7 @@ const mockData = {
 
   anomalies: [
     { id: 1, type: 'HRV 短暂下降', type_en: 'Transient HRV drop', confidence: 82, detectedAt: '2024-06-25 23:00', pattern: 'HRV 降至 38ms，低于个人基线 30%', pattern_en: 'HRV fell to 38 ms, 30% below personal baseline', aiModel: 'VitalGuard-v2', status: 'resolved', severity: 'low' },
-    { id: 2, type: '运动后心率恢复偏慢', type_en: 'Slow post-exercise heart rate recovery', confidence: 76, detectedAt: '2024-06-24 18:30', pattern: '运动后 5 分钟心率仍 > 100 bpm', pattern_en: 'Heart rate still > 100 bpm 5 minutes after exercise', aiModel: 'CardioNet-v3', status: 'monitoring', severity: 'medium' },
+    { id: 2, type: '运动后心率恢复偏慢', type_en: 'Slow post-exercise heart rate recovery', confidence: 76, detectedAt: '2024-06-24 18:30', pattern: '运动后 5 分钟心率仍 > 100 bpm', pattern_en: 'Heart rate still > 100 bpm 5 minutes after exercise', aiModel: 'MedWear-RuleEngine-v1', status: 'monitoring', severity: 'medium' },
   ],
 
   predictions: getDemoPredictions(),

@@ -12,7 +12,7 @@ Connects consumer wearables to actionable health insights with **local-first pri
 |------------|-------------|
 | **Dual-mode architecture** | Demo (synthetic) vs Real (Apple Health) — fully isolated |
 | **Apple Health pipeline** | SAX streaming parser → local JSON store → analytics |
-| **Transparent analytics** | Health score, threshold alerts, personal-baseline 2σ anomalies |
+| **Transparent analytics** | BHI (behavioral health index), peak/single-reading alerts, robust MAD anomaly heuristic |
 | **Clinical workflow** | Screening → exam booking → structured doctor report |
 | **Analytics Lab** | In-app benchmark charts, methods transparency, evaluation metrics |
 | **Engineering quality** | Unit tests, CI, Docker, audit log, encrypted vault |
@@ -23,7 +23,7 @@ Connects consumer wearables to actionable health insights with **local-first pri
 
 - **Frontend:** React 18, MUI 5, Recharts, React Router 6
 - **Backend:** Express 5, SAX XML parser, local JSON persistence
-- **AI:** Rule engine (demo) + optional OpenAI (real mode)
+- **AI:** Rule engine (`MedWear-RuleEngine-v1`) + optional LLM (real mode) — not a trained ML ensemble
 - **Security:** JWT auth, audit log, AES-256-GCM health vault
 
 ---
@@ -107,22 +107,26 @@ npm run test:server
 npm run evaluate             # → benchmarks/results/latest.json
 ```
 
-| Metric (n=5000, seed=42) | Value | 95% CI |
+| Metric (n=5000, seed=42, BHI + MAD engine) | Value | 95% CI |
 |--------------|-------|--------|
-| Alert F1 | ~0.89 | — |
-| Anomaly accuracy | ~0.86 | 0.85–0.87 |
-| Risk accuracy | ~0.85 | 0.84–0.86 |
-| Score agreement (±8) | ~0.87 | 0.86–0.88 |
+| Alert F1 | 0.844 | — |
+| Alert precision | 0.758 | — |
+| Alert recall | 0.953 | — |
+| Anomaly accuracy | 0.700 | 0.688–0.713 |
+| Risk accuracy (BHI tiers) | 0.787 | 0.775–0.798 |
+| BHI agreement (±8 pts) | 0.760 | 0.748–0.772 |
 
 ### Documentation
 
 | Doc | Topic |
 |-----|-------|
-| [docs/METHODS.md](docs/METHODS.md) | Algorithm formulas |
+| [docs/METHODS.md](docs/METHODS.md) | BHI + MAD + alerts (auto-synced via `npm run docs:sync`) |
 | [docs/EVALUATION.md](docs/EVALUATION.md) | Benchmark protocol |
 | [docs/ETHICS.md](docs/ETHICS.md) | Privacy & limitations |
 | [docs/REPRODUCIBILITY.md](docs/REPRODUCIBILITY.md) | Docker, CI |
 | [docs/LITERATURE.md](docs/LITERATURE.md) | References |
+
+**Single source of truth:** `GET /api/methodology/transparency` · in-app Methodology page · `docs/METHODS*.md` (regenerate with `npm run docs:sync`).
 
 ---
 
