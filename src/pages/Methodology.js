@@ -239,9 +239,10 @@ function Methodology() {
             {t('方法学文档', 'Methodology')}
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            {doc?.filename || (isEn ? 'docs/METHODS.md' : 'docs/METHODS.zh.md')}
+            {doc?.filename || (isEn ? 'methodologyTransparency + docs/EVALUATION.md' : 'methodologyTransparency + docs/EVALUATION.zh.md')}
             {' · '}
             {t('引擎', 'Engine')} {doc?.engine || '—'}
+            {doc?.scoreLabel ? ` · ${doc.scoreLabel}` : ''}
             {' · '}
             {isEn ? 'English' : '中文'}
           </Typography>

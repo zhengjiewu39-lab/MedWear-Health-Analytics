@@ -1,5 +1,8 @@
 # 评测协议
 
+> **方法对齐：** 产品引擎 = BHI（`behavioralHealthIndex.js`）+ 稳健 MAD 异常（`robustAnomaly.js`）+ `MedWear-RuleEngine-v1`。  
+> 完整披露：`GET /api/methodology/transparency` · 静态文档：`npm run docs:sync` · CI 校验：`npm run docs:verify`。
+
 ## 基准数据集
 
 **MedWear-Wearable-Analytics-Clinical-v2** — 5000 例合成多日可穿戴案例（CC-BY-4.0），可用于 Wilson 95% CI 临床性能估计。
@@ -121,9 +124,9 @@ npm run evaluate:outcomes    # → benchmarks/results/screening-outcomes-latest.
 
 > 所有结局均由已发表参数模拟，非前瞻性观察结果。仅用于透明度演示与敏感性分析 — 不可作为已证实的临床获益。仪表盘：`/outcomes`（需登录）。
 
-## 临床队列外部验证（SEER / NLST / 中国 NCCR）
+## 已发表参考对比（SEER / NLST / 中国 NCCR）
 
-对照已发表登记与试验子集的外部验证（非完整患者级数据 dump）。
+**说明性基准对比** — 对照已发表登记与试验统计，非前瞻性患者级验证，**非**推断性假设检验（无 p 值）。
 
 **模块：** `server/screening/cohortValidator.js`  
 **参考文献：** `server/screening/clinicalReferenceData.js`
@@ -132,7 +135,7 @@ npm run evaluate:outcomes    # → benchmarks/results/screening-outcomes-latest.
 npm run validate:cohort   # → benchmarks/results/clinical-validation-latest.json
 ```
 
-### 验证结局
+### 对比指标（参考锚点）
 
 | 领域 | 指标 |
 |------|------|

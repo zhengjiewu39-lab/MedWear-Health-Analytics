@@ -1,5 +1,8 @@
 # Evaluation Protocol
 
+> **Methods alignment:** Product engine = BHI (`behavioralHealthIndex.js`) + robust MAD anomalies (`robustAnomaly.js`) + `MedWear-RuleEngine-v1`.  
+> Full disclosure: `GET /api/methodology/transparency` · regenerate static docs: `npm run docs:sync` · CI check: `npm run docs:verify`.
+
 ## Benchmark Dataset
 
 **MedWear-Wearable-Analytics-Clinical-v2** — 5000 synthetic multi-day wearable cases (CC-BY-4.0). Suitable for clinical performance estimation with 95% Wilson CIs.
@@ -126,10 +129,9 @@ exam completed → diagnosed & staged → treatment started (intervention arm).
 > All outcomes are simulated from published parameters, not observed prospective
 > results. Intended for transparency demos and sensitivity analysis — do not report as proven clinical benefit. Dashboard: `/outcomes` (requires login).
 
-## Clinical Cohort Validation (SEER / NLST / China NCCR)
+## Published Reference Comparison (SEER / NLST / China NCCR)
 
-External validation against published registry and trial subsets (not full
-patient-level dumps).
+**Illustrative benchmark comparison** against published registry and trial statistics — not prospective patient-level validation and **not** inferential hypothesis testing (no p-values).
 
 **Module:** `server/screening/cohortValidator.js`  
 **References:** `server/screening/clinicalReferenceData.js`
@@ -138,7 +140,7 @@ patient-level dumps).
 npm run validate:cohort   # → benchmarks/results/clinical-validation-latest.json
 ```
 
-### Validated outcomes
+### Compared metrics (reference anchors)
 
 | Domain | Metrics |
 |--------|---------|

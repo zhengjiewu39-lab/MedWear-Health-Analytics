@@ -1,9 +1,10 @@
 # MedWear 分析引擎 — 方法学
 
-> **自动同步**自 `server/config/methodologyTransparency.js`。重新生成：`npm run docs:sync`。  
-> 在线 API：`GET /api/methodology/transparency`
+> **自动同步（中英文一致）**自 `server/config/methodologyTransparency.js`。重新生成：`npm run docs:sync` · 校验：`npm run docs:verify`。  
+> 在线 API：`GET /api/methodology/transparency` · **引擎：** BHI + 稳健 MAD 启发式 + `MedWear-RuleEngine-v1`
 
-真实模式与基准评测使用的**透明、可复现**流水线。核心告警/异常**不使用黑盒深度学习**。
+真实模式与基准评测使用的**透明、可复现**流水线。核心告警/异常**不使用黑盒深度学习**。  
+**非旧版流水线：** 无离散三档综合健康分；无个人基线 mean + 2σ 异常规则。
 
 ## 行为健康指数（BHI）
 

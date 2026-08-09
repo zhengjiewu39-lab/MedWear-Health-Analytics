@@ -16,6 +16,7 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci
+      - run: npm run docs:verify
       - run: npm run test:server
       - name: npm audit (high severity)
         run: npm audit --audit-level=high

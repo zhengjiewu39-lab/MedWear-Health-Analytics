@@ -31,7 +31,7 @@ Documented in [METHODS.md](./METHODS.md) (auto-synced from `GET /api/methodology
 
 - **Behavioral Health Index (BHI)** — continuous sigmoid/Gaussian components (steps, sleep, RHR, SpO₂, HRV)
 - **Threshold alerts** — peak/single-reading wearable-style sensitivity
-- **Robust MAD anomaly heuristic** — personal baseline with activity context filter (not mean + 2σ)
+- **Robust MAD anomaly heuristic** — personal baseline with activity context filter
 - **3-tier risk stratification** from BHI (≥80 / 60–79 / <60)
 
 ## Clinical Workflow

@@ -165,10 +165,11 @@ function renderMethodsMarkdown(isEn = true) {
   if (isEn) {
     return `# MedWear Analytics — Methods
 
-> **Auto-synced** from \`${SOURCE_FILE}\`. Regenerate: \`npm run docs:sync\`.  
-> Live API: \`GET /api/methodology/transparency\`
+> **Auto-synced (EN/ZH parity)** from \`${SOURCE_FILE}\`. Regenerate: \`npm run docs:sync\` · Verify: \`npm run docs:verify\`.  
+> Live API: \`GET /api/methodology/transparency\` · **Engine:** BHI + robust MAD heuristic + \`MedWear-RuleEngine-v1\`
 
-Transparent, reproducible pipeline for real mode and benchmark evaluation. **No black-box DL** for core alerts/anomalies.
+Transparent, reproducible pipeline for real mode and benchmark evaluation. **No black-box DL** for core alerts/anomalies.  
+**Not the legacy pipeline:** no discrete 3-tier composite health score; no personal-baseline mean + 2σ anomaly rule.
 
 ## Behavioral Health Index (BHI)
 
@@ -247,10 +248,11 @@ See [EVALUATION.md](./EVALUATION.md) for benchmark protocol.
 
   return `# MedWear 分析引擎 — 方法学
 
-> **自动同步**自 \`${SOURCE_FILE}\`。重新生成：\`npm run docs:sync\`。  
-> 在线 API：\`GET /api/methodology/transparency\`
+> **自动同步（中英文一致）**自 \`${SOURCE_FILE}\`。重新生成：\`npm run docs:sync\` · 校验：\`npm run docs:verify\`。  
+> 在线 API：\`GET /api/methodology/transparency\` · **引擎：** BHI + 稳健 MAD 启发式 + \`MedWear-RuleEngine-v1\`
 
-真实模式与基准评测使用的**透明、可复现**流水线。核心告警/异常**不使用黑盒深度学习**。
+真实模式与基准评测使用的**透明、可复现**流水线。核心告警/异常**不使用黑盒深度学习**。  
+**非旧版流水线：** 无离散三档综合健康分；无个人基线 mean + 2σ 异常规则。
 
 ## 行为健康指数（BHI）
 

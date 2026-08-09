@@ -1,9 +1,10 @@
 # MedWear Analytics — Methods
 
-> **Auto-synced** from `server/config/methodologyTransparency.js`. Regenerate: `npm run docs:sync`.  
-> Live API: `GET /api/methodology/transparency`
+> **Auto-synced (EN/ZH parity)** from `server/config/methodologyTransparency.js`. Regenerate: `npm run docs:sync` · Verify: `npm run docs:verify`.  
+> Live API: `GET /api/methodology/transparency` · **Engine:** BHI + robust MAD heuristic + `MedWear-RuleEngine-v1`
 
-Transparent, reproducible pipeline for real mode and benchmark evaluation. **No black-box DL** for core alerts/anomalies.
+Transparent, reproducible pipeline for real mode and benchmark evaluation. **No black-box DL** for core alerts/anomalies.  
+**Not the legacy pipeline:** no discrete 3-tier composite health score; no personal-baseline mean + 2σ anomaly rule.
 
 ## Behavioral Health Index (BHI)
 

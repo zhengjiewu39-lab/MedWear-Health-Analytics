@@ -45,6 +45,7 @@
     "test:ai": "node scripts/test-ai.js",
     "evaluate": "node scripts/evaluate-analytics.js",
     "docs:sync": "node scripts/sync-methods-docs.js",
+    "docs:verify": "node scripts/verify-docs-sync.js",
     "generate:benchmark": "node scripts/generate-wearable-benchmark.js --n 5000 --seed 42",
     "generate:cohort": "node scripts/generate-screening-cohort.js",
     "evaluate:outcomes": "node scripts/evaluate-screening-outcomes.js",
