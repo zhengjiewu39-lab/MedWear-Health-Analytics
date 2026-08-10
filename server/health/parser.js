@@ -3,7 +3,14 @@ const path = require('path');
 const { execFileSync } = require('child_process');
 const sax = require('sax');
 const AdmZip = require('adm-zip');
-const { initStore, ingestRecord, finalizeStore, saveStore } = require('./store');
+const {
+  initStore,
+  ingestRecordBatch,
+  finalizeStore,
+  saveStore,
+} = require('./store');
+
+const BATCH_SIZE = 1000;
 
 const RELEVANT_TYPES = new Set([
   'HKQuantityTypeIdentifierStepCount',
@@ -94,7 +101,6 @@ function extractXmlFromFile(filePath) {
   try {
     zip = new AdmZip(filePath);
   } catch (err) {
-    // Fallback: macOS/Linux unzip handles some zips AdmZip rejects
     try {
       return extractWithSystemUnzip(filePath, tmpDir);
     } catch {
@@ -114,7 +120,6 @@ function extractXmlFromFile(filePath) {
   try {
     fs.writeFileSync(outPath, xmlEntry.getData());
   } catch (err) {
-    // Large exports may exceed AdmZip memory — use system unzip
     try {
       return extractWithSystemUnzip(filePath, tmpDir);
     } catch (err2) {
@@ -130,7 +135,7 @@ function extractXmlFromFile(filePath) {
 
 function parseExportXml(xmlPath, onProgress) {
   return new Promise((resolve, reject) => {
-    const store = initStore({
+    initStore({
       importedAt: new Date().toISOString(),
       sourceFile: path.basename(xmlPath),
     });
@@ -138,6 +143,14 @@ function parseExportXml(xmlPath, onProgress) {
     let parsedRecords = 0;
     let meName = null;
     let currentAttrs = null;
+    let batch = [];
+
+    const flushBatch = () => {
+      if (batch.length) {
+        ingestRecordBatch(batch);
+        batch = [];
+      }
+    };
 
     const parser = sax.createStream(true, { trim: true, normalize: true });
 
@@ -147,7 +160,7 @@ function parseExportXml(xmlPath, onProgress) {
         meName = node.attributes.charCreationDate ? 'Apple Health 用户' : '我';
       }
       if (node.name === 'Record' && RELEVANT_TYPES.has(node.attributes.type)) {
-        ingestRecord(store, {
+        batch.push({
           type: node.attributes.type,
           value: node.attributes.value,
           unit: node.attributes.unit,
@@ -158,6 +171,7 @@ function parseExportXml(xmlPath, onProgress) {
           device: node.attributes.device,
         });
         parsedRecords += 1;
+        if (batch.length >= BATCH_SIZE) flushBatch();
         if (parsedRecords % 5000 === 0 && onProgress) {
           onProgress({ phase: 'parsing', parsedRecords });
         }
@@ -175,16 +189,17 @@ function parseExportXml(xmlPath, onProgress) {
     parser.on('error', (err) => reject(new Error(`XML 解析失败: ${err.message}`)));
 
     parser.on('end', () => {
+      flushBatch();
       if (parsedRecords === 0) {
         reject(new Error('未解析到可用的 Apple Watch 数据（心率/步数/血氧/睡眠等）。请确认导出包来自 iPhone 健康 App 且包含可穿戴记录'));
         return;
       }
-      finalizeStore(store, {
+      const store = finalizeStore({
         totalRecords: parsedRecords,
         parsedRecords,
         userLabel: meName || 'Apple Health 用户',
       });
-      if (!store.meta.dayCount) {
+      if (!store.meta?.dayCount) {
         reject(new Error(
           `已读取 ${parsedRecords} 条记录，但无法解析日期字段。请重新导出 Apple Health 或联系支持（常见原因：export.xml 日期格式不兼容）`,
         ));
@@ -211,4 +226,5 @@ module.exports = {
   parseExportXml,
   extractXmlFromFile,
   findExportXmlEntry,
+  BATCH_SIZE,
 };

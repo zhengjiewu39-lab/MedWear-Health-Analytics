@@ -1,0 +1,56 @@
+{
+  "exp_id": "medwear_rf_2026-08-10",
+  "project": "medwear",
+  "model": "rf",
+  "data": "experiments/data/medwear/features_v1.csv",
+  "cv": 5,
+  "seed": 42,
+  "n_samples": 5000,
+  "metrics": {
+    "accuracy_mean": 0.9858,
+    "accuracy_std": 0.0029257477676655616,
+    "macro_f1_mean": 0.9834401404422785,
+    "macro_f1_std": 0.0033824426762684807
+  },
+  "classification_report": {
+    "0": {
+      "precision": 0.9967585089141004,
+      "recall": 0.984,
+      "f1-score": 0.9903381642512077,
+      "support": 625.0
+    },
+    "1": {
+      "precision": 0.9870410367170627,
+      "recall": 0.9947139303482587,
+      "f1-score": 0.990862629704197,
+      "support": 3216.0
+    },
+    "2": {
+      "precision": 0.9763572679509632,
+      "recall": 0.9620362381363244,
+      "f1-score": 0.9691438504997827,
+      "support": 1159.0
+    },
+    "accuracy": 0.9858,
+    "macro avg": {
+      "precision": 0.9867189378607089,
+      "recall": 0.9802500561615277,
+      "f1-score": 0.9834482148183957,
+      "support": 5000.0
+    },
+    "weighted avg": {
+      "precision": 0.9857792231417106,
+      "recall": 0.9858,
+      "f1-score": 0.98576265850299,
+      "support": 5000.0
+    }
+  },
+  "label_classes": [
+    "high",
+    "low",
+    "moderate"
+  ],
+  "onnx_exported": true,
+  "created_at": "2026-08-10T12:42:57.221901Z",
+  "onnx_path": "server/ai/models/medwear_rf.onnx"
+}

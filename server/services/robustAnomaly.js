@@ -21,6 +21,15 @@ function mad(arr) {
   return median(arr.map((x) => Math.abs(x - m))) || 1e-6;
 }
 
+/** Robust Z-Score: (x − median) / (MAD × 1.4826). Threshold |Z| > 2.5 recommended. */
+function robustZScore(value, baseline) {
+  if (!baseline?.length) return 0;
+  const med = median(baseline);
+  const scale = mad(baseline) * 1.4826;
+  if (!scale) return 0;
+  return (value - med) / scale;
+}
+
 const DEFAULT_OPTS = {
   windowDays: 14,
   hrMadK: 2.5,
@@ -73,7 +82,10 @@ function detectRobustAnomalies(store, opts = {}) {
 
     if (!highActivity && hrScale > 0) {
       const threshold = hrMed + o.hrMadK * hrScale;
-      const spikes = hrs.filter((h) => h > threshold);
+      const spikes = hrs.filter((h) => {
+        const z = robustZScore(h, baselineHr);
+        return z > o.hrMadK;
+      });
       if (spikes.length >= o.hrSpikeMinCount) {
         anomalies.push({
           type: '心率异常波动',
@@ -134,4 +146,5 @@ module.exports = {
   SENSITIVITY_PRESETS,
   median,
   mad,
+  robustZScore,
 };

@@ -14,6 +14,7 @@ import {
 import ChartContainer from '../components/ChartContainer';
 import AiGovernanceBanner from '../components/AiGovernanceBanner';
 import InterventionPathway from '../components/InterventionPathway';
+import SystemStackBanner from '../components/SystemStackBanner';
 import { screeningApi } from '../services/api';
 import useModeRefresh from '../hooks/useModeRefresh';
 import { EvidenceBadge, ReferenceDialog } from '../components/ResearchCitation';
@@ -74,6 +75,7 @@ function DiseaseScreening() {
     <Box>
       <InterventionPathway />
       <AiGovernanceBanner compact />
+      <SystemStackBanner compact />
 
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 3, flexWrap: 'wrap', gap: 2 }}>
         <Box>
@@ -83,7 +85,11 @@ function DiseaseScreening() {
               `6 大类 · ${totalItems} 项筛查（肿瘤/癌症/慢病/心脑血管/常见小病/呼吸）`,
               `6 categories · ${totalItems} screening items (Tumor / Cancer / Chronic / Cardio-Cerebrovascular / Common Ailments / Respiratory)`,
             )}
-            {' · '}{t(`${data.dataCoverage?.days || 0} 天数据`, `${data.dataCoverage?.days || 0} days of data`)} · {data.aiVersion || 'MedWear-AI v3'}
+            {' · '}{t(`${data.dataCoverage?.days || 0} 天数据`, `${data.dataCoverage?.days || 0} days of data`)}
+            {' · '}{data.aiVersion || 'MedWear-ONNX-v1'}
+            {data.engineType && (
+              <> · <Chip size="small" label={data.engineType} color="primary" variant="outlined" sx={{ verticalAlign: 'middle', ml: 0.5 }} /></>
+            )}
           </Typography>
         </Box>
         <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>

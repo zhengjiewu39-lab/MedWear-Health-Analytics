@@ -6,7 +6,7 @@ const {
   buildDoctorReportFor,
   listDemoPatients,
 } = require('../mock/demoPatientRegistry');
-const { enrichScreeningData } = require('../ai/engine');
+const { enrichScreeningData, enrichScreeningDataSync } = require('../ai/engine');
 const {
   getAllAnalytics,
   getEmptyAnalytics,
@@ -100,7 +100,7 @@ function createDemoProvider(req) {
     getFusionSources: () => data().fusionSources,
     getHealthGoals: () => data().healthGoals,
     getAiReport: () => ({ ...data().aiReport, dataMode: 'demo' }),
-    getScreening: () => enrichScreeningData({ ...data().diseaseScreening, dataMode: 'demo', patientId: pid() }),
+    getScreening: () => enrichScreeningDataSync({ ...data().diseaseScreening, dataMode: 'demo', patientId: pid() }),
     getHospitals: () => data().hospitals,
     getExamPackages: () => data().examPackages,
     getAppointments: () => data().appointments,
@@ -188,7 +188,11 @@ const realProvider = {
   getFusionSources: () => realAnalytics().fusionSources,
   getHealthGoals: () => realAnalytics().healthGoals,
   getAiReport: () => realAnalytics().aiReport,
-  getScreening: () => (hasData() ? buildRealScreening(getStore()) : buildRealScreening(null)),
+  getScreening: () => {
+    if (!hasData()) return buildRealScreening(null);
+    const store = getStore();
+    return enrichScreeningData(buildRealScreening(store), store);
+  },
   getHospitals: () => [],
   getExamPackages: () => REAL_EXAM_PACKAGES,
   getAppointments: () => loadRealAppointments(),

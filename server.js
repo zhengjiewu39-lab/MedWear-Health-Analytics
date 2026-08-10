@@ -47,6 +47,8 @@ const {
 } = require('./server/reports/doctorReportService');
 const { getDemoPatientData, getDemoPatientSummary, searchDemoPatients } = require('./server/mock/demoPatientRegistry');
 const { hasData } = require('./server/health/store');
+const { getSystemStack } = require('./server/config/systemStack');
+const { isModelLoaded, loadModel, getModelInfo } = require('./server/ai/onnxInference');
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -146,10 +148,11 @@ app.get('/api/health', (_, res) => {
   res.json({
     status: 'ok',
     service: 'MedWear API',
-    version: '1.1',
+    version: '2.0',
     pid: process.pid,
     modes: ['demo', 'real'],
-    features: ['clinical-analytics', 'research-benchmarks', 'early-screening'],
+    features: ['onnx-inference', 'sqlite-health-store', 'robust-mad-anomaly', 'zod-validation', 'clinical-analytics', 'research-benchmarks', 'early-screening'],
+    systemStack: getSystemStack(),
     benchmarks: {
       wearable: {
         name: wearablePolicy.dataset,
@@ -169,6 +172,27 @@ app.get('/api/health', (_, res) => {
     },
     evaluationFramework: getFrameworkPayload(),
   });
+});
+
+app.get('/api/system/stack', (_, res) => {
+  res.json(getSystemStack());
+});
+
+app.get('/api/ai/model', async (_, res) => {
+  try {
+    if (!isModelLoaded()) await loadModel();
+    res.json({
+      loaded: isModelLoaded(),
+      info: getModelInfo(),
+      stack: getSystemStack().inference,
+    });
+  } catch (err) {
+    res.status(503).json({
+      loaded: false,
+      error: err.message,
+      stack: getSystemStack().inference,
+    });
+  }
 });
 
 app.get('/api/methodology', (req, res) => {
@@ -232,10 +256,28 @@ app.get('/api/alerts', (req, res) => res.json(provider(req).getAlerts()));
 
 app.get('/api/anomalies', (req, res) => res.json(provider(req).getAnomalies()));
 app.get('/api/predictions', (req, res) => res.json(provider(req).getPredictions()));
-app.get('/api/ai/analysis', (req, res) => {
-  const p = provider(req);
-  const bundle = isRealMode(req) ? null : p.getRawDemoData?.();
-  res.json(runFullAnalysis(bundle || undefined));
+app.get('/api/ai/analysis', async (req, res) => {
+  try {
+    const p = provider(req);
+    let bundle;
+    if (isRealMode(req)) {
+      const { getStore } = require('./server/health/store');
+      const { buildRealScreening } = require('./server/health/analytics');
+      const store = getStore();
+      const analytics = p.getDashboardStats?.() || {};
+      bundle = {
+        store,
+        diseaseScreening: buildRealScreening(store),
+        stats: analytics,
+        profile: { name: store.meta?.userLabel || 'Apple Health 用户' },
+      };
+    } else {
+      bundle = p.getRawDemoData?.();
+    }
+    res.json(await runFullAnalysis(bundle || undefined));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 app.get('/api/demo/patients', (req, res) => {

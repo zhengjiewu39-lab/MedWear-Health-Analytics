@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import InterventionPathway from '../components/InterventionPathway';
 import AiGovernanceBanner from '../components/AiGovernanceBanner';
 import EvaluationIntegrityBanner from '../components/EvaluationIntegrityBanner';
+import SystemStackBanner from '../components/SystemStackBanner';
 import { researchApi } from '../services/api';
 import { aiApi } from '../services/api';
 import useModeRefresh from '../hooks/useModeRefresh';
@@ -112,12 +113,13 @@ function AnomalyDetection() {
       <InterventionPathway />
       <AiGovernanceBanner compact />
       <EvaluationIntegrityBanner framework={evalFramework} wearableResults={wearableEval} compact />
+      <SystemStackBanner compact />
       <Typography variant="h5" gutterBottom fontWeight={600}>
         {t('个体异常检测（代理信号）', 'Individual Anomaly Detection (Proxy Signals)')}
       </Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
-        {t('消费级可穿戴代理信号 → BHI + 稳健 MAD 启发式异常检测 + 规则引擎告警',
-          'Consumer wearable proxies → BHI + robust MAD heuristic anomalies + rule-engine alerts')}
+        {t('消费级可穿戴代理信号 → BHI + 稳健 MAD Z-score（|Z|>2.5）异常检测 + ONNX 风险推理',
+          'Consumer wearable proxies → BHI + robust MAD Z-score (|Z|>2.5) anomalies + ONNX risk inference')}
       </Typography>
 
       <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', mb: 3 }}>

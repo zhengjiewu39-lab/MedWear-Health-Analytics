@@ -1,0 +1,5 @@
+# Generated models — keep default RF artifact for reproducibility
+*.onnx
+*.meta.json
+!medwear_rf.onnx
+!medwear_rf.meta.json

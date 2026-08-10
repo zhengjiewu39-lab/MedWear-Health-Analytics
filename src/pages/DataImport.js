@@ -8,6 +8,7 @@ import {
   Info, Apple, Refresh,
 } from '@mui/icons-material';
 import { dataApi } from '../services/api';
+import SystemStackBanner from '../components/SystemStackBanner';
 import { useHealthData } from '../contexts/HealthDataContext';
 import { useDataMode } from '../contexts/DataModeContext';
 import { useLang } from '../contexts/LanguageContext';
@@ -118,12 +119,20 @@ function DataImport() {
         {t('从 Apple Watch / iPhone 导入真实健康数据，所有分析基于您的实际记录（数据仅保存在本机，不上传云端）', 'Import real health data from Apple Watch / iPhone. All analyses are based on your actual records (data stays on this device and is never uploaded to the cloud).')}
       </Typography>
 
+      <SystemStackBanner />
+
       {status?.hasData && (
         <Alert severity="success" sx={{ mb: 3 }} icon={<CheckCircle />}
           action={<Button color="inherit" size="small" onClick={handleClear} startIcon={<Delete />}>{t('清除', 'Clear')}</Button>}>
           <strong>{t('已导入真实数据', 'Real data imported')}</strong> — {status.meta?.parsedRecords?.toLocaleString()} {t('条记录', 'records')}
           · {status.meta?.dateRange?.start} ~ {status.meta?.dateRange?.end}
           · {t('主数据源', 'Primary source')}: {status.primarySource}
+          {status.storage?.engine && (
+            <> · {t('存储', 'Storage')}: {status.storage.engine}{status.storage.batchImportSize ? ` (${t('批量', 'batch')} ${status.storage.batchImportSize})` : ''}</>
+          )}
+          {status.inference?.modelId && (
+            <> · ONNX: {status.inference.modelId}</>
+          )}
         </Alert>
       )}
 

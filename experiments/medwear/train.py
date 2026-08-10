@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Train ML models on exported MedWear wearable feature CSV/JSON."""
+"""Train ML models on exported MedWear wearable feature CSV/JSON and export ONNX for Node.js inference."""
 
 from __future__ import annotations
 
@@ -28,16 +28,20 @@ FEATURE_COLS = [
     "anomaly_flag", "health_score_norm",
 ]
 
+SKLEARN_ONNX_MODELS = {"lr", "dt", "rf", "mlp"}
+ONNX_OUTPUT_DIR = "server/ai/models"
 
-def load_data(path: str) -> tuple[pd.DataFrame, np.ndarray]:
+
+def load_data(path: str) -> tuple[pd.DataFrame, np.ndarray, LabelEncoder]:
     if path.endswith(".json"):
         raw = json.load(open(path, encoding="utf-8"))
         df = pd.DataFrame(raw["rows"])
     else:
         df = pd.read_csv(path)
+    le = LabelEncoder()
     X = df[FEATURE_COLS].astype(float)
-    y = LabelEncoder().fit_transform(df["label"])
-    return X, y
+    y = le.fit_transform(df["label"])
+    return X, y, le
 
 
 def build_model(name: str, seed: int):
@@ -102,16 +106,48 @@ def build_model(name: str, seed: int):
     raise ValueError(f"Unknown model: {name}")
 
 
+def export_onnx_sklearn(pipe, out_dir: str, model_name: str, label_encoder: LabelEncoder, metrics: dict) -> str:
+    from skl2onnx import convert_sklearn
+    from skl2onnx.common.data_types import FloatTensorType
+
+    os.makedirs(out_dir, exist_ok=True)
+    model_id = f"medwear_{model_name}"
+    onnx_path = os.path.join(out_dir, f"{model_id}.onnx")
+    meta_path = os.path.join(out_dir, f"{model_id}.meta.json")
+
+    initial_type = [("float_input", FloatTensorType([None, len(FEATURE_COLS)]))]
+    onnx_model = convert_sklearn(pipe, initial_types=initial_type, target_opset=12)
+
+    with open(onnx_path, "wb") as f:
+        f.write(onnx_model.SerializeToString())
+
+    meta = {
+        "model_id": model_id,
+        "model_type": model_name,
+        "feature_cols": FEATURE_COLS,
+        "label_classes": list(label_encoder.classes_),
+        "metrics": metrics,
+        "exported_at": datetime.utcnow().isoformat() + "Z",
+        "runtime": "onnxruntime-node",
+        "input_name": "float_input",
+    }
+    json.dump(meta, open(meta_path, "w", encoding="utf-8"), indent=2)
+    print(f"→ ONNX {onnx_path}")
+    return onnx_path
+
+
 def main():
-    p = argparse.ArgumentParser(description="Train MedWear wearable risk models")
+    p = argparse.ArgumentParser(description="Train MedWear wearable risk models + export ONNX")
     p.add_argument("--data", default="experiments/data/medwear/features_v1.csv")
-    p.add_argument("--model", default="xgb", choices=["lr", "dt", "rf", "xgb", "lgbm", "mlp", "transformer"])
+    p.add_argument("--model", default="rf", choices=["lr", "dt", "rf", "xgb", "lgbm", "mlp", "transformer"])
     p.add_argument("--cv", type=int, default=5)
     p.add_argument("--seed", type=int, default=42)
     p.add_argument("--out", default=None)
+    p.add_argument("--onnx-dir", default=ONNX_OUTPUT_DIR)
+    p.add_argument("--skip-onnx", action="store_true")
     args = p.parse_args()
 
-    X, y = load_data(args.data)
+    X, y, le = load_data(args.data)
     clf = build_model(args.model, args.seed)
     n_splits = min(args.cv, min(np.bincount(y)))
     cv = StratifiedKFold(n_splits=max(2, n_splits), shuffle=True, random_state=args.seed)
@@ -144,6 +180,13 @@ def main():
     out_path = args.out or f"experiments/results/{exp_id}.json"
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
 
+    metrics = {
+        "accuracy_mean": acc_m,
+        "accuracy_std": acc_s,
+        "macro_f1_mean": f1_m,
+        "macro_f1_std": f1_s,
+    }
+
     result = {
         "exp_id": exp_id,
         "project": "medwear",
@@ -152,17 +195,26 @@ def main():
         "cv": args.cv,
         "seed": args.seed,
         "n_samples": len(y),
-        "metrics": {
-            "accuracy_mean": acc_m,
-            "accuracy_std": acc_s,
-            "macro_f1_mean": f1_m,
-            "macro_f1_std": f1_s,
-        },
+        "metrics": metrics,
         "classification_report": classification_report(y, y_pred, output_dict=True),
+        "label_classes": list(le.classes_),
+        "onnx_exported": False,
         "created_at": datetime.utcnow().isoformat() + "Z",
     }
+
+    joblib.dump({"pipe": pipe, "label_encoder": le}, out_path.replace(".json", ".joblib"))
+
+    if not args.skip_onnx and args.model in SKLEARN_ONNX_MODELS:
+        try:
+            export_onnx_sklearn(pipe, args.onnx_dir, args.model, le, metrics)
+            result["onnx_exported"] = True
+            result["onnx_path"] = os.path.join(args.onnx_dir, f"medwear_{args.model}.onnx")
+        except ImportError:
+            print("⚠ skl2onnx not installed — pip install skl2onnx to enable ONNX export")
+    elif args.model not in SKLEARN_ONNX_MODELS:
+        print(f"⚠ ONNX export skipped for model type '{args.model}' (sklearn pipeline models only)")
+
     json.dump(result, open(out_path, "w", encoding="utf-8"), indent=2)
-    joblib.dump(pipe, out_path.replace(".json", ".joblib"))
     print(json.dumps(result["metrics"], indent=2))
     print(f"→ {out_path}")
 

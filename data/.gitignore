@@ -1,3 +1,7 @@
 # 本地加密数据 — 勿提交
 health-vault.enc
 audit-log.json
+health.db
+health.db-wal
+health.db-shm
+health-store.json

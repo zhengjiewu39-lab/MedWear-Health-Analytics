@@ -1,0 +1,37 @@
+{
+  "model_id": "medwear_rf",
+  "model_type": "rf",
+  "feature_cols": [
+    "steps_norm",
+    "avg_hr",
+    "std_hr",
+    "resting_hr",
+    "avg_spo2",
+    "min_spo2",
+    "avg_hrv",
+    "sleep_hours",
+    "deep_sleep_ratio",
+    "active_energy_norm",
+    "hr_above_threshold",
+    "spo2_below_threshold",
+    "low_activity",
+    "window_hr_mean",
+    "window_hr_std",
+    "anomaly_flag",
+    "health_score_norm"
+  ],
+  "label_classes": [
+    "high",
+    "low",
+    "moderate"
+  ],
+  "metrics": {
+    "accuracy_mean": 0.9858,
+    "accuracy_std": 0.0029257477676655616,
+    "macro_f1_mean": 0.9834401404422785,
+    "macro_f1_std": 0.0033824426762684807
+  },
+  "exported_at": "2026-08-10T12:43:00.833146Z",
+  "runtime": "onnxruntime-node",
+  "input_name": "float_input"
+}

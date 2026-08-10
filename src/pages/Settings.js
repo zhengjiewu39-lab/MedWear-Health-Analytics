@@ -9,7 +9,8 @@ import {
   Translate, VerifiedUser, SmartToy,
 } from '@mui/icons-material';
 import PageHeader from '../components/PageHeader';
-import { settingsApi, securityApi } from '../services/api';
+import SystemStackBanner from '../components/SystemStackBanner';
+import { settingsApi, securityApi, systemApi } from '../services/api';
 import { useLang } from '../contexts/LanguageContext';
 
 const PROVIDER_COLORS = {
@@ -37,6 +38,7 @@ function SettingsPage() {
   const [actionSeverity, setActionSeverity] = useState('info');
   const [drafts, setDrafts] = useState({});
   const [savingId, setSavingId] = useState(null);
+  const [stack, setStack] = useState(null);
   const { t, isEn, lang, setLang } = useLang();
 
   const refresh = () => {
@@ -50,6 +52,7 @@ function SettingsPage() {
     });
     securityApi.getVaultStatus().then((res) => setVault(res.data)).catch(() => {});
     securityApi.getAuditLog(20).then((res) => setAuditLog(res.data)).catch(() => {});
+    systemApi.getStack().then((res) => setStack(res.data)).catch(() => {});
   };
 
   useEffect(() => { refresh(); }, []);
@@ -158,6 +161,17 @@ function SettingsPage() {
       {actionMsg && (
         <Alert severity={actionSeverity} sx={{ mb: 2, whiteSpace: 'pre-line' }} onClose={() => setActionMsg('')}>
           {actionMsg}
+        </Alert>
+      )}
+
+      <SystemStackBanner />
+
+      {stack?.inference?.modelId && (
+        <Alert severity="info" sx={{ mb: 2 }}>
+          {t('在线 ONNX 模型', 'Online ONNX model')}: <strong>{stack.inference.modelId}</strong>
+          {stack.inference.metrics?.accuracy_mean != null && (
+            <> · CV accuracy {(stack.inference.metrics.accuracy_mean * 100).toFixed(1)}%</>
+          )}
         </Alert>
       )}
 

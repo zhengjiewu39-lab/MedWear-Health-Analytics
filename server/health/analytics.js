@@ -601,10 +601,23 @@ function buildAiSummary(store) {
 
 function getDataStatus() {
   const store = getStore();
+  const { getSystemStack } = require('../config/systemStack');
+  const stack = getSystemStack();
   return {
     hasData: hasData(),
     meta: store.meta,
     primarySource: hasData() ? getPrimarySource(store) : null,
+    storage: {
+      engine: stack.storage.engine,
+      database: stack.storage.database,
+      batchImportSize: stack.storage.batchImportSize,
+      walMode: stack.storage.walMode,
+    },
+    inference: {
+      engine: stack.inference.engine,
+      modelId: stack.inference.modelId,
+      featureDim: stack.inference.featureDim,
+    },
   };
 }
 
@@ -802,7 +815,8 @@ function buildRealScreening(store) {
       hasData: false,
       needsImport: true,
       mode: 'real',
-      aiVersion: 'MedWear-AI v3.0 · 真实模式',
+      aiVersion: 'MedWear-ONNX-v1 · 真实模式',
+      engineType: 'onnx-runtime',
       dataCoverage: { days: 0, samples: 0, devices: 0, quality: 0 },
       summary: '真实模式：请先导入 Apple Health 数据。导入后将基于您的真实心率、血氧、睡眠等计算筛查风险，不会使用任何模拟数据。',
       summary_en: 'Real mode: please import Apple Health data first. Once imported, screening risk will be computed from your real heart rate, SpO₂, sleep, and more, with no simulated data used.',
@@ -833,7 +847,8 @@ function buildRealScreening(store) {
     hasData: true,
     needsImport: false,
     mode: 'real',
-    aiVersion: 'MedWear-AI v3.0 · 真实数据',
+    aiVersion: 'MedWear-ONNX-v1 · 真实数据',
+    engineType: 'onnx-runtime',
     dataCoverage: {
       days: store.meta?.dayCount || 0,
       samples: store.meta?.parsedRecords || 0,

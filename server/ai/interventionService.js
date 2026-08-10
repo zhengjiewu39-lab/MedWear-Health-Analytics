@@ -8,7 +8,7 @@
 
 'use strict';
 
-const { runFullAnalysis, MODELS } = require('./engine');
+const { MODELS } = require('./engine');
 const { getDemoPatientData, DEFAULT_ID } = require('../mock/demoPatientRegistry');
 const { hasData } = require('../health/store');
 
@@ -285,7 +285,6 @@ function generateInterventions(opts = {}) {
   }
 
   const items = [];
-  runFullAnalysis(data);
   const scr = data.diseaseScreening;
 
   scr.categories.forEach((cat) => {

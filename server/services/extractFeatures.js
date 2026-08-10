@@ -1,5 +1,6 @@
 /**
- * Extract tabular features from wearable day/window data for ML experiments.
+ * Extract tabular features from wearable day/window data for ML / ONNX inference.
+ * Applies Zod validation and physiological artifact cleaning before vector assembly.
  */
 
 const {
@@ -11,6 +12,7 @@ const {
   buildStoreFromDays,
   classifyRiskFromScore,
 } = require('./analyticsCore');
+const { cleanDayData, validateFeatureVector } = require('./physioValidation');
 
 const FEATURE_NAMES = [
   'steps_norm',
@@ -42,12 +44,18 @@ function sleepHours(day) {
 function extractFeatures(caseData, thresholds = DEFAULT_THRESHOLDS) {
   const daysMap = caseData.days || {};
   const targetDay = caseData.targetDay || Object.keys(daysMap).sort().pop();
-  const store = buildStoreFromDays(daysMap, targetDay);
+
+  const cleanedDays = {};
+  Object.entries(daysMap).forEach(([day, raw]) => {
+    cleanedDays[day] = cleanDayData(raw).day;
+  });
+
+  const store = buildStoreFromDays(cleanedDays, targetDay);
   const day = store.daily[targetDay];
   if (!day) throw new Error(`Missing target day ${targetDay}`);
 
-  const sorted = Object.keys(daysMap).sort();
-  const allHR = sorted.flatMap(d => daysMap[d].heartRate || []);
+  const sorted = Object.keys(cleanedDays).sort();
+  const allHR = sorted.flatMap((d) => cleanedDays[d].heartRate || []);
   const alerts = evaluateDayAlerts(day, thresholds);
   const anomalies = detectAnomaliesFromStore(store);
   const score = computeDayScore(day) || 0;
@@ -55,7 +63,7 @@ function extractFeatures(caseData, thresholds = DEFAULT_THRESHOLDS) {
   const totalSleep = sleepHours(day);
   const deep = (day.sleepMinutes?.deep || 0) / 60;
 
-  return {
+  const raw = {
     steps_norm: Math.min(day.steps / 10000, 2),
     avg_hr: avg(day.heartRate) || 0,
     std_hr: stdDev(day.heartRate || []),
@@ -66,14 +74,16 @@ function extractFeatures(caseData, thresholds = DEFAULT_THRESHOLDS) {
     sleep_hours: totalSleep,
     deep_sleep_ratio: totalSleep > 0 ? deep / totalSleep : 0,
     active_energy_norm: Math.min((day.activeEnergy || 0) / 500, 2),
-    hr_above_threshold: alerts.some(a => a.type === '心率偏高') ? 1 : 0,
-    spo2_below_threshold: alerts.some(a => a.type === '血氧偏低') ? 1 : 0,
-    low_activity: alerts.some(a => a.type === '活动量不足') ? 1 : 0,
+    hr_above_threshold: alerts.some((a) => a.type === '心率偏高') ? 1 : 0,
+    spo2_below_threshold: alerts.some((a) => a.type === '血氧偏低') ? 1 : 0,
+    low_activity: alerts.some((a) => a.type === '活动量不足') ? 1 : 0,
     window_hr_mean: avg(allHR) || 0,
     window_hr_std: stdDev(allHR),
     anomaly_flag: anomalies.length > 0 ? 1 : 0,
     health_score_norm: score / 100,
   };
+
+  return validateFeatureVector(raw);
 }
 
 function extractLabels(caseData) {
@@ -82,7 +92,8 @@ function extractLabels(caseData) {
   if (typeof exp.anomaly === 'boolean') return { label: exp.anomaly ? 1 : 0, task: 'anomaly' };
   const daysMap = caseData.days || {};
   const targetDay = caseData.targetDay || Object.keys(daysMap).sort().pop();
-  const score = computeDayScore(daysMap[targetDay]) || 0;
+  const { day } = cleanDayData(daysMap[targetDay] || {});
+  const score = computeDayScore(day) || 0;
   return { label: classifyRiskFromScore(score), task: 'risk' };
 }
 

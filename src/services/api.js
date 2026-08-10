@@ -197,4 +197,10 @@ export const outcomesApi = {
   getPatientComparison: () => api.get('/outcomes/patient-comparison'),
 };
 
+export const systemApi = {
+  getStack: () => api.get('/system/stack'),
+  getHealth: () => api.get('/health'),
+  getOnnxModel: () => api.get('/ai/model'),
+};
+
 export default api;
