@@ -104,6 +104,53 @@ describe('ONNX inference (engine.js + onnxInference.js)', () => {
     assert.equal(result.optionalOnnxPrediction.engineType, 'onnx-runtime');
     assert.ok(result.conditions.length > 0);
   });
+
+  test('runFullAnalysis silently falls back when ONNX unavailable', async () => {
+    const { runFullAnalysis, buildFeatureHeuristicPrediction } = require('../ai/engine');
+    const { resetModel } = require('../ai/onnxInference');
+    const origModel = process.env.MEDWEAR_ONNX_MODEL;
+    process.env.MEDWEAR_ONNX_MODEL = 'nonexistent_onnx_model_xyz';
+    resetModel();
+
+    const store = {
+      daily: {
+        '2026-01-06': {
+          steps: 6000,
+          heartRate: [75, 78],
+          spo2: [97],
+          hrv: [40],
+          restingHeartRate: 70,
+          sleepMinutes: { deep: 70, rem: 80, light: 180, awake: 10 },
+        },
+      },
+    };
+    const result = await runFullAnalysis({
+      store,
+      diseaseScreening: {
+        categories: [{ items: [{ name: '高血压', risk: 20, level: 'low' }] }],
+        overallScore: 20,
+        summary: 'fallback test',
+        dataCoverage: { quality: 90 },
+      },
+      stats: {},
+      profile: { name: 'Fallback' },
+    });
+
+    assert.equal(result.engineType, 'evidence-weighted-rule-engine');
+    assert.equal(result.inferenceBackend, 'feature-heuristic-fallback');
+    assert.equal(result.optionalOnnxPrediction, null);
+
+    if (origModel !== undefined) process.env.MEDWEAR_ONNX_MODEL = origModel;
+    else delete process.env.MEDWEAR_ONNX_MODEL;
+    resetModel();
+  });
+
+  test('buildFeatureHeuristicPrediction returns tier without throwing', () => {
+    const { buildFeatureHeuristicPrediction } = require('../ai/engine');
+    const pred = buildFeatureHeuristicPrediction({ health_score_norm: 0.55, anomaly_flag: 1 });
+    assert.equal(pred.source, 'feature-heuristic-fallback');
+    assert.ok(['low', 'moderate', 'high'].includes(pred.label));
+  });
 });
 
 // --- 2. MAD algorithm (analyticsCore → robustAnomaly) ---

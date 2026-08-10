@@ -78,22 +78,52 @@ function generateWesadStressProxySample(n = 120, seed = 42) {
   };
 }
 
+function trapezoidAuc(scores, labelsBinary) {
+  const n = scores.length;
+  const pos = labelsBinary.filter((y) => y === 1).length;
+  const neg = n - pos;
+  if (!pos || !neg) return null;
+  const pairs = scores.map((s, i) => ({ s, y: labelsBinary[i] })).sort((a, b) => b.s - a.s);
+  let tp = 0;
+  let fp = 0;
+  let auc = 0;
+  let prevFpr = 0;
+  let prevTpr = 0;
+  pairs.forEach(({ y }) => {
+    if (y === 1) tp += 1;
+    else fp += 1;
+    const tpr = tp / pos;
+    const fpr = fp / neg;
+    auc += (fpr - prevFpr) * (tpr + prevTpr) / 2;
+    prevFpr = fpr;
+    prevTpr = tpr;
+  });
+  return +auc.toFixed(4);
+}
+
 function evaluateProxyDataset(dataset) {
   const rows = (dataset.windows || []).map((w) => ({
     id: w.id,
     label: w.label,
     condition: w.condition,
+    stressBinary: w.condition === 'stress/task' || w.label !== 'low' ? 1 : 0,
     features: windowToFeatures(w),
   }));
 
   let heuristicCorrect = 0;
   let anomalyAgree = 0;
+  const bhiScores = [];
+  const anomalyScores = [];
+  const stressLabels = [];
   rows.forEach((r) => {
     const s = r.features.health_score_norm;
     const pred = s >= 0.8 ? 'low' : s >= 0.6 ? 'moderate' : 'high';
     if (pred === r.label) heuristicCorrect++;
     const goldAnomaly = r.label !== 'low' ? 1 : 0;
     if (r.features.anomaly_flag === goldAnomaly) anomalyAgree++;
+    bhiScores.push(1 - s);
+    anomalyScores.push(r.features.anomaly_flag);
+    stressLabels.push(r.stressBinary);
   });
 
   return {
@@ -101,6 +131,10 @@ function evaluateProxyDataset(dataset) {
     n: rows.length,
     heuristicBhiTierAccuracy: +(heuristicCorrect / Math.max(rows.length, 1)).toFixed(4),
     anomalyFlagAgreement: +(anomalyAgree / Math.max(rows.length, 1)).toFixed(4),
+    stressBinaryAucBhi: trapezoidAuc(bhiScores, stressLabels),
+    stressBinaryAucAnomaly: trapezoidAuc(anomalyScores, stressLabels),
+    sanityCheckOnly: true,
+    disclaimer_en: 'Signal-processing sanity check against stress/arousal proxy — NOT clinical validation.',
     labelDistribution: rows.reduce((acc, r) => {
       acc[r.label] = (acc[r.label] || 0) + 1;
       return acc;

@@ -5,7 +5,7 @@
 
 ## Benchmark Dataset
 
-**MedWear-Wearable-Analytics-Clinical-v2** — 5000 synthetic multi-day wearable cases (CC-BY-4.0). Suitable for clinical performance estimation with 95% Wilson CIs.
+**MedWear-Wearable-Analytics-Clinical-v2** — 5000 synthetic multi-day wearable cases (CC-BY-4.0). Suitable for **engine-vs-gold agreement estimation** with 95% Wilson CIs.
 
 ### Dual-engine architecture (prevents self-test inflation)
 
@@ -19,7 +19,7 @@ Physiology: **28% clinical-random adults** + **72% phenotype-random synthesis** 
 
 Product alerts use **peak/single-reading sensitivity** (wearable-style); gold labels apply **contextual clinical suppression** (exercise tachycardia, motion SpO₂ artifact, planned rest day).
 
-Each case includes 7 days of steps, HR, SpO2, HRV, sleep with **clinical gold labels** (independent adjudication — evaluation measures clinical agreement):
+Each case includes 7 days of steps, HR, SpO2, HRV, sleep with **reference gold labels** (independent adjudication — evaluation measures **inter-engine consistency**):
 
 - Expected alert types
 - Anomaly presence (binary)
@@ -55,7 +55,7 @@ Output: `benchmarks/results/latest.json`
 
 ## Reference Results (v2.5, n=5000, seed=42, BHI + MAD engine)
 
-Run `npm run evaluate` for current numbers. Example (product engine vs **clinicalGoldStandard-v1** labels):
+Run `npm run evaluate` for current numbers. Example (product engine vs **clinicalGoldStandard-v1** reference labels — engine-vs-gold agreement):
 
 | Metric | Value | 95% CI |
 |--------|-------|--------|
@@ -70,7 +70,7 @@ Disagreements: **3041 / 5000** cases differ on at least one task (alert set, ano
 
 Alert precision &lt; 1 reflects realistic wearable false positives (exercise HR peaks, single SpO₂ dips, recovery-day low steps). Gold labels use contextual adjudication — not the product engine.
 
-Gold labels use stricter SpO₂/activity cutoffs and a separate reference BHI formula — not the product engine. Metrics ≥98% on all tasks indicate circular labels and invalid clinical estimation.
+Gold labels use stricter SpO₂/activity cutoffs and a separate reference BHI formula — not the product engine. Metrics ≥98% on all tasks indicate circular labels and invalid **agreement estimation**.
 
 ## API Evaluation
 
@@ -196,11 +196,13 @@ curl http://localhost:3001/api/research/validate
 | Model | BHI tier accuracy / Macro F1 | Notes |
 |-------|------------------------------|-------|
 | Rule engine (vs clinical gold) | risk 0.787, alert F1 0.8441 | product metric |
-| majority-class | acc 0.6432, F1 0.261 | node baseline |
-| hr-steps-heuristic | acc 0.5002, F1 0.3945 | node baseline |
-| lr (sklearn, fair) | acc 0.9474, F1 0.93925697992577 | 5-fold CV, raw features |
-| dt (sklearn, fair) | acc 0.9715999999999999, F1 0.9682518572606396 | 5-fold CV, raw features |
-| rf (sklearn, fair) | acc 0.9872, F1 0.9841347841015973 | 5-fold CV, raw features |
+| majority-class | acc 0.5416, F1 0.2342 | node baseline |
+| hr-steps-heuristic | acc 0.5114, F1 0.4558 | node baseline |
+| lr (sklearn, fair) | acc 0.9358000000000001, F1 0.9281274479488534 | 5-fold CV, raw features |
+| dt (sklearn, fair) | acc 0.9334, F1 0.9237003603134115 | 5-fold CV, raw features |
+| rf (sklearn, fair) | acc 0.9592, F1 0.9504472811020424 | 5-fold CV, raw features |
+
+> **Fair ML note:** Sklearn targets are **product-engine BHI watch tiers** (not gold labels). 5-fold CV uses random stratified splits on the same synthetic export. High accuracy reflects **feature distinguishability ceiling** on correlated synthetic data — **not** independent clinical validation. Rule engine is preferred for interpretability, not because sklearn "loses" on oracle features.
 
 ### Appendix: oracle comparison (engine-derived features — feature leakage)
 
@@ -211,6 +213,18 @@ curl http://localhost:3001/api/research/validate
 | lr (sklearn, oracle) | acc 0.9446, F1 0.9364173036358509 | appendix only |
 | dt (sklearn, oracle) | acc 0.9827999999999999, F1 0.9794665527307297 | appendix only |
 | rf (sklearn, oracle) | acc 0.9858, F1 0.9834401404422785 | appendix only |
+
+### Gold-tier ML comparison (clinicalGoldStandard-v1 labels)
+
+> Sklearn trained to predict **reference risk tier** from raw features. Regenerate: `npm run experiment:compare-vs-gold`.
+
+| Model | Gold-tier accuracy / Macro F1 | Notes |
+|-------|-------------------------------|-------|
+| Rule engine (engine-vs-gold) | 0.787, alert F1 0.8441 | product vs gold reference |
+| majority-class | acc 0.6432, F1 0.261 | node baseline |
+| lr (sklearn, vs gold) | acc 0.9474, F1 0.93925697992577 | 5-fold CV, gold label target |
+| dt (sklearn, vs gold) | acc 0.9715999999999999, F1 0.9682518572606396 | 5-fold CV, gold label target |
+| rf (sklearn, vs gold) | acc 0.9872, F1 0.9841347841015973 | 5-fold CV, gold label target |
 
 ## Parameter sensitivity (outcome simulation)
 
@@ -227,7 +241,7 @@ curl http://localhost:3001/api/research/validate
 
 > Descriptive check on exported 17-dim rows; WESAD/PPG-DaLiA require separate adapters. See [EXTERNAL-VALIDATION.md](./EXTERNAL-VALIDATION.md).
 
-- WESAD stress proxy: n=120 · BHI-tier acc=0.5583 · anomaly flag agree=0.6333
+- WESAD stress proxy (**sanity check only — not validation**): n=120 · BHI-tier acc=0.5583 · anomaly agree=0.6333 · stress-binary AUC(BHI)=0.9989 · AUC(anomaly)=0.6025
 - Internal export: n=5000 · BHI-tier acc=0.7932
 - Planned external: WESAD (stress/arousal proxy), PPG-DaLiA (activity HR proxy)
 

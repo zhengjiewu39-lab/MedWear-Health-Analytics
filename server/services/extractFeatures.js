@@ -11,6 +11,7 @@ const {
   detectAnomaliesFromStore,
   buildStoreFromDays,
   classifyRiskFromScore,
+  evaluateCase,
 } = require('./analyticsCore');
 const { cleanDayData, validateFeatureVector } = require('./physioValidation');
 
@@ -109,6 +110,23 @@ function extractLabels(caseData) {
   return { label: classifyRiskFromScore(score), task: 'risk' };
 }
 
+/** Product-engine BHI watch tier (MedWear-AnalyticsCore-v1) — for fair ML export. */
+function extractProductBHIWatchTierLabel(caseData, thresholds = DEFAULT_THRESHOLDS) {
+  const pred = evaluateCase(caseData, thresholds);
+  return { label: pred.bhiWatchTier || pred.riskLevel, task: 'bhi-watch-tier' };
+}
+
+/** clinicalGoldStandard-v1 reference risk tier from benchmark expected labels. */
+function extractGoldRiskTierLabel(caseData) {
+  const exp = caseData.expected || {};
+  if (!exp.riskLevel) throw new Error(`Missing expected.riskLevel for case ${caseData.id}`);
+  return {
+    label: exp.riskLevel,
+    task: 'gold-risk-tier',
+    adjudication: exp.adjudication || 'clinicalGoldStandard-v1',
+  };
+}
+
 module.exports = {
   FEATURE_NAMES,
   RAW_FEATURE_NAMES,
@@ -116,4 +134,6 @@ module.exports = {
   extractFeatures,
   extractRawFeatures,
   extractLabels,
+  extractProductBHIWatchTierLabel,
+  extractGoldRiskTierLabel,
 };

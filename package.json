@@ -56,6 +56,7 @@
     "experiment:compare": "node scripts/experiment-compare-fair.js",
     "experiment:compare-fair": "node scripts/experiment-compare-fair.js",
     "experiment:compare-oracle": "node scripts/experiment-compare-oracle.js",
+    "experiment:compare-vs-gold": "node scripts/experiment-compare-vs-gold.js",
     "sensitivity:outcomes": "node scripts/sensitivity-outcomes.js",
     "evaluate:public": "node scripts/evaluate-public-datasets.js",
     "evaluate:supplement": "node scripts/sync-evaluation-supplement.js",

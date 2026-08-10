@@ -144,6 +144,29 @@ const ruleEngine = {
   disclaimer_zh: '领域权重为可配置占位符 — 非训练模型投票。',
 };
 
+const optionalOnnxBackend = {
+  label_en: 'Optional ONNX inference backend',
+  label_zh: '可选 ONNX 推理后端',
+  isDefaultCore: false,
+  defaultCore_en: 'The evidence-weighted rule engine (BHI + MAD + screening rules) is the default product core — not the ONNX model.',
+  defaultCore_zh: '证据加权规则引擎（BHI + MAD + 筛查规则）为默认产品核心 — 非 ONNX 模型。',
+  modelArtifact: 'server/ai/models/medwear_rf.onnx + medwear_rf.meta.json',
+  trainingScript: 'experiments/medwear/train.py (sklearn RandomForest → skl2onnx export)',
+  trainingData_en: 'MedWear-Wearable-Analytics-Clinical-v2 synthetic export (n=5000, seed=42) → experiments/data/medwear/features_v1.csv via scripts/export_features.js',
+  trainingData_zh: 'MedWear-Wearable-Analytics-Clinical-v2 合成导出（n=5000, seed=42）→ scripts/export_features.js 生成 experiments/data/medwear/features_v1.csv',
+  labelTarget_en: 'BHI watch tier (low/moderate/high) at export time — research comparison artifact only',
+  labelTarget_zh: '导出时的 BHI 关注分层（low/moderate/high）— 仅研究对比产物',
+  runtime: 'onnxruntime-node via server/ai/onnxInference.js',
+  usedIn: 'runFullAnalysis() in server/ai/engine.js only (screening AI analysis path)',
+  notUsedIn: 'npm run evaluate / MedWear-AnalyticsCore-v1 benchmark pipeline (rule engine only)',
+  fallback: 'feature-heuristic-fallback',
+  fallbackBehavior_en: 'If ONNX load or inference fails, silently fall back to BHI/anomaly-derived heuristics — no thrown errors to callers.',
+  fallbackBehavior_zh: 'ONNX 加载或推理失败时静默回退至 BHI/异常启发式 — 不向调用方抛错。',
+  implementation: 'server/ai/onnxInference.js → server/ai/engine.js',
+  disclaimer_en: 'Optional experimental backend — not validated for clinical use; rule engine remains authoritative.',
+  disclaimer_zh: '可选实验性后端 — 未经临床验证；规则引擎仍为权威路径。',
+};
+
 const robustnessTests = {
   label_en: 'Robustness scenarios (server/__tests__/robustness.test.js)',
   label_zh: '鲁棒性场景（server/__tests__/robustness.test.js）',
@@ -206,6 +229,7 @@ function getMethodologyTransparency() {
     alerts,
     anomalyDetection,
     ruleEngine,
+    optionalOnnxBackend,
     robustnessTests,
     cohortSimulation,
     ethicsLink: '/api/methodology/transparency',
@@ -218,6 +242,7 @@ function renderMethodsMarkdown(isEn = true) {
   const an = t.anomalyDetection;
   const al = t.alerts;
   const re = t.ruleEngine;
+  const onnx = t.optionalOnnxBackend;
   const bw = t.bhiWatchTier;
   const ev = t.evidenceLevels;
   const rb = t.robustnessTests;
@@ -308,6 +333,23 @@ ${re.domainWeights.map((d) => `| ${d.domain} | ${(d.weight * 100).toFixed(0)}% |
 Honest API fields: \`referenceDomainLabel\`, \`domainWeightedSummaries\`, \`heuristicConfidence\`. Deprecated aliases (not shown in UI): ${re.apiFields.deprecatedAliases.join(', ')}.
 
 Removed claims: ${re.removedClaims.join('; ')}.
+
+## Optional ONNX inference backend
+
+**${onnx.defaultCore_en}**
+
+| Item | Detail |
+|------|--------|
+| Artifact | \`${onnx.modelArtifact}\` |
+| Training | \`${onnx.trainingScript}\` |
+| Training data | ${onnx.trainingData_en} |
+| Label target | ${onnx.labelTarget_en} |
+| Runtime | ${onnx.runtime} |
+| Used in | ${onnx.usedIn} |
+| **Not used in** | ${onnx.notUsedIn} |
+| Fallback | \`${onnx.fallback}\` — ${onnx.fallbackBehavior_en} |
+
+Implementation: \`${onnx.implementation}\`. ${onnx.disclaimer_en}
 
 ## Robustness Testing
 
@@ -418,6 +460,23 @@ ${re.domainWeights.map((d) => `| ${d.domain} | ${(d.weight * 100).toFixed(0)}% |
 
 已移除声明：${re.removedClaims.join('；')}。
 
+## 可选 ONNX 推理后端
+
+**${onnx.defaultCore_zh}**
+
+| 项 | 说明 |
+|----|------|
+| 模型文件 | \`${onnx.modelArtifact}\` |
+| 训练脚本 | \`${onnx.trainingScript}\` |
+| 训练数据 | ${onnx.trainingData_zh} |
+| 标签目标 | ${onnx.labelTarget_zh} |
+| 运行时 | ${onnx.runtime} |
+| 用于 | ${onnx.usedIn} |
+| **不用于** | ${onnx.notUsedIn} |
+| 回退 | \`${onnx.fallback}\` — ${onnx.fallbackBehavior_zh} |
+
+实现：\`${onnx.implementation}\`。${onnx.disclaimer_zh}
+
 ## 鲁棒性测试
 
 **${rb.expectation_zh}**
@@ -459,6 +518,7 @@ module.exports = {
   anomalyDetection,
   bhiWatchTier,
   evidenceLevels,
+  optionalOnnxBackend,
   robustnessTests,
   ruleEngine,
   cohortSimulation,

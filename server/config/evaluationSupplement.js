@@ -10,6 +10,7 @@ const FILES = {
   fpBurden: 'benchmarks/results/fp-burden-latest.json',
   mlComparison: 'benchmarks/results/ml-comparison-fair-latest.json',
   mlComparisonOracle: 'benchmarks/results/ml-comparison-oracle-latest.json',
+  mlComparisonVsGold: 'benchmarks/results/ml-comparison-vs-gold-latest.json',
   sensitivityOutcomes: 'benchmarks/results/sensitivity-outcomes-latest.json',
   externalDescriptive: 'benchmarks/results/external-descriptive-latest.json',
 };
@@ -31,6 +32,7 @@ function getEvaluationSupplement() {
     fpBurden: readJson(FILES.fpBurden),
     mlComparison: readJson(FILES.mlComparison),
     mlComparisonOracle: readJson(FILES.mlComparisonOracle),
+    mlComparisonVsGold: readJson(FILES.mlComparisonVsGold),
     sensitivityOutcomes: readJson(FILES.sensitivityOutcomes),
     externalDescriptive: readJson(FILES.externalDescriptive),
     regenerate: {
@@ -38,6 +40,7 @@ function getEvaluationSupplement() {
       fpBurden: 'npm run analyze:fp-burden',
       mlComparison: 'npm run experiment:compare-fair',
       mlComparisonOracle: 'npm run experiment:compare-oracle',
+      mlComparisonVsGold: 'npm run experiment:compare-vs-gold',
       sensitivityOutcomes: 'npm run sensitivity:outcomes',
       externalDescriptive: 'npm run evaluate:public',
       all: 'npm run evaluate:supplement',
@@ -109,6 +112,10 @@ function renderSupplementMarkdown(isEn = true) {
       lines.push(`| ${m.name} (sklearn, fair) | acc ${m.accuracy}, F1 ${m.macroF1} | 5-fold CV, raw features |`);
     });
     lines.push('');
+    lines.push(isEn
+      ? '> **Fair ML note:** Sklearn targets are **product-engine BHI watch tiers** (not gold labels). 5-fold CV uses random stratified splits on the same synthetic export. High accuracy reflects **feature distinguishability ceiling** on correlated synthetic data — **not** independent clinical validation. Rule engine is preferred for interpretability, not because sklearn "loses" on oracle features.'
+      : '> **公平 ML 说明：** sklearn 目标为**产品引擎 BHI 关注分层**（非 gold 标签）。5-fold CV 为同导出集上的随机分层分割。高准确率反映合成数据上的**特征可区分性上限** — **非**独立临床验证。规则引擎因可解释性优先，而非 oracle 特征上 sklearn 更差。');
+    lines.push('');
   } else {
     lines.push(isEn ? '_Run `npm run experiment:compare-fair` to populate._\n' : '_运行 `npm run experiment:compare-fair` 生成表格。_\n');
   }
@@ -126,6 +133,28 @@ function renderSupplementMarkdown(isEn = true) {
     lines.push(`|-------|---------------------|-------|`);
     s.mlComparisonOracle.mlModels.forEach((m) => {
       lines.push(`| ${m.name} (sklearn, oracle) | acc ${m.accuracy}, F1 ${m.macroF1} | appendix only |`);
+    });
+    lines.push('');
+  }
+
+  if (isEn) {
+    lines.push('### Gold-tier ML comparison (clinicalGoldStandard-v1 labels)\n');
+    lines.push('> Sklearn trained to predict **reference risk tier** from raw features. Regenerate: `npm run experiment:compare-vs-gold`.\n');
+  } else {
+    lines.push('### Gold 分层 ML 对比（clinicalGoldStandard-v1 标签）\n');
+    lines.push('> sklearn 预测**参考风险分层**（原始特征）。`npm run experiment:compare-vs-gold`。\n');
+  }
+
+  if (s.mlComparisonVsGold?.ruleEngine) {
+    const g = s.mlComparisonVsGold;
+    lines.push(`| Model | Gold-tier accuracy / Macro F1 | Notes |`);
+    lines.push(`|-------|-------------------------------|-------|`);
+    lines.push(`| Rule engine (engine-vs-gold) | ${g.ruleEngine.goldTierAgreement}, alert F1 ${g.ruleEngine.alertF1 ?? '—'} | product vs gold reference |`);
+    (g.nodeBaselines || []).forEach((m) => {
+      lines.push(`| ${m.name} | acc ${m.accuracy}, F1 ${m.macroF1} | node baseline |`);
+    });
+    (g.mlModels || []).forEach((m) => {
+      lines.push(`| ${m.name} (sklearn, vs gold) | acc ${m.accuracy}, F1 ${m.macroF1} | 5-fold CV, gold label target |`);
     });
     lines.push('');
   }
@@ -158,7 +187,8 @@ function renderSupplementMarkdown(isEn = true) {
   if (s.externalDescriptive) {
     const e = s.externalDescriptive;
     if (e.wesadStressProxy) {
-      lines.push(`- WESAD stress proxy: n=${e.wesadStressProxy.n} · BHI-tier acc=${e.wesadStressProxy.heuristicBhiTierAccuracy} · anomaly flag agree=${e.wesadStressProxy.anomalyFlagAgreement ?? '—'}`);
+      const w = e.wesadStressProxy;
+      lines.push(`- WESAD stress proxy (**sanity check only — not validation**): n=${w.n} · BHI-tier acc=${w.heuristicBhiTierAccuracy} · anomaly agree=${w.anomalyFlagAgreement ?? '—'} · stress-binary AUC(BHI)=${w.stressBinaryAucBhi ?? '—'} · AUC(anomaly)=${w.stressBinaryAucAnomaly ?? '—'}`);
     }
     if (e.internalExport) {
       lines.push(`- Internal export: n=${e.internalExport.n} · BHI-tier acc=${e.internalExport.heuristicBhiTierAccuracy}`);

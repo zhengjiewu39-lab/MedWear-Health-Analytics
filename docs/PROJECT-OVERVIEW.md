@@ -37,6 +37,19 @@ See [METHODS.md](./METHODS.md):
 - **3-tier risk stratification** from BHI (≥80 / 60–79 / <60)
 - **Rule engine screening** — evidence-weighted placeholders, not a trained ML ensemble
 
+## Optional ONNX Inference Backend
+
+The **rule engine is the default core** for alerts, BHI, MAD anomalies, and benchmark evaluation (`npm run evaluate` never loads ONNX).
+
+| Item | Detail |
+|------|--------|
+| Artifact | `server/ai/models/medwear_rf.onnx` (sklearn RF exported via `experiments/medwear/train.py`) |
+| Training data | Synthetic export `features_v1.csv` from `benchmarks/wearable-analytics-dataset.json` (n=5000, seed=42) |
+| Used in | `runFullAnalysis()` screening path only |
+| Fallback | Silent `feature-heuristic-fallback` when ONNX load/inference fails |
+
+See [METHODS.md](./METHODS.md) § Optional ONNX inference backend.
+
 **Limitations:** MAD k-values, activity thresholds, and BHI weights are empirical; no external outcome calibration; no multiple-testing correction; incomplete artifact modeling.
 
 ## Exploratory Cohort Scenario Simulation

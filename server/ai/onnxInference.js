@@ -27,7 +27,7 @@ function findAvailableModel() {
 }
 
 async function loadModel(modelId) {
-  const id = modelId || findAvailableModel();
+  const id = modelId || process.env.MEDWEAR_ONNX_MODEL || findAvailableModel();
   if (!id) {
     loadError = 'No ONNX model found in server/ai/models/. Run: npm run experiment:train';
     return false;
@@ -139,6 +139,12 @@ function predictRiskSync(features) {
   throw new Error('Use predictRisk() — ONNX Runtime inference is asynchronous');
 }
 
+function resetModel() {
+  session = null;
+  meta = null;
+  loadError = null;
+}
+
 module.exports = {
   MODELS_DIR,
   DEFAULT_MODEL,
@@ -148,4 +154,5 @@ module.exports = {
   predictRisk,
   predictRiskSync,
   getLoadError: () => loadError,
+  resetModel,
 };

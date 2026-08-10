@@ -54,7 +54,7 @@ function main() {
   fs.mkdirSync(path.dirname(OUT), { recursive: true });
   fs.writeFileSync(OUT, JSON.stringify(payload, null, 2));
   console.log(`Public dataset evaluation → ${OUT}`);
-  console.log(`  WESAD proxy n=${wesadEval.n} BHI-tier acc=${wesadEval.heuristicBhiTierAccuracy}`);
+  console.log(`  WESAD proxy n=${wesadEval.n} BHI-tier acc=${wesadEval.heuristicBhiTierAccuracy} stress-binary AUC(BHI)=${wesadEval.stressBinaryAucBhi}`);
   if (internal) console.log(`  Internal export n=${internal.n} BHI-tier acc=${internal.heuristicBhiTierAccuracy}`);
 }
 

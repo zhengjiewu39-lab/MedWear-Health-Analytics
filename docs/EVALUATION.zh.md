@@ -191,11 +191,13 @@ curl http://localhost:3001/api/research/validate
 | Model | BHI tier accuracy / Macro F1 | Notes |
 |-------|------------------------------|-------|
 | Rule engine (vs clinical gold) | risk 0.787, alert F1 0.8441 | product metric |
-| majority-class | acc 0.6432, F1 0.261 | node baseline |
-| hr-steps-heuristic | acc 0.5002, F1 0.3945 | node baseline |
-| lr (sklearn, fair) | acc 0.9474, F1 0.93925697992577 | 5-fold CV, raw features |
-| dt (sklearn, fair) | acc 0.9715999999999999, F1 0.9682518572606396 | 5-fold CV, raw features |
-| rf (sklearn, fair) | acc 0.9872, F1 0.9841347841015973 | 5-fold CV, raw features |
+| majority-class | acc 0.5416, F1 0.2342 | node baseline |
+| hr-steps-heuristic | acc 0.5114, F1 0.4558 | node baseline |
+| lr (sklearn, fair) | acc 0.9358000000000001, F1 0.9281274479488534 | 5-fold CV, raw features |
+| dt (sklearn, fair) | acc 0.9334, F1 0.9237003603134115 | 5-fold CV, raw features |
+| rf (sklearn, fair) | acc 0.9592, F1 0.9504472811020424 | 5-fold CV, raw features |
+
+> **公平 ML 说明：** sklearn 目标为**产品引擎 BHI 关注分层**（非 gold 标签）。5-fold CV 为同导出集上的随机分层分割。高准确率反映合成数据上的**特征可区分性上限** — **非**独立临床验证。规则引擎因可解释性优先，而非 oracle 特征上 sklearn 更差。
 
 ### 附录：oracle 比较（含引擎衍生特征 — 特征泄露）
 
@@ -206,6 +208,18 @@ curl http://localhost:3001/api/research/validate
 | lr (sklearn, oracle) | acc 0.9446, F1 0.9364173036358509 | appendix only |
 | dt (sklearn, oracle) | acc 0.9827999999999999, F1 0.9794665527307297 | appendix only |
 | rf (sklearn, oracle) | acc 0.9858, F1 0.9834401404422785 | appendix only |
+
+### Gold 分层 ML 对比（clinicalGoldStandard-v1 标签）
+
+> sklearn 预测**参考风险分层**（原始特征）。`npm run experiment:compare-vs-gold`。
+
+| Model | Gold-tier accuracy / Macro F1 | Notes |
+|-------|-------------------------------|-------|
+| Rule engine (engine-vs-gold) | 0.787, alert F1 0.8441 | product vs gold reference |
+| majority-class | acc 0.6432, F1 0.261 | node baseline |
+| lr (sklearn, vs gold) | acc 0.9474, F1 0.93925697992577 | 5-fold CV, gold label target |
+| dt (sklearn, vs gold) | acc 0.9715999999999999, F1 0.9682518572606396 | 5-fold CV, gold label target |
+| rf (sklearn, vs gold) | acc 0.9872, F1 0.9841347841015973 | 5-fold CV, gold label target |
 
 ## 参数敏感性（结局模拟）
 
@@ -222,7 +236,7 @@ curl http://localhost:3001/api/research/validate
 
 > 17 维导出特征描述性检查；WESAD/PPG-DaLiA 需单独适配。见 [EXTERNAL-VALIDATION.zh.md](./EXTERNAL-VALIDATION.zh.md)。
 
-- WESAD stress proxy: n=120 · BHI-tier acc=0.5583 · anomaly flag agree=0.6333
+- WESAD stress proxy (**sanity check only — not validation**): n=120 · BHI-tier acc=0.5583 · anomaly agree=0.6333 · stress-binary AUC(BHI)=0.9989 · AUC(anomaly)=0.6025
 - Internal export: n=5000 · BHI-tier acc=0.7932
 - Planned external: WESAD (stress/arousal proxy), PPG-DaLiA (activity HR proxy)
 

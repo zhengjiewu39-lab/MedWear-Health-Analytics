@@ -31,7 +31,7 @@ function prf1(tp, fp, fn) {
   return { precision: +precision.toFixed(4), recall: +recall.toFixed(4), f1: +f1.toFixed(4) };
 }
 
-/** Wilson score 95% CI for binomial proportion (clinical performance reporting). */
+/** Wilson score 95% CI for binomial proportion (engine-vs-gold agreement reporting). */
 function wilsonCI(successes, n, z = 1.96) {
   if (!n) return { lower: 0, upper: 0, point: 0 };
   const p = successes / n;
@@ -54,6 +54,8 @@ function run() {
     evaluatedAt: new Date().toISOString(),
     n: dataset.cases.length,
     engine: 'MedWear-AnalyticsCore-v1',
+    inferenceBackend: 'rule-engine-only',
+    usesOnnx: false,
     scoreField: SCORE_FIELD,
     metrics: {},
     cases: [],

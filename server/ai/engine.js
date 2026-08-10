@@ -140,6 +140,28 @@ function attachLegacyEngineFields(result) {
   };
 }
 
+function buildFeatureHeuristicPrediction(features) {
+  return {
+    label: features.health_score_norm < 0.6 ? 'high' : features.health_score_norm < 0.75 ? 'moderate' : 'low',
+    riskPercent: Math.round((1 - features.health_score_norm) * 60 + features.anomaly_flag * 15),
+    confidence: 0.5,
+    source: 'feature-heuristic-fallback',
+  };
+}
+
+/** Optional ONNX path — returns null on any failure (silent fallback). */
+async function tryOptionalOnnxInference(features) {
+  try {
+    if (!isModelLoaded()) {
+      const loaded = await loadModel();
+      if (!loaded) return null;
+    }
+    return await predictRisk(features);
+  } catch {
+    return null;
+  }
+}
+
 async function runFullAnalysis(patientData) {
   const store = patientData?.store || patientData?.wearableStore;
   const screening = patientData?.diseaseScreening || patientData?.screening;
@@ -155,18 +177,13 @@ async function runFullAnalysis(patientData) {
       days: store.daily,
       targetDay: Object.keys(store.daily).sort().pop(),
     });
-    try {
-      if (!isModelLoaded()) await loadModel();
-      prediction = await predictRisk(features);
+    const onnxPred = await tryOptionalOnnxInference(features);
+    if (onnxPred) {
+      prediction = onnxPred;
       inferenceBackend = 'onnx-runtime';
-    } catch (err) {
+    } else {
       inferenceBackend = 'feature-heuristic-fallback';
-      prediction = {
-        label: features.health_score_norm < 0.6 ? 'high' : features.health_score_norm < 0.75 ? 'moderate' : 'low',
-        riskPercent: Math.round((1 - features.health_score_norm) * 60 + features.anomaly_flag * 15),
-        confidence: 0.5,
-        error: err.message,
-      };
+      prediction = buildFeatureHeuristicPrediction(features);
     }
   } else {
     inferenceBackend = 'insufficient-data';
@@ -304,4 +321,6 @@ module.exports = {
   getAllReferences,
   buildDomainWeightedSummaries,
   referenceDomainLabel,
+  buildFeatureHeuristicPrediction,
+  tryOptionalOnnxInference,
 };

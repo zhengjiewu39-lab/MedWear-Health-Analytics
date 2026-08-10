@@ -1,27 +1,27 @@
 #!/usr/bin/env node
 /**
- * Fair ML comparison — raw wearable features only (no BHI / anomaly_flag).
- * Rule engine preferred for interpretability, not because sklearn "loses" on oracle features.
+ * ML comparison with clinicalGoldStandard-v1 risk tier as label target.
+ * Same raw wearable features as fair compare — labels from benchmark expected.riskLevel.
  */
 const fs = require('fs');
 const path = require('path');
 const { spawnSync } = require('child_process');
 const { run: runEvaluate } = require('./evaluate-analytics');
-const { RAW_FEATURE_NAMES, extractRawFeatures, extractProductBHIWatchTierLabel } = require('../server/services/extractFeatures');
+const { RAW_FEATURE_NAMES, extractRawFeatures, extractGoldRiskTierLabel } = require('../server/services/extractFeatures');
 const { loadCases } = require('./export_features');
 
-const OUT = path.join(__dirname, '../benchmarks/results/ml-comparison-fair-latest.json');
-const FEATURES = path.join(__dirname, '../experiments/data/medwear/features_fair_v1.csv');
+const OUT = path.join(__dirname, '../benchmarks/results/ml-comparison-vs-gold-latest.json');
+const FEATURES = path.join(__dirname, '../experiments/data/medwear/features_vs_gold_v1.csv');
 const DATASET = path.join(__dirname, '../benchmarks/wearable-analytics-dataset.json');
 const TRAIN = path.join(__dirname, '../experiments/medwear/train.py');
 
-function exportFairFeatures() {
+function exportGoldFeatures() {
   const cases = loadCases(DATASET);
   const cols = ['id', 'label', 'task', ...RAW_FEATURE_NAMES];
   const lines = [cols.join(',')];
   cases.forEach((c) => {
     const features = extractRawFeatures(c);
-    const { label, task } = extractProductBHIWatchTierLabel(c);
+    const { label, task } = extractGoldRiskTierLabel(c);
     const row = [c.id, label, task, ...RAW_FEATURE_NAMES.map((k) => features[k] ?? 0)];
     lines.push(row.join(','));
   });
@@ -46,27 +46,6 @@ function macroF1(yTrue, yPred, labels) {
   return f1s.reduce((a, b) => a + b, 0) / labels.length;
 }
 
-function nodeBaselines(rows) {
-  const labels = ['low', 'moderate', 'high'];
-  const yTrue = rows.map((r) => r.label);
-  const counts = {};
-  yTrue.forEach((l) => { counts[l] = (counts[l] || 0) + 1; });
-  const majority = Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0];
-  const majorityPred = yTrue.map(() => majority);
-  const hrPred = rows.map((r) => {
-    const hr = parseFloat(r.avg_hr);
-    const steps = parseFloat(r.steps_norm) * 10000;
-    if (hr > 90 || steps < 3000) return 'high';
-    if (hr > 80 || steps < 5000) return 'moderate';
-    return 'low';
-  });
-  const acc = (pred) => pred.filter((p, i) => p === yTrue[i]).length / yTrue.length;
-  return [
-    { name: 'majority-class', type: 'node-baseline', accuracy: +acc(majorityPred).toFixed(4), macroF1: +macroF1(yTrue, majorityPred, labels).toFixed(4) },
-    { name: 'hr-steps-heuristic', type: 'node-baseline', accuracy: +acc(hrPred).toFixed(4), macroF1: +macroF1(yTrue, hrPred, labels).toFixed(4) },
-  ];
-}
-
 function parseCsv(text) {
   const lines = text.trim().split('\n');
   const headers = lines[0].split(',');
@@ -76,6 +55,19 @@ function parseCsv(text) {
     headers.forEach((h, i) => { row[h] = vals[i]; });
     return row;
   });
+}
+
+function nodeBaselines(rows) {
+  const labels = ['low', 'moderate', 'high'];
+  const yTrue = rows.map((r) => r.label);
+  const counts = {};
+  yTrue.forEach((l) => { counts[l] = (counts[l] || 0) + 1; });
+  const majority = Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0];
+  const majorityPred = yTrue.map(() => majority);
+  const acc = (pred) => pred.filter((p, i) => p === yTrue[i]).length / yTrue.length;
+  return [
+    { name: 'majority-class', type: 'node-baseline', accuracy: +acc(majorityPred).toFixed(4), macroF1: +macroF1(yTrue, majorityPred, labels).toFixed(4) },
+  ];
 }
 
 function runPythonModel(model) {
@@ -92,7 +84,7 @@ function runPythonModel(model) {
 }
 
 function main() {
-  const n = exportFairFeatures();
+  const n = exportGoldFeatures();
   spawnSync('python3', ['-m', 'pip', 'install', '-q', '-r', path.join(__dirname, '../experiments/medwear/requirements-min.txt')], {
     stdio: 'inherit',
     cwd: path.join(__dirname, '..'),
@@ -100,11 +92,11 @@ function main() {
 
   const evalResults = runEvaluate();
   const ruleEngine = {
-    name: 'MedWear-RuleEngine-v1 + AnalyticsCore',
+    name: 'MedWear-AnalyticsCore-v1',
     type: 'rule-engine',
-    riskAccuracy: evalResults.metrics.riskAccuracy,
+    goldTierAgreement: evalResults.metrics.riskAccuracy,
     alertF1: evalResults.metrics.alerts?.f1,
-    note: 'Engine vs clinicalGoldStandard-v1 — primary product metric',
+    note: 'Product BHI watch tier vs clinicalGoldStandard-v1 reference risk tier (engine-vs-gold agreement)',
   };
 
   const rows = parseCsv(fs.readFileSync(FEATURES, 'utf8'));
@@ -124,23 +116,22 @@ function main() {
 
   const payload = {
     generatedAt: new Date().toISOString(),
-    comparisonKind: 'fair-raw-wearable-only',
+    comparisonKind: 'vs-clinical-gold-risk-tier',
+    labelSource: 'clinicalGoldStandard-v1 → expected.riskLevel',
     featureCount: RAW_FEATURE_NAMES.length,
-    featureNames: RAW_FEATURE_NAMES,
     nSamples: n,
-    task: 'BHI watch tier (product engine labels) from raw wearable features only',
+    task: 'Reference risk tier (low/moderate/high) from independent gold adjudication',
     ruleEngine,
     nodeBaselines: nodeBaselineResults,
     mlModels,
-    primaryRationale:
-      'Rule engine is preferred for interpretability, auditability, and evidence-linked screening — NOT because it beats sklearn on oracle (engine-derived) features.',
     disclosure:
-      'Fair comparison excludes health_score_norm and anomaly_flag. Sklearn scores here reflect portable raw-signal predictability only — not independent clinical validation.',
+      'Sklearn 5-fold CV predicts gold reference tiers from raw wearable features. Measures inter-engine / feature distinguishability ceiling — NOT independent clinical validation.',
+    regenerate: 'npm run experiment:compare-vs-gold',
   };
 
   fs.mkdirSync(path.dirname(OUT), { recursive: true });
   fs.writeFileSync(OUT, JSON.stringify(payload, null, 2));
-  console.log(`Fair ML comparison → ${OUT} (${RAW_FEATURE_NAMES.length} features, n=${n})`);
+  console.log(`Gold-tier ML comparison → ${OUT} (n=${n}, gold label target)`);
 }
 
 main();

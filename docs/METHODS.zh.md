@@ -102,6 +102,23 @@
 
 已移除声明：CardioNet-style declared accuracy；ensemble confidence clamped to 0.98；fake model validation AUC。
 
+## 可选 ONNX 推理后端
+
+**证据加权规则引擎（BHI + MAD + 筛查规则）为默认产品核心 — 非 ONNX 模型。**
+
+| 项 | 说明 |
+|----|------|
+| 模型文件 | `server/ai/models/medwear_rf.onnx + medwear_rf.meta.json` |
+| 训练脚本 | `experiments/medwear/train.py (sklearn RandomForest → skl2onnx export)` |
+| 训练数据 | MedWear-Wearable-Analytics-Clinical-v2 合成导出（n=5000, seed=42）→ scripts/export_features.js 生成 experiments/data/medwear/features_v1.csv |
+| 标签目标 | 导出时的 BHI 关注分层（low/moderate/high）— 仅研究对比产物 |
+| 运行时 | onnxruntime-node via server/ai/onnxInference.js |
+| 用于 | runFullAnalysis() in server/ai/engine.js only (screening AI analysis path) |
+| **不用于** | npm run evaluate / MedWear-AnalyticsCore-v1 benchmark pipeline (rule engine only) |
+| 回退 | `feature-heuristic-fallback` — ONNX 加载或推理失败时静默回退至 BHI/异常启发式 — 不向调用方抛错。 |
+
+实现：`server/ai/onnxInference.js → server/ai/engine.js`。可选实验性后端 — 未经临床验证；规则引擎仍为权威路径。
+
 ## 鲁棒性测试
 
 **BHI 与异常管道返回有限分数/分层且不抛错；输出可优雅降级。**
