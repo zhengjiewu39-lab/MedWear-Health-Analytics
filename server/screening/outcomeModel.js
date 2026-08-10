@@ -581,4 +581,5 @@ module.exports = {
   UNTREATED_SURVIVAL_FACTOR,
   DEFAULT_SEED,
   DEFAULT_N,
+  computeRiskScore,
 };

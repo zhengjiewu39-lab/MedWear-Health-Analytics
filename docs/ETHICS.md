@@ -26,6 +26,8 @@ MedWear is a **research and education prototype** for consumer wearable analytic
 
 - Disease screening scores are **risk stratification aids**, not diagnoses
 - Core analytics use **BHI** (behavioral health index) — API field `healthScore` is a backward-compatible name
+- **BHI watch tiers** (Stable / Observe / Watch closely) are **not calibrated against clinical outcomes** — they indicate behavioral signal patterns only, not validated disease risk
+- Evidence levels **A/B/C** are **author annotations** from public literature — not independent third-party ratings
 - LLM responses include non-diagnostic disclaimers
 - All outputs require human clinician review in any real-world use
 

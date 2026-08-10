@@ -1,7 +1,105 @@
 /**
- * 病症预测与测量 — 真实研究/指南参考库
- * 来源: WHO、AHA/ACC、ADA、NCCN、中国临床指南及 peer-reviewed 研究
+ * Condition research references — evidence levels are author annotations from public literature,
+ * NOT independent third-party ratings.
  */
+
+/** Author-defined evidence tier rules (not external agency ratings). */
+const EVIDENCE_LEVEL_RULES = {
+  A: {
+    label_zh: 'A级 — 国际指南或高质量 RCT',
+    label_en: 'Level A — international guideline or high-quality RCT',
+    criteria_zh: '国际权威指南和/或高质量随机对照试验（含大型筛查 RCT、NEJM/Lancet 级 RCT）',
+    criteria_en: 'International authoritative guidelines and/or high-quality RCTs (including major screening RCTs)',
+  },
+  B: {
+    label_zh: 'B级 — 队列或验证研究',
+    label_en: 'Level B — cohort or validation study',
+    criteria_zh: '前瞻性队列、验证研究或国家级指南（非最高等级 RCT 直接证据）',
+    criteria_en: 'Prospective cohorts, validation studies, or national guidelines without direct top-tier RCT',
+  },
+  C: {
+    label_zh: 'C级 — 专家共识或间接证据',
+    label_en: 'Level C — expert consensus or indirect evidence',
+    criteria_zh: '专家共识、系统综述中的间接关联，或可穿戴代理信号与结局的弱关联文献',
+    criteria_en: 'Expert consensus, indirect links in reviews, or weak wearable-proxy literature',
+  },
+};
+
+const EVIDENCE_RATIONALE = {
+  lung_cancer: {
+    zh: 'NCCN 筛查指南 + NLST RCT；可穿戴 SpO₂/呼吸率为间接代理',
+    en: 'NCCN screening guideline + NLST RCT; wearable SpO₂/resp rate are indirect proxies',
+  },
+  colorectal_cancer: {
+    zh: 'USPSTF A 级推荐 + 国家卫健委指南 + 活动量 meta-analysis',
+    en: 'USPSTF Grade A + national guideline + physical-activity meta-analysis',
+  },
+  breast_cancer: {
+    zh: 'NCCN/WHO 乳腺癌筛查指南 — 直接筛查证据',
+    en: 'NCCN/WHO breast screening guidelines — direct screening evidence',
+  },
+  gastric_cancer: {
+    zh: '国家卫健委指南 + H. pylori  eradication NEJM RCT',
+    en: 'National guideline + H. pylori eradication NEJM RCT',
+  },
+  prostate_cancer: {
+    zh: 'USPSTF/EAU 前列腺癌筛查指南',
+    en: 'USPSTF/EAU prostate screening guidelines',
+  },
+  cervical_cancer: {
+    zh: 'WHO 2021 宫颈癌筛查与治疗指南',
+    en: 'WHO 2021 cervical screening and treatment guideline',
+  },
+  thyroid: {
+    zh: 'ATA 指南 + HRV 系统综述 — 可穿戴信号为间接代理（C→B 边界）',
+    en: 'ATA guideline + HRV systematic review — wearables are indirect (borderline B/C)',
+  },
+  liver_cancer: {
+    zh: 'AASLD HCC 筛查指南 + 可穿戴活动队列研究',
+    en: 'AASLD HCC screening + wearable activity cohort study',
+  },
+  hypertension: {
+    zh: '2023 ESH 指南 + 中国高血压指南 + 智能手表 BP 验证研究',
+    en: '2023 ESH + China hypertension guidelines + smartwatch BP validation',
+  },
+  chronic_kidney_disease: {
+    zh: 'KDIGO 2024 CKD 指南',
+    en: 'KDIGO 2024 CKD guideline',
+  },
+  diabetes: {
+    zh: 'ADA 2024 标准 + 中国 T2D 指南 + 活动/血糖队列',
+    en: 'ADA 2024 Standards + China T2D guideline + activity/glucose cohort',
+  },
+  dyslipidemia: {
+    zh: 'ACC/AHA 2019 一级预防指南 + 中国血脂指南 2023',
+    en: 'ACC/AHA 2019 primary prevention + China lipid guideline 2023',
+  },
+  copd: {
+    zh: 'GOLD 2024 全球策略 + 夜间 SpO₂ 可穿戴验证',
+    en: 'GOLD 2024 strategy + nocturnal SpO₂ wearable validation',
+  },
+  respiratory: {
+    zh: 'GINA 2024 + WHO 急性呼吸道感染概述 — 间接代理',
+    en: 'GINA 2024 + WHO ARI overview — indirect wearable proxies',
+  },
+  sleep_apnea: {
+    zh: 'AASM OSA 诊断指南 + 消费级可穿戴系统综述',
+    en: 'AASM OSA testing guideline + consumer wearable systematic review',
+  },
+  coronary: {
+    zh: '2023 ESC ACS 指南 + Framingham HRV 队列 + Apple Heart RCT',
+    en: '2023 ESC ACS + Framingham HRV cohort + Apple Heart Study RCT',
+  },
+  stroke: {
+    zh: 'AHA/ASA 2021 卒中预防指南 + 中国一级预防指南',
+    en: 'AHA/ASA 2021 stroke prevention + China primary prevention guideline',
+  },
+  arrhythmia: {
+    zh: '2023 ACC/AHA AF 指南 + 智能手表 AF meta-analysis',
+    en: '2023 ACC/AHA AF guideline + smartwatch AF meta-analysis',
+  },
+};
+
 const RESEARCH_DB = {
   lung_cancer: {
     id: 'lung_cancer',
@@ -226,31 +324,56 @@ const RESEARCH_DB = {
   },
 };
 
-const EVIDENCE_LABELS = { A: 'A级 — 高质量 RCT/指南', B: 'B级 — 队列/验证研究', C: 'C级 — 专家共识/间接证据' };
+const EVIDENCE_LABELS = {
+  A: EVIDENCE_LEVEL_RULES.A.label_zh,
+  B: EVIDENCE_LEVEL_RULES.B.label_zh,
+  C: EVIDENCE_LEVEL_RULES.C.label_zh,
+};
+
+function attachEvidenceMeta(ref) {
+  if (!ref) return ref;
+  const rationale = EVIDENCE_RATIONALE[ref.id];
+  return {
+    ...ref,
+    referenceDomainLabel: ref.model,
+    evidenceRationale: rationale?.zh || null,
+    evidenceRationale_en: rationale?.en || null,
+  };
+}
 
 function getReference(id) {
-  return RESEARCH_DB[id] || null;
+  return attachEvidenceMeta(RESEARCH_DB[id] || null);
 }
 
 function getAllReferences() {
-  return Object.values(RESEARCH_DB);
+  return Object.values(RESEARCH_DB).map(attachEvidenceMeta);
 }
 
 function enrichScreeningItem(itemKey, item) {
-  const ref = RESEARCH_DB[itemKey];
+  const ref = getReference(itemKey);
   if (!ref) return item;
   return {
     ...item,
     researchId: ref.id,
     evidenceLevel: ref.evidenceLevel,
     evidenceLabel: EVIDENCE_LABELS[ref.evidenceLevel],
+    evidenceRationale: ref.evidenceRationale,
+    evidenceRationale_en: ref.evidenceRationale_en,
     engineType: 'evidence-weighted-rule-engine',
-    aiModel: ref.model,
+    referenceDomainLabel: ref.referenceDomainLabel,
     measuredMetrics: ref.metrics,
     clinicalThresholds: ref.thresholds,
     references: ref.references,
-    disclaimer: 'Rule-engine reference domain — aiModel is not a trained neural network.',
+    disclaimer: 'Author-assigned evidence tier from public literature — not an independent agency rating.',
   };
 }
 
-module.exports = { RESEARCH_DB, EVIDENCE_LABELS, getReference, getAllReferences, enrichScreeningItem };
+module.exports = {
+  RESEARCH_DB,
+  EVIDENCE_LEVEL_RULES,
+  EVIDENCE_LABELS,
+  EVIDENCE_RATIONALE,
+  getReference,
+  getAllReferences,
+  enrichScreeningItem,
+};

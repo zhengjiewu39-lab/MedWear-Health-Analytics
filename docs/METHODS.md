@@ -62,17 +62,33 @@ Threshold alerts (wearable-style sensitivity). Implementation: `server/services/
 
 Implementation: `server/services/robustAnomaly.js → analyticsCore.detectAnomaliesFromStore()`
 
-## Risk Stratification (from BHI)
+## BHI Watch Tiers (not disease risk)
 
-| Tier | BHI score |
-|------|-----------|
-| low | ≥ 80 |
-| moderate | 60–79 |
-| high | < 60 |
+**Tier labels (Stable / Observe / Watch closely) are heuristic BHI bands — not validated against clinical outcomes.**
+
+| Internal key | UI label (EN) | BHI range |
+|--------------|---------------|-----------|
+| low | Stable (BHI≥80) | ≥ 80 |
+| moderate | Observe (BHI 60–79) | 60–79 |
+| high | Watch closely (BHI<60) | < 60 |
+
+Implementation: `server/config/bhiWatchTier.js → classifyBHIWatchTier()`
+
+## Evidence Levels (A/B/C)
+
+**A/B/C levels reflect author annotation from public literature — NOT independent third-party ratings.**
+
+| Level | Criteria |
+|-------|----------|
+| A | International authoritative guidelines and/or high-quality RCTs (including major screening RCTs) |
+| B | Prospective cohorts, validation studies, or national guidelines without direct top-tier RCT |
+| C | Expert consensus, indirect links in reviews, or weak wearable-proxy literature |
+
+Implementation: `server/data/researchReferences.js → EVIDENCE_LEVEL_RULES + EVIDENCE_RATIONALE`
 
 ## Rule Engine (Screening)
 
-**Domain weights are configurable placeholders — not trained model votes.** Version: `MedWear-RuleEngine-v1`. Confidence capped at 0.85.
+**Domain weights are configurable placeholders — not trained model votes.** `engineType: evidence-weighted-rule-engine` · Version: `MedWear-RuleEngine-v1`. Confidence capped at 0.85.
 
 | Domain | Weight |
 |--------|--------|
@@ -82,7 +98,20 @@ Implementation: `server/services/robustAnomaly.js → analyticsCore.detectAnomal
 | metabolic | 16% |
 | sleep | 16% |
 
+Honest API fields: `referenceDomainLabel`, `domainWeightedSummaries`, `heuristicConfidence`. Deprecated aliases (not shown in UI): aiModel, models, modelVotes, ensembleConfidence.
+
 Removed claims: CardioNet-style declared accuracy; ensemble confidence clamped to 0.98; fake model validation AUC.
+
+## Robustness Testing
+
+**BHI and anomaly pipelines return finite scores/tiers without throwing; outputs may degrade gracefully.**
+
+- Missing day data / empty sensor arrays
+- Missing sensor dimensions (no HRV, no SpO₂)
+- Single-point HR/SpO₂ outliers (artifact cleaning)
+- Sensor drift (gradual HR elevation over window)
+- Motion artifact (high-activity days excluded from MAD baseline)
+- Recovery/rest day (low steps, suppressed activity alerts context)
 
 ## Exploratory Cohort Scenario Simulation
 

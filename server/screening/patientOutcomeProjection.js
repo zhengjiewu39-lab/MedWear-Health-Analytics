@@ -5,7 +5,7 @@
 
 'use strict';
 
-const { MODELS } = require('../ai/engine');
+const { DOMAIN_WEIGHTS } = require('../ai/engine');
 const { uniqueNameFromId } = require('../data/patientIdentity');
 const {
   getCohort,
@@ -39,12 +39,12 @@ const REFERENCE_MODELS = [
     role: 'Population prevalence and outcome calibration',
     role_zh: '人群患病率与结局校准',
   },
-  ...MODELS.map((m) => ({
+  ...DOMAIN_WEIGHTS.map((m) => ({
     id: m.id,
     name: m.id,
-    name_zh: m.id,
-    role: `${m.domain} wearable fusion (${Math.round(m.accuracy * 100)}% validation accuracy)`,
-    role_zh: `${m.domain} 可穿戴融合（验证准确率 ${Math.round(m.accuracy * 100)}%）`,
+    name_zh: m.domain,
+    role: `${m.domain_en} domain weight placeholder (configurable, not validated accuracy)`,
+    role_zh: `${m.domain} 领域权重占位符（可配置，非验证准确率）`,
   })),
 ];
 

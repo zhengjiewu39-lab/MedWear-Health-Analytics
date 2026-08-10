@@ -49,7 +49,7 @@ Output: `benchmarks/results/latest.json`
 |--------|------------|
 | Alert F1 | Micro-F1 over alert type sets (precision/recall also reported) |
 | Anomaly Accuracy | Binary match on anomalyDetected |
-| Risk Accuracy | 3-class match on riskLevel |
+| Risk Accuracy | 3-class BHI watch tier match on bhiWatchTier |
 | Score agreement | BHI within ±8 pts of gold reference (`healthScore` field = BHI) |
 | 95% CI | Wilson score interval for accuracy metrics (n≥100) |
 
@@ -63,7 +63,7 @@ Run `npm run evaluate` for current numbers. Example (product engine vs **clinica
 | Alert precision | 0.758 | — |
 | Alert recall | 0.953 | — |
 | Anomaly accuracy | 0.700 | 0.688–0.713 |
-| Risk accuracy (BHI tiers) | 0.787 | 0.775–0.798 |
+| Risk accuracy (BHI watch tiers) | 0.787 | 0.775–0.798 |
 | BHI agreement (±8 pts) | 0.760 | 0.748–0.772 |
 
 Disagreements: **3041 / 5000** cases differ on at least one task (alert set, anomaly, risk, or BHI).
@@ -189,18 +189,39 @@ curl http://localhost:3001/api/research/validate
 | Est. extra outpatient visits | 64.8 |
 | Alert precision (eval) | 0.7576 |
 
-## Rule engine vs simple ML (exported features)
+## Rule engine vs simple ML — fair comparison (raw wearable features)
 
-> Same synthetic export — **features include engine-derived BHI/anomaly flags**; high sklearn CV does not replace engine-vs-gold. `npm run experiment:compare-all`.
+> **Primary table:** 15-dim export **without** BHI/anomaly flags. Rule engine preferred for **interpretability & auditability**, not oracle sklearn accuracy. Regenerate: `npm run experiment:compare-fair`.
 
-| Model | Risk accuracy / Macro F1 | Notes |
-|-------|--------------------------|-------|
-| Rule engine | risk 0.787, alert F1 0.8441 | vs clinical gold |
+| Model | BHI tier accuracy / Macro F1 | Notes |
+|-------|------------------------------|-------|
+| Rule engine (vs clinical gold) | risk 0.787, alert F1 0.8441 | product metric |
 | majority-class | acc 0.6432, F1 0.261 | node baseline |
-| bhi-threshold-heuristic | acc 0.7932, F1 0.736 | node baseline |
-| lr (sklearn) | acc 0.9446, F1 0.9364173036358509 | 5-fold CV |
-| dt (sklearn) | acc 0.9827999999999999, F1 0.9794665527307297 | 5-fold CV |
-| rf (sklearn) | acc 0.9858, F1 0.9834401404422785 | 5-fold CV |
+| hr-steps-heuristic | acc 0.5002, F1 0.3945 | node baseline |
+| lr (sklearn, fair) | acc 0.9474, F1 0.93925697992577 | 5-fold CV, raw features |
+| dt (sklearn, fair) | acc 0.9715999999999999, F1 0.9682518572606396 | 5-fold CV, raw features |
+| rf (sklearn, fair) | acc 0.9872, F1 0.9841347841015973 | 5-fold CV, raw features |
+
+### Appendix: oracle comparison (engine-derived features — feature leakage)
+
+> Includes `health_score_norm` + `anomaly_flag`. High sklearn CV (~0.94–0.98) is **not** independent validation. `npm run experiment:compare-oracle`.
+
+| Model | Accuracy / Macro F1 | Notes |
+|-------|---------------------|-------|
+| lr (sklearn, oracle) | acc 0.9446, F1 0.9364173036358509 | appendix only |
+| dt (sklearn, oracle) | acc 0.9827999999999999, F1 0.9794665527307297 | appendix only |
+| rf (sklearn, oracle) | acc 0.9858, F1 0.9834401404422785 | appendix only |
+
+## Parameter sensitivity (outcome simulation)
+
+> Outcomes highly parameter-driven — tornado from `npm run sensitivity:outcomes`.
+
+| Parameter perturbation | Metric | Baseline | Perturbed | Δ |
+|------------------------|--------|----------|-----------|---|
+| STAGE_DISTRIBUTION.intervention (I +15%) | earlyStageRate (intervention, analytical) | 0.75 | 0.8045 | 0.0545 |
+| TREATMENT_INITIATION_RATE.intervention (+10%) | treatmentInitiationRate (intervention) | 0.92 | 0.99 | 0.07 |
+| CHRONIC_CONTROL_RATE.intervention (+8%) | chronicControlRate (intervention) | 0.74 | 0.7992 | 0.0592 |
+| simulated 5y survival headline (frozen cohort) | survival5y.absoluteDelta | 0.2464 | 0.2464 | 0 |
 
 ## Portable feature / external dataset baseline
 

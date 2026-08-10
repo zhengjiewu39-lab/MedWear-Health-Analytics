@@ -9,7 +9,9 @@ const steps = [
   'freeze-scenario-results.js',
   'analyze-fp-burden.js',
   'evaluate-public-datasets.js',
-  'run-ml-comparison.js',
+  'sensitivity-outcomes.js',
+  'experiment-compare-fair.js',
+  'experiment-compare-oracle.js',
 ];
 
 for (const s of steps) {

@@ -1,10 +1,14 @@
 /**
- * MedWear AI engine — ONNX Runtime inference + evidence-weighted enrichment.
- * Replaces legacy rule-only hardcoded risk with trained model predictions.
+ * MedWear evidence-weighted rule engine — domain placeholders + optional ONNX backend.
+ * Honest API field names; legacy ML-style aliases retained for backward compatibility only.
  */
 const { getReference, getAllReferences, EVIDENCE_LABELS } = require('../data/researchReferences');
 const { extractFeatures } = require('../services/extractFeatures');
 const { predictRisk, isModelLoaded, getModelInfo, loadModel } = require('./onnxInference');
+
+const ENGINE_TYPE = 'evidence-weighted-rule-engine';
+const LEGACY_FIELDS_NOTE =
+  'Deprecated aliases (aiModel, models, modelVotes, ensembleConfidence) are compatibility-only — not trained ML outputs.';
 
 const ITEM_RESEARCH_MAP = {
   '肺结节/肺癌': 'lung_cancer',
@@ -35,14 +39,13 @@ const ITEM_RESEARCH_MAP = {
 };
 
 const DOMAIN_WEIGHTS = [
-  { id: 'cardio-ml', domain: '心血管', domain_en: 'Cardiovascular', weight: 0.28 },
-  { id: 'vitals-ml', domain: '生命体征', domain_en: 'Vital signs', weight: 0.22 },
-  { id: 'oncology-ml', domain: '肿瘤筛查', domain_en: 'Oncology screening', weight: 0.18 },
-  { id: 'metabolic-ml', domain: '代谢', domain_en: 'Metabolic', weight: 0.16 },
-  { id: 'sleep-ml', domain: '睡眠呼吸', domain_en: 'Sleep & respiration', weight: 0.16 },
+  { id: 'cardio-rules', domain: '心血管', domain_en: 'Cardiovascular', weight: 0.28, role: 'domain-weight-placeholder' },
+  { id: 'vitals-rules', domain: '生命体征', domain_en: 'Vital signs', weight: 0.22, role: 'domain-weight-placeholder' },
+  { id: 'oncology-rules', domain: '肿瘤筛查', domain_en: 'Oncology screening', weight: 0.18, role: 'domain-weight-placeholder' },
+  { id: 'metabolic-rules', domain: '代谢', domain_en: 'Metabolic', weight: 0.16, role: 'domain-weight-placeholder' },
+  { id: 'sleep-rules', domain: '睡眠呼吸', domain_en: 'Sleep & respiration', weight: 0.16, role: 'domain-weight-placeholder' },
 ];
 
-const LEVEL_FROM_RISK = (risk) => (risk >= 35 ? 'moderate' : 'low');
 const HIGH_LEVEL = (risk) => (risk >= 55 ? 'high' : risk >= 35 ? 'moderate' : 'low');
 
 function evidenceAdjustedRisk(risk, evidenceLevel) {
@@ -50,10 +53,10 @@ function evidenceAdjustedRisk(risk, evidenceLevel) {
   return Math.round(risk * evidenceFactor * 10) / 10;
 }
 
-function modelConfidence(prediction, evidenceLevel) {
+function computeHeuristicConfidence(prediction, evidenceLevel) {
   if (prediction?.confidence != null) {
     const evidenceBoost = { A: 0.04, B: 0.02, C: 0.01 }[evidenceLevel] || 0;
-    return Math.min(0.95, Math.max(0.4, prediction.confidence + evidenceBoost));
+    return Math.min(0.85, Math.max(0.45, prediction.confidence + evidenceBoost));
   }
   return 0.55;
 }
@@ -67,10 +70,18 @@ function buildEvidenceChain(researchId) {
   }));
 }
 
+function referenceDomainLabel(ref, prediction) {
+  if (ref?.referenceDomainLabel) return ref.referenceDomainLabel;
+  if (ref?.model) return ref.model;
+  return prediction?.modelId || 'MedWear-RuleEngine-v1';
+}
+
 function analyzeCondition(name, risk, level, prediction) {
   const researchId = ITEM_RESEARCH_MAP[name];
   const ref = researchId ? getReference(researchId) : null;
   const evidenceLevel = ref?.evidenceLevel || 'C';
+  const domainLabel = referenceDomainLabel(ref, prediction);
+  const hc = computeHeuristicConfidence(prediction, evidenceLevel);
   return {
     name,
     rawRisk: risk,
@@ -78,25 +89,21 @@ function analyzeCondition(name, risk, level, prediction) {
     level,
     evidenceLevel,
     evidenceLabel: EVIDENCE_LABELS[evidenceLevel],
-    confidence: modelConfidence(prediction, evidenceLevel),
-    engine: prediction?.modelId || 'MedWear-ONNX',
-    engineType: 'onnx-runtime',
-    model: ref?.model || prediction?.modelId || 'MedWear-ONNX',
-    aiModel: prediction?.modelId || 'MedWear-ONNX',
+    confidence: hc,
+    heuristicConfidence: hc,
+    engineType: ENGINE_TYPE,
+    referenceDomainLabel: domainLabel,
     metrics: ref?.metrics || [],
     thresholds: ref?.thresholds || {},
     references: ref?.references || [],
     evidenceChain: researchId ? buildEvidenceChain(researchId) : [],
-    mlProbabilities: prediction?.probabilities || null,
+    evidenceRationale: ref?.evidenceRationale || null,
+    // deprecated aliases — do not display in UI
+    engine: domainLabel,
+    model: domainLabel,
+    aiModel: domainLabel,
+    ensembleConfidence: hc,
   };
-}
-
-async function runOnnxFromStore(store) {
-  const days = Object.keys(store?.daily || {}).sort();
-  if (!days.length) throw new Error('No wearable data available for ONNX inference');
-
-  const features = extractFeatures({ days: store.daily, targetDay: days[days.length - 1] });
-  return predictRisk(features);
 }
 
 function deriveConditionRisk(baseRisk, itemName, features) {
@@ -114,14 +121,23 @@ function deriveConditionRisk(baseRisk, itemName, features) {
   return Math.min(85, Math.max(5, Math.round(risk)));
 }
 
-function buildConditionsFromPrediction(screening, prediction, features) {
-  const baseRisk = prediction.riskPercent;
-  return screening.categories.flatMap((cat) =>
-    cat.items.map((item) => {
-      const risk = deriveConditionRisk(baseRisk, item.name, features);
-      return analyzeCondition(item.name, risk, HIGH_LEVEL(risk), prediction);
-    }),
-  );
+function buildDomainWeightedSummaries(conditions) {
+  return DOMAIN_WEIGHTS.map((m) => ({
+    ...m,
+    weightedSummary: conditions.reduce((s, c) => s + c.calibratedRisk * m.weight, 0) / Math.max(1, conditions.length),
+    // deprecated alias
+    vote: conditions.reduce((s, c) => s + c.calibratedRisk * m.weight, 0) / Math.max(1, conditions.length),
+  }));
+}
+
+function attachLegacyEngineFields(result) {
+  return {
+    ...result,
+    ensembleConfidence: result.heuristicConfidence,
+    modelVotes: result.domainWeightedSummaries,
+    models: result.domainWeightPlaceholders,
+    legacyFieldsNote: LEGACY_FIELDS_NOTE,
+  };
 }
 
 async function runFullAnalysis(patientData) {
@@ -132,7 +148,7 @@ async function runFullAnalysis(patientData) {
 
   let prediction = null;
   let features = null;
-  let engineType = 'onnx-runtime';
+  let inferenceBackend = null;
 
   if (store?.daily && Object.keys(store.daily).length) {
     features = extractFeatures({
@@ -142,8 +158,9 @@ async function runFullAnalysis(patientData) {
     try {
       if (!isModelLoaded()) await loadModel();
       prediction = await predictRisk(features);
+      inferenceBackend = 'onnx-runtime';
     } catch (err) {
-      engineType = 'feature-heuristic-fallback';
+      inferenceBackend = 'feature-heuristic-fallback';
       prediction = {
         label: features.health_score_norm < 0.6 ? 'high' : features.health_score_norm < 0.75 ? 'moderate' : 'low',
         riskPercent: Math.round((1 - features.health_score_norm) * 60 + features.anomaly_flag * 15),
@@ -152,38 +169,45 @@ async function runFullAnalysis(patientData) {
       };
     }
   } else {
-    engineType = 'insufficient-data';
+    inferenceBackend = 'insufficient-data';
     prediction = { label: 'unknown', riskPercent: 0, confidence: null };
   }
 
   const conditions = screening
-    ? buildConditionsFromPrediction(screening, prediction, features || {})
+    ? screening.categories.flatMap((cat) =>
+      cat.items.map((item) => {
+        const risk = deriveConditionRisk(
+          prediction.riskPercent ?? item.risk ?? 20,
+          item.name,
+          features || {},
+        );
+        return analyzeCondition(item.name, risk, HIGH_LEVEL(risk), prediction);
+      }),
+    )
     : [];
 
-  const domainVotes = DOMAIN_WEIGHTS.map((m) => ({
-    ...m,
-    vote: conditions.reduce((s, c) => s + c.calibratedRisk * m.weight, 0) / Math.max(1, conditions.length),
-  }));
+  const domainWeightedSummaries = buildDomainWeightedSummaries(conditions);
+  const heuristicConfidence = prediction?.confidence ?? 0.55;
 
-  const overallScore = prediction.riskPercent ?? screening?.overallScore ?? 0;
-
-  return {
-    version: prediction.modelId || 'MedWear-ONNX-v1',
-    engineType,
+  return attachLegacyEngineFields({
+    version: 'MedWear-RuleEngine-v1',
+    engineType: ENGINE_TYPE,
+    inferenceBackend,
     generatedAt: new Date().toISOString(),
     patient: profile,
-    ensembleConfidence: prediction.confidence,
+    heuristicConfidence,
     domainWeights: DOMAIN_WEIGHTS,
-    models: DOMAIN_WEIGHTS.map((m) => ({ ...m, role: 'onnx-domain-weight' })),
-    modelVotes: domainVotes,
+    domainWeightPlaceholders: DOMAIN_WEIGHTS.map((m) => ({ ...m, disclaimer: 'Configurable domain weight — not a trained model' })),
+    domainWeightedSummaries,
     conditions,
     summary: screening?.summary,
     overallRisk: prediction.label,
-    overallScore,
-    onnxPrediction: prediction,
+    overallScore: prediction.riskPercent ?? screening?.overallScore ?? 0,
+    optionalOnnxPrediction: inferenceBackend === 'onnx-runtime' ? prediction : null,
     modelInfo: getModelInfo(),
-    fusionWeights: { wearable: 0.65, clinical: 0.20, behavioral: 0.15 },
+    fusionWeights: { wearable: 0.55, clinical: 0.30, behavioral: 0.15 },
     dataQuality: screening?.dataCoverage?.quality || 'from-wearable-store',
+    disclaimer: LEGACY_FIELDS_NOTE,
     vitalsUsed: {
       heartRate: stats.heartRate,
       restingHR: stats.restingHR,
@@ -194,85 +218,90 @@ async function runFullAnalysis(patientData) {
       bmi: profile.bmi,
     },
     featureVector: features,
+  });
+}
+
+function enrichScreeningItem(item, ref, features, riskOverride) {
+  const risk = riskOverride ?? item.risk ?? 20;
+  const domainLabel = referenceDomainLabel(ref, null);
+  const hc = computeHeuristicConfidence(null, ref?.evidenceLevel || 'C');
+  return {
+    ...item,
+    risk,
+    level: HIGH_LEVEL(risk),
+    researchId: ref?.id,
+    evidenceLevel: ref?.evidenceLevel,
+    evidenceLabel: ref ? EVIDENCE_LABELS[ref.evidenceLevel] : undefined,
+    evidenceRationale: ref?.evidenceRationale,
+    engineType: ENGINE_TYPE,
+    referenceDomainLabel: domainLabel,
+    calibratedRisk: ref ? evidenceAdjustedRisk(risk, ref.evidenceLevel) : risk,
+    heuristicConfidence: hc,
+    confidence: hc,
+    references: ref?.references,
   };
 }
 
 function enrichScreeningData(screening, store) {
-  const base = { ...screening };
-  if (store?.daily) {
-    const days = Object.keys(store.daily).sort();
-    const features = extractFeatures({ days: store.daily, targetDay: days[days.length - 1] });
-    return {
-      ...base,
-      aiVersion: 'MedWear-ONNX-v1',
-      engineType: 'onnx-runtime',
-      categories: screening.categories.map((cat) => ({
-        ...cat,
-        items: cat.items.map((item) => {
-          const rid = ITEM_RESEARCH_MAP[item.name];
-          const ref = rid ? getReference(rid) : null;
-          const risk = deriveConditionRisk(
-            item.risk ?? (features.health_score_norm < 0.65 ? 45 : 20),
-            item.name,
-            features,
-          );
-          return {
-            ...item,
-            risk,
-            level: HIGH_LEVEL(risk),
-            researchId: rid,
-            evidenceLevel: ref?.evidenceLevel,
-            evidenceLabel: ref ? EVIDENCE_LABELS[ref.evidenceLevel] : undefined,
-            engineType: 'onnx-runtime',
-            aiModel: ref?.model || 'MedWear-ONNX',
-            calibratedRisk: ref ? evidenceAdjustedRisk(risk, ref.evidenceLevel) : risk,
-            references: ref?.references,
-          };
-        }),
-      })),
-    };
-  }
-  return enrichScreeningDataSync(screening);
-}
+  const base = { ...screening, aiVersion: 'MedWear-RuleEngine-v1', engineType: ENGINE_TYPE };
+  if (!store?.daily) return enrichScreeningDataSync(screening);
 
-function enrichScreeningDataSync(screening) {
+  const days = Object.keys(store.daily).sort();
+  const features = extractFeatures({ days: store.daily, targetDay: days[days.length - 1] });
+
   return {
-    ...screening,
-    aiVersion: 'MedWear-ONNX-v1',
-    engineType: 'onnx-runtime',
+    ...base,
     categories: screening.categories.map((cat) => ({
       ...cat,
       items: cat.items.map((item) => {
         const rid = ITEM_RESEARCH_MAP[item.name];
         const ref = rid ? getReference(rid) : null;
-        if (!ref) return { ...item, engineType: 'onnx-runtime' };
-        return {
-          ...item,
-          researchId: rid,
-          evidenceLevel: ref.evidenceLevel,
-          evidenceLabel: EVIDENCE_LABELS[ref.evidenceLevel],
-          engineType: 'onnx-runtime',
-          aiModel: ref.model,
-          calibratedRisk: evidenceAdjustedRisk(item.risk, ref.evidenceLevel),
-          confidence: modelConfidence(null, ref.evidenceLevel),
-          references: ref.references,
-        };
+        const risk = deriveConditionRisk(
+          item.risk ?? (features.health_score_norm < 0.65 ? 45 : 20),
+          item.name,
+          features,
+        );
+        return enrichScreeningItem(item, ref, features, risk);
+      }),
+    })),
+  };
+}
+
+function enrichScreeningDataSync(screening) {
+  return {
+    ...screening,
+    aiVersion: 'MedWear-RuleEngine-v1',
+    engineType: ENGINE_TYPE,
+    categories: (screening.categories || []).map((cat) => ({
+      ...cat,
+      items: cat.items.map((item) => {
+        const rid = ITEM_RESEARCH_MAP[item.name];
+        const ref = rid ? getReference(rid) : null;
+        if (!ref) return { ...item, engineType: ENGINE_TYPE };
+        return enrichScreeningItem(item, ref, null);
       }),
     })),
   };
 }
 
 module.exports = {
+  ENGINE_TYPE,
+  LEGACY_FIELDS_NOTE,
   DOMAIN_WEIGHTS,
-  MODELS: DOMAIN_WEIGHTS.map((m) => ({ ...m, role: 'onnx-domain-weight' })),
+  /** @deprecated use DOMAIN_WEIGHTS */
+  MODELS: DOMAIN_WEIGHTS,
   ITEM_RESEARCH_MAP,
   runFullAnalysis,
   enrichScreeningData,
   enrichScreeningDataSync,
   analyzeCondition,
-  runOnnxFromStore,
   evidenceAdjustedRisk,
+  computeHeuristicConfidence,
+  /** @deprecated */
   ensembleScore: evidenceAdjustedRisk,
-  calibrateConfidence: modelConfidence,
+  /** @deprecated */
+  calibrateConfidence: computeHeuristicConfidence,
   getAllReferences,
+  buildDomainWeightedSummaries,
+  referenceDomainLabel,
 };

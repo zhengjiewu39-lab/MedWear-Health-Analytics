@@ -108,9 +108,11 @@ Supported: HeartRate, OxygenSaturation, StepCount, SleepAnalysis, HRV, ActiveEne
 ```bash
 npm run generate:benchmark   # random physiology + independent gold labels (n=5000)
 npm run test:server
-npm run evaluate             # → benchmarks/results/latest.json
-npm run evaluate:supplement    # scenarios + FP burden + ML compare + EVALUATION sync
+npm run evaluate             # → benchmarks/results/latest.json (gitignored; see benchmarks/results/example-summary.json)
+npm run evaluate:supplement    # scenarios + FP burden + fair/oracle ML compare + EVALUATION sync
 ```
+
+> **Note:** Full benchmark JSON artifacts under `benchmarks/results/*.json` are **gitignored** (except `example-summary.json`). Regenerate locally with `npm run evaluate`.
 
 | Metric (n=5000, seed=42, BHI + MAD engine) | Value | 95% CI |
 |--------------|-------|--------|

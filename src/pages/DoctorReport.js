@@ -19,8 +19,8 @@ import { screeningApi } from '../services/api';
 import useModeRefresh from '../hooks/useModeRefresh';
 import { useLang } from '../contexts/LanguageContext';
 
-const riskLabel = { low: '低风险', moderate: '中风险', high: '高风险' };
-const riskLabelEn = { low: 'Low Risk', moderate: 'Moderate Risk', high: 'High Risk' };
+import { bhiTierLabel, bhiTierShort } from '../utils/bhiWatchTier';
+
 const riskChip = { low: 'success', moderate: 'warning', high: 'error' };
 const flagColor = { normal: 'success', watch: 'warning', abnormal: 'error' };
 
@@ -63,7 +63,7 @@ function DoctorReport() {
   const [error, setError] = useState('');
   const [form, setForm] = useState({ name: '', gender: '男', age: '', height: '', weight: '', phone: '' });
   const { t, isEn } = useLang();
-  const rl = (k) => t(riskLabel[k], riskLabelEn[k]);
+  const rl = (k) => bhiTierLabel(k, isEn);
   const pick = (obj, field) => (isEn && obj?.[`${field}_en`]) || obj?.[field];
 
   const syncForm = (data) => {
@@ -261,7 +261,7 @@ function DoctorReport() {
             <Typography variant="h5" fontWeight={800} gutterBottom>{pick(report, 'reportType')}</Typography>
             <Typography variant="body2" color="text.secondary">
               {t('报告编号', 'Report No.')} {report.reportId} · {t('生成', 'Generated')} {new Date(report.generatedAt).toLocaleString()}
-              {report.aiGenerated && <Chip size="small" label={`AI · ${report.aiModel || ''}`} color="primary" sx={{ ml: 1 }} />}
+              {report.aiGenerated && <Chip size="small" label={`${report.engineType || 'evidence-weighted-rule-engine'} · ${report.referenceDomainLabel || report.aiVersion || ''}`} color="primary" sx={{ ml: 1 }} />}
             </Typography>
           </Grid>
           <Grid item xs={12} md={4} sx={{ textAlign: { md: 'right' } }}>
@@ -478,7 +478,7 @@ function DoctorReport() {
                 <Chip size="small" color="success" label={t('已批准', 'Approved')} />
               </Box>
               <Typography variant="body2">{isEn ? iv.action_en : iv.action}</Typography>
-              <Typography variant="caption" color="text.secondary">{iv.aiModel} · {iv.confidence}% · {iv.reviewedBy}</Typography>
+              <Typography variant="caption" color="text.secondary">{iv.referenceDomainLabel || iv.aiModel} · {iv.confidence}% · {iv.reviewedBy}</Typography>
             </Box>
           ))
         )}

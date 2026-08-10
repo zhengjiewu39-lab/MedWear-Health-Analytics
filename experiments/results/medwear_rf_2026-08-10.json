@@ -2,10 +2,29 @@
   "exp_id": "medwear_rf_2026-08-10",
   "project": "medwear",
   "model": "rf",
-  "data": "experiments/data/medwear/features_v1.csv",
+  "data": "/Users/wuzhengjie/Desktop/\u533b\u7528\u53ef\u7a7f\u6234\u8bbe\u5907\u6570\u636e\u5206\u6790\u5e73\u53f0/experiments/data/medwear/features_v1.csv",
   "cv": 5,
   "seed": 42,
   "n_samples": 5000,
+  "feature_cols": [
+    "steps_norm",
+    "avg_hr",
+    "std_hr",
+    "resting_hr",
+    "avg_spo2",
+    "min_spo2",
+    "avg_hrv",
+    "sleep_hours",
+    "deep_sleep_ratio",
+    "active_energy_norm",
+    "hr_above_threshold",
+    "spo2_below_threshold",
+    "low_activity",
+    "window_hr_mean",
+    "window_hr_std",
+    "anomaly_flag",
+    "health_score_norm"
+  ],
   "metrics": {
     "accuracy_mean": 0.9858,
     "accuracy_std": 0.0029257477676655616,
@@ -50,7 +69,6 @@
     "low",
     "moderate"
   ],
-  "onnx_exported": true,
-  "created_at": "2026-08-10T12:42:57.221901Z",
-  "onnx_path": "server/ai/models/medwear_rf.onnx"
+  "onnx_exported": false,
+  "created_at": "2026-08-10T13:10:38.379243Z"
 }

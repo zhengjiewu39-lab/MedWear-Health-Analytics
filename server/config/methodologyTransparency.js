@@ -8,6 +8,8 @@ const fs = require('fs');
 const path = require('path');
 const { SCORE_FIELD, WEIGHTS } = require('../services/behavioralHealthIndex');
 const { SENSITIVITY_PRESETS } = require('../services/robustAnomaly');
+const { BHI_WATCH_TIERS } = require('./bhiWatchTier');
+const { EVIDENCE_LEVEL_RULES } = require('../data/researchReferences');
 
 const SOURCE_FILE = 'server/config/methodologyTransparency.js';
 
@@ -96,10 +98,37 @@ const anomalyDetection = {
   ],
 };
 
+const bhiWatchTier = {
+  label_en: 'BHI watch tiers (behavioral wellness — NOT calibrated disease risk)',
+  label_zh: 'BHI 关注分层（行为健康 — 非经临床校准的疾病风险）',
+  notCalibratedAgainstOutcomes: true,
+  tiers: BHI_WATCH_TIERS,
+  implementation: 'server/config/bhiWatchTier.js → classifyBHIWatchTier()',
+  disclaimer_en: 'Tier labels (Stable / Observe / Watch closely) are heuristic BHI bands — not validated against clinical outcomes.',
+  disclaimer_zh: '分层标签（当前平稳/建议观察/建议重点关注）为 BHI 启发式区间 — 未在临床结局上验证。',
+};
+
+const evidenceLevels = {
+  label_en: 'Author-assigned evidence tiers (A/B/C)',
+  label_zh: '作者标注的证据等级（A/B/C）',
+  notExternalRating: true,
+  rules: EVIDENCE_LEVEL_RULES,
+  disclaimer_en: 'A/B/C levels reflect author annotation from public literature — NOT independent third-party ratings.',
+  disclaimer_zh: 'A/B/C 等级为作者基于公开文献的标注 — 非外部机构独立评级。',
+  implementation: 'server/data/researchReferences.js → EVIDENCE_LEVEL_RULES + EVIDENCE_RATIONALE',
+};
+
 const ruleEngine = {
+  engineType: 'evidence-weighted-rule-engine',
   version: 'MedWear-RuleEngine-v1',
   label_en: 'Evidence-weighted rule engine (not ML ensemble)',
   label_zh: '证据加权规则引擎（非 ML 集成）',
+  apiFields: {
+    referenceDomainLabel: 'Configurable reference domain label — not a trained model name',
+    domainWeightedSummaries: 'Domain-weight placeholders — not model votes',
+    heuristicConfidence: 'Evidence-adjusted heuristic — not ensemble confidence',
+    deprecatedAliases: ['aiModel', 'models', 'modelVotes', 'ensembleConfidence'],
+  },
   removedClaims: ['CardioNet-style declared accuracy', 'ensemble confidence clamped to 0.98', 'fake model validation AUC'],
   domainWeights: [
     { domain: 'cardiovascular', weight: 0.28 },
@@ -113,6 +142,29 @@ const ruleEngine = {
   implementation: 'server/ai/engine.js',
   disclaimer_en: 'Domain weights are configurable placeholders — not trained model votes.',
   disclaimer_zh: '领域权重为可配置占位符 — 非训练模型投票。',
+};
+
+const robustnessTests = {
+  label_en: 'Robustness scenarios (server/__tests__/robustness.test.js)',
+  label_zh: '鲁棒性场景（server/__tests__/robustness.test.js）',
+  scenarios_en: [
+    'Missing day data / empty sensor arrays',
+    'Missing sensor dimensions (no HRV, no SpO₂)',
+    'Single-point HR/SpO₂ outliers (artifact cleaning)',
+    'Sensor drift (gradual HR elevation over window)',
+    'Motion artifact (high-activity days excluded from MAD baseline)',
+    'Recovery/rest day (low steps, suppressed activity alerts context)',
+  ],
+  scenarios_zh: [
+    '缺失日数据 / 空传感器数组',
+    '缺失传感器维度（无 HRV、无 SpO₂）',
+    '单点 HR/SpO₂ 离群值（伪影清洗）',
+    '传感器漂移（窗口内 HR 渐升）',
+    '运动伪影（高活动日排除 MAD 基线）',
+    '恢复/休息日（低步数）',
+  ],
+  expectation_en: 'BHI and anomaly pipelines return finite scores/tiers without throwing; outputs may degrade gracefully.',
+  expectation_zh: 'BHI 与异常管道返回有限分数/分层且不抛错；输出可优雅降级。',
 };
 
 const cohortSimulation = {
@@ -149,9 +201,12 @@ function getMethodologyTransparency() {
     source: SOURCE_FILE,
     updatedAt: new Date().toISOString(),
     healthScore,
+    bhiWatchTier,
+    evidenceLevels,
     alerts,
     anomalyDetection,
     ruleEngine,
+    robustnessTests,
     cohortSimulation,
     ethicsLink: '/api/methodology/transparency',
   };
@@ -163,6 +218,9 @@ function renderMethodsMarkdown(isEn = true) {
   const an = t.anomalyDetection;
   const al = t.alerts;
   const re = t.ruleEngine;
+  const bw = t.bhiWatchTier;
+  const ev = t.evidenceLevels;
+  const rb = t.robustnessTests;
   const co = t.cohortSimulation;
 
   if (isEn) {
@@ -215,23 +273,47 @@ ${Object.entries(an.sensitivityPresets).map(([name, p]) => `| ${name} | ${p.wind
 
 Implementation: \`${an.implementation}\`
 
-## Risk Stratification (from BHI)
+## BHI Watch Tiers (not disease risk)
 
-| Tier | BHI score |
-|------|-----------|
-| low | ≥ 80 |
-| moderate | 60–79 |
-| high | < 60 |
+**${bw.disclaimer_en}**
+
+| Internal key | UI label (EN) | BHI range |
+|--------------|---------------|-----------|
+| low | ${BHI_WATCH_TIERS.low.label_en} | ≥ 80 |
+| moderate | ${BHI_WATCH_TIERS.moderate.label_en} | 60–79 |
+| high | ${BHI_WATCH_TIERS.high.label_en} | < 60 |
+
+Implementation: \`${bw.implementation}\`
+
+## Evidence Levels (A/B/C)
+
+**${ev.disclaimer_en}**
+
+| Level | Criteria |
+|-------|----------|
+| A | ${EVIDENCE_LEVEL_RULES.A.criteria_en} |
+| B | ${EVIDENCE_LEVEL_RULES.B.criteria_en} |
+| C | ${EVIDENCE_LEVEL_RULES.C.criteria_en} |
+
+Implementation: \`${ev.implementation}\`
 
 ## Rule Engine (Screening)
 
-**${re.disclaimer_en}** Version: \`${re.version}\`. Confidence capped at ${re.confidenceCap}.
+**${re.disclaimer_en}** \`engineType: ${re.engineType}\` · Version: \`${re.version}\`. Confidence capped at ${re.confidenceCap}.
 
 | Domain | Weight |
 |--------|--------|
 ${re.domainWeights.map((d) => `| ${d.domain} | ${(d.weight * 100).toFixed(0)}% |`).join('\n')}
 
+Honest API fields: \`referenceDomainLabel\`, \`domainWeightedSummaries\`, \`heuristicConfidence\`. Deprecated aliases (not shown in UI): ${re.apiFields.deprecatedAliases.join(', ')}.
+
 Removed claims: ${re.removedClaims.join('; ')}.
+
+## Robustness Testing
+
+**${rb.expectation_en}**
+
+${rb.scenarios_en.map((s) => `- ${s}`).join('\n')}
 
 ## Exploratory Cohort Scenario Simulation
 
@@ -300,23 +382,47 @@ ${Object.entries(an.sensitivityPresets).map(([name, p]) => `| ${name} | ${p.wind
 
 实现：\`${an.implementation}\`
 
-## 风险分层（基于 BHI）
+## BHI 关注分层（非疾病风险）
 
-| 等级 | BHI 分数 |
+**${bw.disclaimer_zh}**
+
+| 内部键 | UI 标签（中文） | BHI 区间 |
+|--------|-----------------|----------|
+| low | ${BHI_WATCH_TIERS.low.label_zh} | ≥ 80 |
+| moderate | ${BHI_WATCH_TIERS.moderate.label_zh} | 60–79 |
+| high | ${BHI_WATCH_TIERS.high.label_zh} | < 60 |
+
+实现：\`${bw.implementation}\`
+
+## 证据等级（A/B/C）
+
+**${ev.disclaimer_zh}**
+
+| 等级 | 判定规则 |
 |------|----------|
-| 低 | ≥ 80 |
-| 中 | 60–79 |
-| 高 | < 60 |
+| A | ${EVIDENCE_LEVEL_RULES.A.criteria_zh} |
+| B | ${EVIDENCE_LEVEL_RULES.B.criteria_zh} |
+| C | ${EVIDENCE_LEVEL_RULES.C.criteria_zh} |
+
+实现：\`${ev.implementation}\`
 
 ## 规则引擎（筛查）
 
-**${re.disclaimer_zh}** 版本：\`${re.version}\`。置信度上限 ${re.confidenceCap}。
+**${re.disclaimer_zh}** \`engineType: ${re.engineType}\` · 版本：\`${re.version}\`。置信度上限 ${re.confidenceCap}。
 
 | 领域 | 权重 |
 |------|------|
 ${re.domainWeights.map((d) => `| ${d.domain} | ${(d.weight * 100).toFixed(0)}% |`).join('\n')}
 
+诚实 API 字段：\`referenceDomainLabel\`、\`domainWeightedSummaries\`、\`heuristicConfidence\`。已弃用别名（前端不展示）：${re.apiFields.deprecatedAliases.join('、')}。
+
 已移除声明：${re.removedClaims.join('；')}。
+
+## 鲁棒性测试
+
+**${rb.expectation_zh}**
+
+${rb.scenarios_zh.map((s) => `- ${s}`).join('\n')}
 
 ## 探索性队列情景模拟
 
@@ -351,6 +457,9 @@ module.exports = {
   healthScore,
   alerts,
   anomalyDetection,
+  bhiWatchTier,
+  evidenceLevels,
+  robustnessTests,
   ruleEngine,
   cohortSimulation,
 };

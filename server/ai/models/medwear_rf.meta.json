@@ -31,7 +31,7 @@
     "macro_f1_mean": 0.9834401404422785,
     "macro_f1_std": 0.0033824426762684807
   },
-  "exported_at": "2026-08-10T12:43:00.833146Z",
+  "exported_at": "2026-08-10T13:09:49.201955Z",
   "runtime": "onnxruntime-node",
   "input_name": "float_input"
 }

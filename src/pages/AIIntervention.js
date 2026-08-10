@@ -212,7 +212,7 @@ function AIIntervention() {
                     {t('AI 依据', 'AI rationale')}: {pick(item, 'rationale')}
                   </Typography>
                   <Stack direction="row" spacing={0.5} flexWrap="wrap" sx={{ mb: 1.5 }}>
-                    <Chip size="small" icon={<Psychology />} label={item.aiModel} variant="outlined" />
+                    <Chip size="small" icon={<Psychology />} label={item.referenceDomainLabel || item.aiModel} variant="outlined" />
                     <Chip size="small" label={`${t('置信度', 'Confidence')} ${item.confidence}%`} />
                     {item.horizon && <Chip size="small" label={item.horizon} variant="outlined" />}
                     {item.patientId && <Chip size="small" label={item.patientId} variant="outlined" />}

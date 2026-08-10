@@ -184,18 +184,39 @@ curl http://localhost:3001/api/research/validate
 | Est. extra outpatient visits | 64.8 |
 | Alert precision (eval) | 0.7576 |
 
-## 规则引擎 vs 简单 ML（导出特征）
+## 规则引擎 vs 简单 ML — 公平比较（原始可穿戴特征）
 
-> 同一合成导出 — **特征含引擎衍生 BHI/异常标记**；sklearn CV 高不代表独立验证。`npm run experiment:compare-all`。
+> **主表：** 15 维导出，**不含** BHI/异常标记。规则引擎因**可解释与可审计**优先，而非 oracle sklearn 准确率。`npm run experiment:compare-fair`。
 
-| Model | Risk accuracy / Macro F1 | Notes |
-|-------|--------------------------|-------|
-| Rule engine | risk 0.787, alert F1 0.8441 | vs clinical gold |
+| Model | BHI tier accuracy / Macro F1 | Notes |
+|-------|------------------------------|-------|
+| Rule engine (vs clinical gold) | risk 0.787, alert F1 0.8441 | product metric |
 | majority-class | acc 0.6432, F1 0.261 | node baseline |
-| bhi-threshold-heuristic | acc 0.7932, F1 0.736 | node baseline |
-| lr (sklearn) | acc 0.9446, F1 0.9364173036358509 | 5-fold CV |
-| dt (sklearn) | acc 0.9827999999999999, F1 0.9794665527307297 | 5-fold CV |
-| rf (sklearn) | acc 0.9858, F1 0.9834401404422785 | 5-fold CV |
+| hr-steps-heuristic | acc 0.5002, F1 0.3945 | node baseline |
+| lr (sklearn, fair) | acc 0.9474, F1 0.93925697992577 | 5-fold CV, raw features |
+| dt (sklearn, fair) | acc 0.9715999999999999, F1 0.9682518572606396 | 5-fold CV, raw features |
+| rf (sklearn, fair) | acc 0.9872, F1 0.9841347841015973 | 5-fold CV, raw features |
+
+### 附录：oracle 比较（含引擎衍生特征 — 特征泄露）
+
+> 含 `health_score_norm` + `anomaly_flag`。sklearn CV 高（~0.94–0.98）**非**独立验证。`npm run experiment:compare-oracle`。
+
+| Model | Accuracy / Macro F1 | Notes |
+|-------|---------------------|-------|
+| lr (sklearn, oracle) | acc 0.9446, F1 0.9364173036358509 | appendix only |
+| dt (sklearn, oracle) | acc 0.9827999999999999, F1 0.9794665527307297 | appendix only |
+| rf (sklearn, oracle) | acc 0.9858, F1 0.9834401404422785 | appendix only |
+
+## 参数敏感性（结局模拟）
+
+> 结局高度依赖参数 — `npm run sensitivity:outcomes` 生成 tornado。
+
+| Parameter perturbation | Metric | Baseline | Perturbed | Δ |
+|------------------------|--------|----------|-----------|---|
+| STAGE_DISTRIBUTION.intervention (I +15%) | earlyStageRate (intervention, analytical) | 0.75 | 0.8045 | 0.0545 |
+| TREATMENT_INITIATION_RATE.intervention (+10%) | treatmentInitiationRate (intervention) | 0.92 | 0.99 | 0.07 |
+| CHRONIC_CONTROL_RATE.intervention (+8%) | chronicControlRate (intervention) | 0.74 | 0.7992 | 0.0592 |
+| simulated 5y survival headline (frozen cohort) | survival5y.absoluteDelta | 0.2464 | 0.2464 | 0 |
 
 ## 可移植特征 / 外部数据集基线
 

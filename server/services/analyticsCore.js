@@ -1,5 +1,6 @@
 const { computeBHIWithTrend, computeBehavioralHealthIndex, SCORE_FIELD } = require('./behavioralHealthIndex');
 const { detectRobustAnomalies } = require('./robustAnomaly');
+const { classifyBHIWatchTier } = require('../config/bhiWatchTier');
 
 function avg(arr) {
   if (!arr?.length) return null;
@@ -43,12 +44,12 @@ function computeDayScoreDetail(dayData, opts = {}) {
   return computeBHIWithTrend(d, prior, { age: opts.age, sex: opts.sex });
 }
 
+/** BHI watch tier — NOT calibrated disease risk. Prefer classifyBHIWatchTier. */
 function classifyRiskFromScore(score) {
-  if (score == null) return 'unknown';
-  if (score >= 80) return 'low';
-  if (score >= 60) return 'moderate';
-  return 'high';
+  return classifyBHIWatchTier(score);
 }
+
+const classifyBHIWatchTierExport = classifyBHIWatchTier;
 
 function evaluateDayAlerts(dayData, thresholds = {}, patient = 'Bench') {
   const d = normalizeDay(dayData);
@@ -62,7 +63,6 @@ function evaluateDayAlerts(dayData, thresholds = {}, patient = 'Bench') {
   const hrPeak = hrReadings.length ? Math.max(...hrReadings) : null;
   const hrNadir = hrReadings.length ? Math.min(...hrReadings) : null;
 
-  // Consumer wearables often flag peak/nadir readings, not only daily mean.
   if ((hrAvg && hrAvg > hrMax) || (hrPeak != null && hrPeak > hrMax)) {
     alerts.push({ type: '心率偏高', severity: 'high' });
   }
@@ -107,17 +107,18 @@ function evaluateCase(caseData, thresholds) {
   const alerts = evaluateDayAlerts(dayData, thresholds);
   const anomalies = detectAnomaliesFromStore(store);
   const score = computeDayScore(dayData, { priorDays });
-  const riskLevel = classifyRiskFromScore(score);
+  const bhiWatchTier = classifyBHIWatchTier(score);
 
   return {
     id: caseData.id,
-    alerts: alerts.map(a => a.type),
+    alerts: alerts.map((a) => a.type),
     anomalyDetected: anomalies.length > 0,
-    anomalyTypes: anomalies.map(a => a.type),
-    healthScore: score, // SCORE_FIELD.apiField — Behavioral Health Index (BHI)
+    anomalyTypes: anomalies.map((a) => a.type),
+    healthScore: score,
     scoreKind: SCORE_FIELD.kind,
     scoreLabel: SCORE_FIELD.label_en,
-    riskLevel,
+    bhiWatchTier,
+    riskLevel: bhiWatchTier,
   };
 }
 
@@ -128,6 +129,7 @@ module.exports = {
   computeDayScore,
   computeDayScoreDetail,
   computeBehavioralHealthIndex,
+  classifyBHIWatchTier: classifyBHIWatchTierExport,
   classifyRiskFromScore,
   evaluateDayAlerts,
   buildStoreFromDays,

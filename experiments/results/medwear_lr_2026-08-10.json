@@ -1,0 +1,74 @@
+{
+  "exp_id": "medwear_lr_2026-08-10",
+  "project": "medwear",
+  "model": "lr",
+  "data": "/Users/wuzhengjie/Desktop/\u533b\u7528\u53ef\u7a7f\u6234\u8bbe\u5907\u6570\u636e\u5206\u6790\u5e73\u53f0/experiments/data/medwear/features_v1.csv",
+  "cv": 5,
+  "seed": 42,
+  "n_samples": 5000,
+  "feature_cols": [
+    "steps_norm",
+    "avg_hr",
+    "std_hr",
+    "resting_hr",
+    "avg_spo2",
+    "min_spo2",
+    "avg_hrv",
+    "sleep_hours",
+    "deep_sleep_ratio",
+    "active_energy_norm",
+    "hr_above_threshold",
+    "spo2_below_threshold",
+    "low_activity",
+    "window_hr_mean",
+    "window_hr_std",
+    "anomaly_flag",
+    "health_score_norm"
+  ],
+  "metrics": {
+    "accuracy_mean": 0.9446,
+    "accuracy_std": 0.003878143885933067,
+    "macro_f1_mean": 0.9364173036358509,
+    "macro_f1_std": 0.005552061116687808
+  },
+  "classification_report": {
+    "0": {
+      "precision": 0.9387442572741195,
+      "recall": 0.9808,
+      "f1-score": 0.9593114241001565,
+      "support": 625.0
+    },
+    "1": {
+      "precision": 0.9850794680506001,
+      "recall": 0.9443407960199005,
+      "f1-score": 0.9642800444515003,
+      "support": 3216.0
+    },
+    "2": {
+      "precision": 0.8488924050632911,
+      "recall": 0.9257981018119068,
+      "f1-score": 0.8856789104416013,
+      "support": 1159.0
+    },
+    "accuracy": 0.9446,
+    "macro avg": {
+      "precision": 0.9242387101293369,
+      "recall": 0.9503129659439358,
+      "f1-score": 0.9364234596644193,
+      "support": 5000.0
+    },
+    "weighted avg": {
+      "precision": 0.9477194055030819,
+      "recall": 0.9446,
+      "f1-score": 0.9454392240440876,
+      "support": 5000.0
+    }
+  },
+  "label_classes": [
+    "high",
+    "low",
+    "moderate"
+  ],
+  "onnx_exported": false,
+  "created_at": "2026-08-10T13:10:31.729504Z"
+}

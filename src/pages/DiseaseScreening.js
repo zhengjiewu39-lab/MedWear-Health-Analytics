@@ -22,9 +22,9 @@ import { useLang } from '../contexts/LanguageContext';
 
 import { CHART } from '../config/chartTheme';
 
+import { bhiTierLabel, bhiTierShort } from '../utils/bhiWatchTier';
+
 const riskColor = CHART.risk;
-const riskLabel = { low: '低风险', moderate: '中风险', high: '高风险', unknown: '待导入' };
-const riskLabelEn = { low: 'Low Risk', moderate: 'Moderate Risk', high: 'High Risk', unknown: 'Pending Import' };
 const riskChip = { low: 'success', moderate: 'warning', high: 'error', unknown: 'default' };
 const insightIcon = { positive: <CheckCircle color="success" />, warning: <Warning color="warning" />, info: <Info color="info" /> };
 
@@ -104,7 +104,7 @@ function DiseaseScreening() {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Biotech sx={{ fontSize: 48 }} />
               <Box>
-                <Typography variant="h6" fontWeight={600}>{t('综合筛查结论', 'Overall Screening Conclusion')} · {t(riskLabel[data.overallRisk], riskLabelEn[data.overallRisk]) || t('评估中', 'Evaluating')}</Typography>
+                <Typography variant="h6" fontWeight={600}>{t('综合筛查结论', 'Overall Screening Conclusion')} · {bhiTierLabel(data.overallRisk, isEn) || t('评估中', 'Evaluating')}</Typography>
                 <Typography variant="body2" sx={{ mt: 0.5, opacity: 0.95 }}>{pick(data, 'summary')}</Typography>
               </Box>
             </Box>
@@ -133,7 +133,7 @@ function DiseaseScreening() {
               <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
                   <Typography variant="subtitle2" fontWeight={600}>{pick(cat, 'name')}</Typography>
-                  <Chip label={t(riskLabel[cat.riskLevel], riskLabelEn[cat.riskLevel])} size="small" color={riskChip[cat.riskLevel]} sx={{ height: 20, fontSize: '0.65rem' }} />
+                  <Chip label={bhiTierShort(cat.riskLevel, isEn)} size="small" color={riskChip[cat.riskLevel]} sx={{ height: 20, fontSize: '0.65rem' }} />
                 </Box>
                 <Typography variant="h5" fontWeight={700} color={riskColor[cat.riskLevel]}>
                   {cat.healthScore ?? (data.overallScoreType === 'health' || data.mode === 'real' ? Math.max(55, 100 - (cat.score || 0)) : cat.score)}
@@ -175,13 +175,13 @@ function DiseaseScreening() {
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1, flexWrap: 'wrap', gap: 1 }}>
                   <Typography fontWeight={600}>{item.name}</Typography>
                   <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
-                    <Chip label={`${item.calibratedRisk ?? item.risk}% · ${t(riskLabel[item.level], riskLabelEn[item.level])}`} size="small" color={riskChip[item.level]} />
+                    <Chip label={`${item.calibratedRisk ?? item.risk}% · ${bhiTierShort(item.level, isEn)}`} size="small" color={riskChip[item.level]} />
                     {item.evidenceLevel && <EvidenceBadge level={item.evidenceLevel} label={item.evidenceLabel} />}
                   </Box>
                 </Box>
-                {item.aiModel && (
+                {item.referenceDomainLabel && (
                   <Typography variant="caption" color="primary" display="block" gutterBottom>
-                    {t(`模型 ${item.aiModel}`, `Model ${item.aiModel}`)} · {t('置信度', 'Confidence')} {item.confidence ? `${(item.confidence * 100).toFixed(1)}%` : '—'}
+                    {t(`参考领域 ${item.referenceDomainLabel}`, `Reference domain ${item.referenceDomainLabel}`)} · {t('启发式置信度', 'Heuristic confidence')} {item.heuristicConfidence != null ? `${(item.heuristicConfidence * 100).toFixed(1)}%` : item.confidence ? `${(item.confidence * 100).toFixed(1)}%` : '—'}
                   </Typography>
                 )}
                 <Typography variant="body2" color="text.secondary" gutterBottom>

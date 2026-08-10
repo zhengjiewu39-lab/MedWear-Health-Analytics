@@ -8,7 +8,9 @@ const ROOT = path.join(__dirname, '../..');
 const FILES = {
   scenarios: 'benchmarks/results/scenarios-latest.json',
   fpBurden: 'benchmarks/results/fp-burden-latest.json',
-  mlComparison: 'benchmarks/results/ml-comparison-latest.json',
+  mlComparison: 'benchmarks/results/ml-comparison-fair-latest.json',
+  mlComparisonOracle: 'benchmarks/results/ml-comparison-oracle-latest.json',
+  sensitivityOutcomes: 'benchmarks/results/sensitivity-outcomes-latest.json',
   externalDescriptive: 'benchmarks/results/external-descriptive-latest.json',
 };
 
@@ -28,11 +30,15 @@ function getEvaluationSupplement() {
     scenarios: readJson(FILES.scenarios),
     fpBurden: readJson(FILES.fpBurden),
     mlComparison: readJson(FILES.mlComparison),
+    mlComparisonOracle: readJson(FILES.mlComparisonOracle),
+    sensitivityOutcomes: readJson(FILES.sensitivityOutcomes),
     externalDescriptive: readJson(FILES.externalDescriptive),
     regenerate: {
       scenarios: 'npm run freeze:scenarios',
       fpBurden: 'npm run analyze:fp-burden',
-      mlComparison: 'npm run experiment:compare',
+      mlComparison: 'npm run experiment:compare-fair',
+      mlComparisonOracle: 'npm run experiment:compare-oracle',
+      sensitivityOutcomes: 'npm run sensitivity:outcomes',
       externalDescriptive: 'npm run evaluate:public',
       all: 'npm run evaluate:supplement',
     },
@@ -84,23 +90,59 @@ function renderSupplementMarkdown(isEn = true) {
   }
 
   if (isEn) {
-    lines.push('## Rule engine vs simple ML (exported features)\n');
-    lines.push('> Same synthetic export — **features include engine-derived BHI/anomaly flags**; high sklearn CV does not replace engine-vs-gold. `npm run experiment:compare-all`.\n');
+    lines.push('## Rule engine vs simple ML — fair comparison (raw wearable features)\n');
+    lines.push('> **Primary table:** 15-dim export **without** BHI/anomaly flags. Rule engine preferred for **interpretability & auditability**, not oracle sklearn accuracy. Regenerate: `npm run experiment:compare-fair`.\n');
   } else {
-    lines.push('## 规则引擎 vs 简单 ML（导出特征）\n');
-    lines.push('> 同一合成导出 — **特征含引擎衍生 BHI/异常标记**；sklearn CV 高不代表独立验证。`npm run experiment:compare-all`。\n');
+    lines.push('## 规则引擎 vs 简单 ML — 公平比较（原始可穿戴特征）\n');
+    lines.push('> **主表：** 15 维导出，**不含** BHI/异常标记。规则引擎因**可解释与可审计**优先，而非 oracle sklearn 准确率。`npm run experiment:compare-fair`。\n');
   }
 
   if (s.mlComparison?.ruleEngine) {
     const re = s.mlComparison.ruleEngine;
-    lines.push(`| Model | Risk accuracy / Macro F1 | Notes |`);
-    lines.push(`|-------|--------------------------|-------|`);
-    lines.push(`| Rule engine | risk ${re.riskAccuracy}, alert F1 ${re.alertF1} | vs clinical gold |`);
+    lines.push(`| Model | BHI tier accuracy / Macro F1 | Notes |`);
+    lines.push(`|-------|------------------------------|-------|`);
+    lines.push(`| Rule engine (vs clinical gold) | risk ${re.riskAccuracy}, alert F1 ${re.alertF1 ?? '—'} | product metric |`);
     (s.mlComparison.nodeBaselines || []).forEach((m) => {
       lines.push(`| ${m.name} | acc ${m.accuracy}, F1 ${m.macroF1} | node baseline |`);
     });
     (s.mlComparison.mlModels || []).forEach((m) => {
-      lines.push(`| ${m.name} (sklearn) | acc ${m.accuracy}, F1 ${m.macroF1} | 5-fold CV |`);
+      lines.push(`| ${m.name} (sklearn, fair) | acc ${m.accuracy}, F1 ${m.macroF1} | 5-fold CV, raw features |`);
+    });
+    lines.push('');
+  } else {
+    lines.push(isEn ? '_Run `npm run experiment:compare-fair` to populate._\n' : '_运行 `npm run experiment:compare-fair` 生成表格。_\n');
+  }
+
+  if (isEn) {
+    lines.push('### Appendix: oracle comparison (engine-derived features — feature leakage)\n');
+    lines.push('> Includes `health_score_norm` + `anomaly_flag`. High sklearn CV (~0.94–0.98) is **not** independent validation. `npm run experiment:compare-oracle`.\n');
+  } else {
+    lines.push('### 附录：oracle 比较（含引擎衍生特征 — 特征泄露）\n');
+    lines.push('> 含 `health_score_norm` + `anomaly_flag`。sklearn CV 高（~0.94–0.98）**非**独立验证。`npm run experiment:compare-oracle`。\n');
+  }
+
+  if (s.mlComparisonOracle?.mlModels?.length) {
+    lines.push(`| Model | Accuracy / Macro F1 | Notes |`);
+    lines.push(`|-------|---------------------|-------|`);
+    s.mlComparisonOracle.mlModels.forEach((m) => {
+      lines.push(`| ${m.name} (sklearn, oracle) | acc ${m.accuracy}, F1 ${m.macroF1} | appendix only |`);
+    });
+    lines.push('');
+  }
+
+  if (isEn) {
+    lines.push('## Parameter sensitivity (outcome simulation)\n');
+    lines.push('> Outcomes highly parameter-driven — tornado from `npm run sensitivity:outcomes`.\n');
+  } else {
+    lines.push('## 参数敏感性（结局模拟）\n');
+    lines.push('> 结局高度依赖参数 — `npm run sensitivity:outcomes` 生成 tornado。\n');
+  }
+
+  if (s.sensitivityOutcomes?.tornado?.length) {
+    lines.push(`| Parameter perturbation | Metric | Baseline | Perturbed | Δ |`);
+    lines.push(`|------------------------|--------|----------|-----------|---|`);
+    s.sensitivityOutcomes.tornado.forEach((row) => {
+      lines.push(`| ${row.parameter} | ${row.metric} | ${row.baseline} | ${row.perturbed} | ${row.delta} |`);
     });
     lines.push('');
   }

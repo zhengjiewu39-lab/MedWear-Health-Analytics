@@ -31,3 +31,7 @@ experiments/data/**/synth_n*.json
 experiments/data/**/synth_user_*.json
 experiments/data/**/synth_user_*.zip
 experiments/results/*.joblib
+
+# Benchmark outputs (regenerate via npm run evaluate)
+benchmarks/results/*.json
+!benchmarks/results/example-summary.json

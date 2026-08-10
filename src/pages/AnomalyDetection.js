@@ -171,7 +171,7 @@ function AnomalyDetection() {
                 <Typography variant="body1" sx={{ mb: 2 }}>{anomaly.pattern}</Typography>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <Box sx={{ display: 'flex', gap: 1 }}>
-                    <Chip icon={<Psychology />} label={`${t('规则', 'Rule')}: ${anomaly.aiModel}`} size="small" color="primary" variant="outlined" />
+                    <Chip icon={<Psychology />} label={`${t('规则', 'Rule')}: ${anomaly.referenceDomainLabel || anomaly.aiModel_en || anomaly.aiModel}`} size="small" color="primary" variant="outlined" />
                     <Chip label={`${t('信号强度', 'Signal')} ${anomaly.confidence}%`} size="small" color="secondary" />
                   </Box>
                   <Button size="small" variant="contained" onClick={() => handleAnalyze(anomaly)}>{t('信号研判', 'Signal review')}</Button>

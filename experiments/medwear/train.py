@@ -32,16 +32,18 @@ SKLEARN_ONNX_MODELS = {"lr", "dt", "rf", "mlp"}
 ONNX_OUTPUT_DIR = "server/ai/models"
 
 
-def load_data(path: str) -> tuple[pd.DataFrame, np.ndarray, LabelEncoder]:
+def load_data(path: str) -> tuple[pd.DataFrame, np.ndarray, LabelEncoder, list[str]]:
     if path.endswith(".json"):
         raw = json.load(open(path, encoding="utf-8"))
         df = pd.DataFrame(raw["rows"])
     else:
         df = pd.read_csv(path)
     le = LabelEncoder()
-    X = df[FEATURE_COLS].astype(float)
+    meta_cols = {"id", "label", "task"}
+    feature_cols = [c for c in df.columns if c not in meta_cols]
+    X = df[feature_cols].astype(float)
     y = le.fit_transform(df["label"])
-    return X, y, le
+    return X, y, le, feature_cols
 
 
 def build_model(name: str, seed: int):
@@ -147,7 +149,7 @@ def main():
     p.add_argument("--skip-onnx", action="store_true")
     args = p.parse_args()
 
-    X, y, le = load_data(args.data)
+    X, y, le, feature_cols = load_data(args.data)
     clf = build_model(args.model, args.seed)
     n_splits = min(args.cv, min(np.bincount(y)))
     cv = StratifiedKFold(n_splits=max(2, n_splits), shuffle=True, random_state=args.seed)
@@ -195,6 +197,7 @@ def main():
         "cv": args.cv,
         "seed": args.seed,
         "n_samples": len(y),
+        "feature_cols": feature_cols,
         "metrics": metrics,
         "classification_report": classification_report(y, y_pred, output_dict=True),
         "label_classes": list(le.classes_),

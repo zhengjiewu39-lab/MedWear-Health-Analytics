@@ -34,6 +34,11 @@ const FEATURE_NAMES = [
   'health_score_norm',
 ];
 
+/** Raw wearable features only — excludes engine-derived BHI/anomaly flags (fair ML comparison). */
+const RAW_FEATURE_NAMES = FEATURE_NAMES.filter(
+  (f) => !['anomaly_flag', 'health_score_norm'].includes(f),
+);
+
 const DEFAULT_THRESHOLDS = { heartRateMax: 100, heartRateMin: 50, spo2Min: 93 };
 
 function sleepHours(day) {
@@ -68,8 +73,8 @@ function extractFeatures(caseData, thresholds = DEFAULT_THRESHOLDS) {
     avg_hr: avg(day.heartRate) || 0,
     std_hr: stdDev(day.heartRate || []),
     resting_hr: day.restingHeartRate || avg(day.heartRate) || 0,
-    avg_spo2: avg(spo2) || 0,
-    min_spo2: spo2.length ? Math.min(...spo2) : 0,
+    avg_spo2: avg(spo2) || 97,
+    min_spo2: spo2.length ? Math.min(...spo2) : 97,
     avg_hrv: avg(day.hrv) || 0,
     sleep_hours: totalSleep,
     deep_sleep_ratio: totalSleep > 0 ? deep / totalSleep : 0,
@@ -86,6 +91,13 @@ function extractFeatures(caseData, thresholds = DEFAULT_THRESHOLDS) {
   return validateFeatureVector(raw);
 }
 
+function extractRawFeatures(caseData, thresholds = DEFAULT_THRESHOLDS) {
+  const full = extractFeatures(caseData, thresholds);
+  const raw = {};
+  RAW_FEATURE_NAMES.forEach((k) => { raw[k] = full[k]; });
+  return raw;
+}
+
 function extractLabels(caseData) {
   const exp = caseData.expected || {};
   if (exp.riskLevel) return { label: exp.riskLevel, task: 'risk' };
@@ -99,7 +111,9 @@ function extractLabels(caseData) {
 
 module.exports = {
   FEATURE_NAMES,
+  RAW_FEATURE_NAMES,
   DEFAULT_THRESHOLDS,
   extractFeatures,
+  extractRawFeatures,
   extractLabels,
 };

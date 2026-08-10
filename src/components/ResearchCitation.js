@@ -54,7 +54,12 @@ export function ReferenceDialog({ item, open, onClose }) {
         {item.name} — 研究依据
         <Box sx={{ mt: 1, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
           {item.evidenceLevel && <EvidenceBadge level={item.evidenceLevel} label={item.evidenceLabel} />}
-          {item.aiModel && <Chip label={`模型 ${item.aiModel}`} size="small" color="primary" variant="outlined" />}
+          {item.referenceDomainLabel && <Chip label={`参考领域 ${item.referenceDomainLabel}`} size="small" color="primary" variant="outlined" />}
+          {item.evidenceRationale && (
+            <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.5 }}>
+              证据依据：{item.evidenceRationale}
+            </Typography>
+          )}
           {item.confidence && <Chip label={`置信度 ${(item.confidence * 100).toFixed(1)}%`} size="small" />}
         </Box>
       </DialogTitle>

@@ -62,17 +62,33 @@
 
 实现：`server/services/robustAnomaly.js → analyticsCore.detectAnomaliesFromStore()`
 
-## 风险分层（基于 BHI）
+## BHI 关注分层（非疾病风险）
 
-| 等级 | BHI 分数 |
+**分层标签（当前平稳/建议观察/建议重点关注）为 BHI 启发式区间 — 未在临床结局上验证。**
+
+| 内部键 | UI 标签（中文） | BHI 区间 |
+|--------|-----------------|----------|
+| low | 当前平稳（BHI≥80） | ≥ 80 |
+| moderate | 建议观察（BHI 60–79） | 60–79 |
+| high | 建议重点关注（BHI<60） | < 60 |
+
+实现：`server/config/bhiWatchTier.js → classifyBHIWatchTier()`
+
+## 证据等级（A/B/C）
+
+**A/B/C 等级为作者基于公开文献的标注 — 非外部机构独立评级。**
+
+| 等级 | 判定规则 |
 |------|----------|
-| 低 | ≥ 80 |
-| 中 | 60–79 |
-| 高 | < 60 |
+| A | 国际权威指南和/或高质量随机对照试验（含大型筛查 RCT、NEJM/Lancet 级 RCT） |
+| B | 前瞻性队列、验证研究或国家级指南（非最高等级 RCT 直接证据） |
+| C | 专家共识、系统综述中的间接关联，或可穿戴代理信号与结局的弱关联文献 |
+
+实现：`server/data/researchReferences.js → EVIDENCE_LEVEL_RULES + EVIDENCE_RATIONALE`
 
 ## 规则引擎（筛查）
 
-**领域权重为可配置占位符 — 非训练模型投票。** 版本：`MedWear-RuleEngine-v1`。置信度上限 0.85。
+**领域权重为可配置占位符 — 非训练模型投票。** `engineType: evidence-weighted-rule-engine` · 版本：`MedWear-RuleEngine-v1`。置信度上限 0.85。
 
 | 领域 | 权重 |
 |------|------|
@@ -82,7 +98,20 @@
 | metabolic | 16% |
 | sleep | 16% |
 
+诚实 API 字段：`referenceDomainLabel`、`domainWeightedSummaries`、`heuristicConfidence`。已弃用别名（前端不展示）：aiModel、models、modelVotes、ensembleConfidence。
+
 已移除声明：CardioNet-style declared accuracy；ensemble confidence clamped to 0.98；fake model validation AUC。
+
+## 鲁棒性测试
+
+**BHI 与异常管道返回有限分数/分层且不抛错；输出可优雅降级。**
+
+- 缺失日数据 / 空传感器数组
+- 缺失传感器维度（无 HRV、无 SpO₂）
+- 单点 HR/SpO₂ 离群值（伪影清洗）
+- 传感器漂移（窗口内 HR 渐升）
+- 运动伪影（高活动日排除 MAD 基线）
+- 恢复/休息日（低步数）
 
 ## 探索性队列情景模拟
 

@@ -1,0 +1,18 @@
+{
+  "description": "Example evaluation summary — regenerate full results with npm run evaluate",
+  "dataset": "MedWear-Wearable-Analytics-Clinical-v2",
+  "version": "2.5",
+  "n": 5000,
+  "seed": 42,
+  "engine": "MedWear-AnalyticsCore-v1",
+  "scoreField": "healthScore (BHI)",
+  "metrics": {
+    "alertF1": 0.844,
+    "alertPrecision": 0.758,
+    "alertRecall": 0.953,
+    "anomalyAccuracy": 0.7,
+    "riskAccuracy": 0.787,
+    "healthScoreAgreementRate": 0.76
+  },
+  "note": "Full case-level output written to benchmarks/results/latest.json by npm run evaluate (gitignored)"
+}
