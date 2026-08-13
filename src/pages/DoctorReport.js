@@ -20,7 +20,7 @@ import { screeningApi } from '../services/api';
 import useModeRefresh from '../hooks/useModeRefresh';
 import { useLang } from '../contexts/LanguageContext';
 
-import { bhiTierLabel, bhiTierShort } from '../utils/bhiWatchTier';
+import { bhiTierLabel } from '../utils/bhiWatchTier';
 
 const riskChip = { low: 'success', moderate: 'warning', high: 'error' };
 const flagColor = { normal: 'success', watch: 'warning', abnormal: 'error' };

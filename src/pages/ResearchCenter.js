@@ -21,8 +21,7 @@ import PageHeader from '../components/PageHeader';
 import { researchApi } from '../services/api';
 import { PAPER_TITLE, PAPER_TITLE_EN } from '../config/paperDemo';
 import { useLang } from '../contexts/LanguageContext';
-import { CHART, AXIS, GRID, chartMargin } from '../config/chartTheme';
-import { ChartGradients, MedWearTooltip } from '../components/ChartTheme';
+import { CHART } from '../config/chartTheme';
 
 function TabPanel({ value, index, children }) {
   return value === index ? <Box sx={{ pt: 2 }}>{children}</Box> : null;

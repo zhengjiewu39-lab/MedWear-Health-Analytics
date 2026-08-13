@@ -15,8 +15,7 @@ import { useDataMode } from '../contexts/DataModeContext';
 import { useHealthData } from '../contexts/HealthDataContext';
 import { useLang } from '../contexts/LanguageContext';
 import { localizePredictions } from '../utils/predictionLocale';
-import { CHART, AXIS, GRID, chartMargin } from '../config/chartTheme';
-import { ChartGradients, MedWearTooltip } from '../components/ChartTheme';
+import { CHART } from '../config/chartTheme';
 
 const HORIZON_LABEL = { short: '短期', medium: '中期', long: '长期' };
 const HORIZON_LABEL_EN = { short: 'Short-term', medium: 'Mid-term', long: 'Long-term' };

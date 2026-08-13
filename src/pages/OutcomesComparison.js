@@ -8,7 +8,7 @@ import {
   Insights, Refresh, TrendingUp, MonitorHeart, Biotech, LocalHospital,
   Timeline, CompareArrows, Gavel,
 } from '@mui/icons-material';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   FunnelChart, Funnel, LabelList, Cell,
 } from 'recharts';
 import ChartContainer from '../components/ChartContainer';
