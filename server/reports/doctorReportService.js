@@ -87,7 +87,7 @@ function buildRiskFactors(patient, report) {
   const vitals = report.vitalsSnapshot || [];
 
   if (report.overallScore != null) {
-    const tier = report.overallBhiTier ?? report.overallRisk || 'moderate';
+    const tier = report.overallBhiTier ?? report.overallRisk ?? 'moderate';
     const tierZh = { low: '低', moderate: '中', high: '高', unknown: '待评估' }[tier] || '中';
     push({
       factor: isHealthScore
