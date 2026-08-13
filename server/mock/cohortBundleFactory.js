@@ -61,6 +61,9 @@ function estimateHrv(restingHR, age, signalHrv) {
   return Math.max(22, Math.round(72 - restingHR - age * 0.15));
 }
 
+const DEMO_DISCLAIMER_ZH = '【仅演示/研究情景，不构成诊断或临床建议】';
+const DEMO_DISCLAIMER_EN = '[Demo/research scenario only — not a diagnosis or clinical advice]';
+
 const CATEGORY_BOOSTS = {
   healthy: {},
   hypertension: { '高血压': 1.8, '脑卒中': 1.5, '冠心病/心梗': 1.4 },
@@ -102,28 +105,28 @@ function buildScreeningSummary(cohort, params) {
   const en = cohort.categoryLabel_en;
   if (cohort.category === 'healthy') {
     return {
-      summary: '整体风险偏低，可穿戴指标处于同龄正常范围，建议维持生活方式并年度体检。',
-      summary_en: 'Overall low risk; wearable metrics within age-matched normal range; maintain lifestyle and annual checkups.',
+      summary: `合成情景中可穿戴指标处于同龄参考范围，BHI 行为健康分层为低关注。建议维持生活方式并年度健康体检。${DEMO_DISCLAIMER_ZH}`,
+      summary_en: `In this synthetic scenario, wearable metrics fall within age-matched reference; low BHI watch-tier attention. Maintain lifestyle and annual checkups. ${DEMO_DISCLAIMER_EN}`,
       insights: [],
     };
   }
   if (cohort.malignant) {
     return {
-      summary: `${label}相关可穿戴代理信号异常，专项影像筛查与肿瘤标志物检测建议提前安排。`,
-      summary_en: `Wearable proxy signals suggest ${en}-related risk; specialty imaging and tumor markers advised.`,
+      summary: `${label}相关合成情景中出现规则关注信号；建议在临床专业人员评估后考虑进一步检查。${DEMO_DISCLAIMER_ZH}`,
+      summary_en: `Rule-derived attention signals in synthetic ${en} scenario; consider further evaluation after clinician review. ${DEMO_DISCLAIMER_EN}`,
       insights: [],
     };
   }
   return {
-    summary: `${label}相关指标偏离基线，慢病管理与生活方式干预建议纳入随访计划。`,
-    summary_en: `${en}-related metrics deviate from baseline; chronic care and lifestyle intervention recommended.`,
+    summary: `${label}相关合成情景中指标偏离基线，出现规则关注信号；建议在临床专业人员评估后考虑进一步检查与生活方式干预。${DEMO_DISCLAIMER_ZH}`,
+    summary_en: `${en}-related metrics deviate from baseline in synthetic scenario; rule-derived attention signals — consider clinician review and lifestyle follow-up. ${DEMO_DISCLAIMER_EN}`,
     insights: [],
   };
 }
 
 function buildDetailedScreeningInsights(stats, cohort, record) {
-  const tierZh = cohort.riskTier === 'high' ? '高风险' : cohort.riskTier === 'moderate' ? '中风险' : '低风险';
-  const tierEn = cohort.riskTier === 'high' ? 'high risk' : cohort.riskTier === 'moderate' ? 'moderate risk' : 'low risk';
+  const tierZh = cohort.riskTier === 'high' ? '高关注' : cohort.riskTier === 'moderate' ? '中关注' : '低关注';
+  const tierEn = cohort.riskTier === 'high' ? 'high attention' : cohort.riskTier === 'moderate' ? 'moderate attention' : 'low attention';
   const armZh = cohort.arm === 'intervention' ? '干预组（可穿戴早筛）' : '对照组（常规照护）';
   const armEn = cohort.arm === 'intervention' ? 'intervention (wearable screening)' : 'control (usual care)';
   const di = record.deviceIntegration || {};
@@ -138,8 +141,8 @@ function buildDetailedScreeningInsights(stats, cohort, record) {
 
   items.push({
     type: cohort.riskTier === 'low' ? 'positive' : 'warning',
-    text: `【风险分层】综合风险指数 ${riskPct}/100（${tierZh}）· BHI ${stats.healthScore} · 队列类别：${cohort.categoryLabel}`,
-    text_en: `[Risk stratification] composite index ${riskPct}/100 (${tierEn}) · BHI ${stats.healthScore} · cohort: ${cohort.categoryLabel_en}`,
+    text: `【BHI 分层】综合关注指数 ${riskPct}/100（${tierZh}）· BHI ${stats.healthScore} · 合成队列类别：${cohort.categoryLabel} · ${DEMO_DISCLAIMER_ZH}`,
+    text_en: `[BHI watch-tier] composite attention index ${riskPct}/100 (${tierEn}) · BHI ${stats.healthScore} · synthetic cohort: ${cohort.categoryLabel_en} · ${DEMO_DISCLAIMER_EN}`,
   });
 
   if (di.primaryDevice) {
@@ -177,20 +180,20 @@ function buildDetailedScreeningInsights(stats, cohort, record) {
   if (cohort.malignant) {
     items.push({
       type: 'warning',
-      text: `【肿瘤早筛】${cohort.categoryLabel} 相关可穿戴代理信号异常 · 建议 30 天内完成专项影像（低剂量 CT / 肿瘤标志物）并纳入 ${armZh} 随访路径`,
-      text_en: `[Oncology screening] ${cohort.categoryLabel_en}-related wearable signals abnormal · specialty imaging within 30 days`,
+      text: `【合成情景关注信号】${cohort.categoryLabel} 相关可穿戴代理信号偏离基线 · 建议在临床专业人员评估后考虑进一步检查 · ${armZh} · ${DEMO_DISCLAIMER_ZH}`,
+      text_en: `[Synthetic attention signal] ${cohort.categoryLabel_en}-related wearable proxy deviates from baseline · consider further evaluation after clinician review · ${armEn} · ${DEMO_DISCLAIMER_EN}`,
     });
   } else if (cohort.chronic) {
     items.push({
       type: 'warning',
-      text: `【慢病管理】${cohort.categoryLabel} · 建议强化 14 天可穿戴监测窗口，对接慢病门诊与用药依从性评估`,
-      text_en: `[Chronic care] ${cohort.categoryLabel_en} · 14-day enhanced wearable monitoring and chronic-care follow-up`,
+      text: `【合成情景关注信号】${cohort.categoryLabel} · 规则引擎标记需进一步评估 · 建议临床专业人员评估后决定 14 天可穿戴监测与门诊随访 · ${DEMO_DISCLAIMER_ZH}`,
+      text_en: `[Synthetic attention signal] ${cohort.categoryLabel_en} · rule-engine flag for further evaluation · clinician review before enhanced monitoring · ${DEMO_DISCLAIMER_EN}`,
     });
   } else {
     items.push({
       type: 'positive',
-      text: '【健康维护】主要肿瘤与慢病间接指标处于低风险区间 · 建议维持当前生活方式并年度健康体检',
-      text_en: '[Maintenance] tumor/chronic proxy indicators low · maintain lifestyle and annual checkup',
+      text: `【健康维护】合成情景中主要间接指标处于低关注区间 · 建议维持当前生活方式并年度健康体检 · ${DEMO_DISCLAIMER_ZH}`,
+      text_en: `[Maintenance] synthetic scenario proxy indicators in low-attention range · maintain lifestyle and annual checkup · ${DEMO_DISCLAIMER_EN}`,
     });
   }
 
@@ -204,8 +207,8 @@ function buildDetailedScreeningInsights(stats, cohort, record) {
 
   items.push({
     type: 'info',
-    text: '【下一步】完成本页 6 大类筛查复核 → 异常检测 → 预测分析 → AI 干预审批 → 医生报告',
-    text_en: '[Next steps] Review 6 categories → anomaly detection → predictions → AI intervention approval → physician report',
+    text: '【下一步】完成本页 6 大类筛查复核 → 异常检测 → 预测性提示 → AI 干预审批 → 医生报告（演示流程）',
+    text_en: '[Next steps] Review 6 categories → anomaly detection → predictive signals → AI intervention approval → physician report (demo flow)',
   });
 
   return items;
@@ -348,8 +351,8 @@ function buildPatientSpec(cohort) {
   };
   const detailedInsights = buildDetailedScreeningInsights(stats, cohort, record);
   const anomalies = buildAnomalies(stats, cohort);
-  const scenario = `${cohort.categoryLabel} · ${cohort.riskTier === 'high' ? '高风险' : cohort.riskTier === 'moderate' ? '中风险' : '低风险'}`;
-  const scenarioEn = `${cohort.categoryLabel_en} · ${cohort.riskTier} risk`;
+  const scenario = `${cohort.categoryLabel} · ${cohort.riskTier === 'high' ? '高关注' : cohort.riskTier === 'moderate' ? '中关注' : '低关注'}（合成情景）`;
+  const scenarioEn = `${cohort.categoryLabel_en} · ${cohort.riskTier} attention (synthetic scenario)`;
 
   return {
     id: cohort.id,
@@ -387,10 +390,10 @@ function buildPatientSpec(cohort) {
       : ['指标稳定', '可按计划活动'],
     reportSummary: narrative.summary,
     recommendations: cohort.malignant
-      ? ['安排专项肿瘤筛查套餐', '2 周内复核可穿戴异常窗口']
+      ? ['合成情景：规则关注信号已标记，建议临床专业人员评估后决定随访路径', '复核可穿戴异常窗口（演示）']
       : cohort.chronic
-        ? ['慢病门诊随访', '强化可穿戴监测 14 天']
-        : ['维持当前生活方式', '年度健康体检'],
+        ? ['合成情景：需进一步评估的信号，建议临床专业人员评估后决定门诊随访', '强化可穿戴监测 14 天（演示）']
+        : ['维持当前生活方式', '年度健康体检（演示参考）'],
     cohortMeta: {
       arm: cohort.arm,
       category: cohort.category,

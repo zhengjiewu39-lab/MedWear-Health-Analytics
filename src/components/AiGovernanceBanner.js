@@ -34,8 +34,8 @@ function AiGovernanceBanner({ compact = false }) {
         <Chip size="small" label={t('管理者审核', 'Administrator review')} variant="outlined" />
       </Box>
       <Box component="span" sx={{ display: 'block', mt: 0.5, fontSize: '0.85rem' }}>
-        {t('AI 融合异常检测、预测分析与临床筛查信号，自动生成干预建议；所有建议须经医师或管理者批准后方可进入医生报告与体检预约流程。',
-          'AI fuses anomaly detection, predictive analytics and clinical screening to auto-generate intervention suggestions; all suggestions require physician or administrator approval before entering the doctor report and exam booking workflow.')}
+        {t('AI 融合异常检测、预测性提示与筛查导向决策支持信号，自动生成干预建议；所有建议须经医师或管理者批准后方可进入医生报告与体检预约流程。非诊断性输出，需专业人员审核。',
+          'AI fuses anomaly detection, predictive signals and screening-oriented decision support to auto-generate intervention suggestions; all suggestions require physician or administrator approval before entering the doctor report and exam booking workflow. Non-diagnostic — requires professional review.')}
       </Box>
     </Alert>
   );

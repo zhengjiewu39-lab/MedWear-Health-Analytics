@@ -31,7 +31,7 @@ const SOURCE_LABEL = {
   wearable: { zh: '可穿戴', en: 'Wearable' },
   screening: { zh: 'AI筛查', en: 'AI screening' },
   anomaly: { zh: '异常检测', en: 'Anomaly' },
-  prediction: { zh: '预测分析', en: 'Prediction' },
+  prediction: { zh: '预测性提示', en: 'Predictive signal' },
   lifestyle: { zh: '行为', en: 'Behavior' },
   cohort: { zh: '队列', en: 'Cohort' },
 };
@@ -317,9 +317,9 @@ function DoctorReport() {
           {report.riskFactors?.length > 0 && (
             <Grid item xs={12} md={6}>
               <Paper sx={{ p: 3, height: '100%' }}>
-                <Typography variant="h6" fontWeight={600} gutterBottom>{t('综合风险因素', 'Combined risk factors')}</Typography>
+                <Typography variant="h6" fontWeight={600} gutterBottom>{t('需进一步评估的信号', 'Signals requiring further evaluation')}</Typography>
                 <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1.5 }}>
-                  {t('融合人口学、可穿戴、AI 筛查、异常检测与预测分析', 'Demographics, wearables, AI screening, anomalies & predictions')}
+                  {t('融合人口学、可穿戴、AI 筛查、异常检测与预测性提示 · 非诊断性输出', 'Demographics, wearables, AI screening, anomalies & predictive signals — non-diagnostic')}
                 </Typography>
                 {report.riskFactors.map((r, i) => (
                   <Box

@@ -117,9 +117,9 @@ function PredictiveAnalytics() {
         <>
           <Grid container spacing={2} sx={{ mb: 3 }}>
             {[
-              { label: '预测项目', label_en: 'Predictions', value: stats.total, icon: <Science />, color: 'primary.main' },
+              { label: '预测项目', label_en: 'Signals', value: stats.total, icon: <Science />, color: 'primary.main' },
               { label: '需关注', label_en: 'Need Attention', value: stats.high + stats.medium, icon: <Warning />, color: 'warning.main' },
-              { label: '平均风险', label_en: 'Average Risk', value: `${stats.avgProb}%`, icon: <TrendingUp />, color: 'info.main' },
+              { label: '平均信号强度', label_en: 'Avg signal strength', value: `${stats.avgProb}%`, icon: <TrendingUp />, color: 'info.main' },
               { label: '预测类别', label_en: 'Categories', value: categories.length, icon: <Psychology />, color: 'secondary.main' },
             ].map(s => (
               <Grid item xs={6} md={3} key={s.label}>
@@ -146,14 +146,14 @@ function PredictiveAnalytics() {
           </Tabs>
 
           <Paper sx={{ p: 3, mb: 3 }}>
-            <Typography variant="h6" gutterBottom fontWeight={600}>{t('风险概率分布', 'Risk Probability Distribution')}</Typography>
+            <Typography variant="h6" gutterBottom fontWeight={600}>{t('信号强度分布', 'Signal strength distribution')}</Typography>
             <ChartContainer width="100%" height={Math.max(200, chartData.length * 36)}>
               <BarChart data={chartData} layout="vertical" margin={{ left: 10 }}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis type="number" domain={[0, 100]} unit="%" />
                 <YAxis type="category" dataKey="name" width={100} tick={{ fontSize: 11 }} />
                 <Tooltip formatter={(v, _n, props) => [`${v}%`, props.payload.fullName || props.payload.name]} />
-                <Bar dataKey="probability" name={t('风险概率', 'Risk Probability')} radius={[0, 4, 4, 0]}>
+                <Bar dataKey="probability" name={t('信号强度', 'Signal strength')} radius={[0, 4, 4, 0]}>
                   {chartData.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
                 </Bar>
               </BarChart>

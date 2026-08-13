@@ -11,7 +11,7 @@
 
 | 角色 | 模块 | 用途 |
 |------|------|------|
-| 产品流水线 | `MedWear-AnalyticsCore-v1` | 应用内实时告警/异常/风险 |
+| 产品流水线 | `MedWear-AnalyticsCore-v1` | 应用内实时告警/异常/BHI 行为健康分层与关注信号分类 |
 | 基准金标准 | `clinicalGoldStandard-v1` | 独立标注（更严 SpO₂、不同评分公式） |
 | 评测 | `engine-vs-gold-agreement` | 衡量分歧率，**非**引擎自标注 |
 
@@ -50,7 +50,7 @@ npm run evaluate
 |------|------|
 | 告警 F1 | 告警类型集合 micro-F1（同时报告精确率/召回率） |
 | 异常准确率 | `anomalyDetected` 二分类一致率 |
-| 风险准确率 | `riskLevel` 三分类一致率 |
+| 风险准确率 | BHI 行为健康分层（`bhiWatchTier`）三分类一致率 |
 | 评分一致 | BHI 与金标准参考值相差 ≤8 分（`healthScore` 字段 = BHI） |
 | 95% CI | Wilson 区间（n≥100 时可用于临床报告） |
 
@@ -147,7 +147,7 @@ npm run validate:cohort   # → benchmarks/results/clinical-validation-latest.js
 
 | 指标 | 定义 |
 |------|------|
-| 灵敏度 | TP / (TP + FN) — 可穿戴风险标记 vs 模拟恶性 |
+| 灵敏度 | TP / (TP + FN) — 规则引擎标记 vs 模拟结局标签 |
 | 特异度 | TN / (TN + FP) |
 | 阳性预测值 | TP / (TP + FP) |
 | AUC | riskScore 阈值 ROC 曲线下面积（干预组） |
@@ -211,7 +211,7 @@ curl http://localhost:3001/api/research/validate
 
 ### Gold 分层 ML 对比（clinicalGoldStandard-v1 标签）
 
-> sklearn 预测**参考风险分层**（原始特征）。`npm run experiment:compare-vs-gold`。
+> sklearn 预测**参考分层**（原始特征）。`npm run experiment:compare-vs-gold`。
 
 | Model | Gold-tier accuracy / Macro F1 | Notes |
 |-------|-------------------------------|-------|

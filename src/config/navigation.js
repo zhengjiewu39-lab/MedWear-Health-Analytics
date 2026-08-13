@@ -65,7 +65,7 @@ export function getPageTitle(pathname, isAdmin, isEn = false) {
 export const ADMIN_QUICK_ACTIONS = [
   { title: 'AI 临床助手', title_en: 'Clinical AI Assistant', desc: '真实LLM·随时提问', desc_en: 'Live LLM · ask anytime', path: '/ai/chat', color: '#7c3aed' },
   { title: '结局对比', title_en: 'Outcome Comparison', desc: '早诊率·治疗率·存活率', desc_en: 'Early dx · treatment · survival', path: '/outcomes', color: '#1565C0' },
-  { title: '临床筛查', title_en: 'Clinical Screening', desc: '肿瘤/慢病早筛预测', desc_en: 'Tumor/chronic early screening', path: '/screening', color: '#b45309' },
+  { title: '临床筛查', title_en: 'Clinical Screening', desc: '筛查导向决策支持 · BHI 分层', desc_en: 'Screening-oriented decision support · BHI tiers', path: '/screening', color: '#b45309' },
   { title: '患者队列', title_en: 'Patient Cohort', desc: '5000 例统一合成队列', desc_en: '5,000 unified synthetic cohort', path: '/admin/patients', color: '#4f46e5' },
   { title: '研究评价', title_en: 'Research & Evaluation', desc: '基准评测与复现', desc_en: 'Benchmark evaluation & reproduction', path: '/research', color: '#0d9488' },
   { title: '系统设置', title_en: 'Settings', desc: '语言与安全配置', desc_en: 'Language & security', path: '/settings', color: '#64748b' },

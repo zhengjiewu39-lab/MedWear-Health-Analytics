@@ -28,6 +28,7 @@ const ICONS = {
   '异常检测': BugReport,
   'AI 干预': Psychology,
   'AI 临床助手': SmartToy,
+  '预测性提示': TrendingUp,
   '预测分析': TrendingUp,
   '医生报告': Assignment,
   '预约体检': LocalHospital,

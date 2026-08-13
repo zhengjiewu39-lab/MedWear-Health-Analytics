@@ -158,8 +158,8 @@ function buildRiskFactors(patient, report) {
   }
   if (meta.malignant && meta.categoryLabel) {
     push({
-      factor: `队列肿瘤相关类别：${meta.categoryLabel}（可穿戴信号已偏离健康基线）`,
-      factor_en: `Cohort oncology category: ${meta.categoryLabel_en || meta.categoryLabel}`,
+      factor: `合成情景规则关注信号：${meta.categoryLabel}（可穿戴代理信号偏离健康基线，仅演示/研究情景）`,
+      factor_en: `Synthetic rule-derived attention signal: ${meta.categoryLabel_en || meta.categoryLabel} (wearable proxy deviates — demo/research only)`,
       level: meta.riskTier === 'high' ? 'high' : 'moderate',
       source: 'cohort',
     });
@@ -214,8 +214,8 @@ function buildRiskFactors(patient, report) {
     .filter((s) => s.riskLevel && s.riskLevel !== 'low')
     .forEach((s) => {
       push({
-        factor: `AI 筛查 · ${s.name}：类别${s.riskLevel === 'high' ? '高' : '中'}风险（指数 ${s.score ?? '—'}）`,
-        factor_en: `AI screening · ${s.name_en || s.name}: ${s.riskLevel} category risk`,
+        factor: `AI 筛查 · ${s.name}：${s.riskLevel === 'high' ? '高' : '中'}关注（信号强度 ${s.score ?? '—'}）`,
+        factor_en: `AI screening · ${s.name_en || s.name}: ${s.riskLevel} attention (signal ${s.score ?? '—'})`,
         level: s.riskLevel === 'high' ? 'high' : 'moderate',
         source: 'screening',
       }, `cat:${s.name}`);
@@ -223,8 +223,8 @@ function buildRiskFactors(patient, report) {
 
   (report.screeningHighlights || []).slice(0, 6).forEach((h) => {
     push({
-      factor: `${h.category} · ${h.name}：风险 ${h.risk}%${h.recommendation ? ` — ${h.recommendation}` : ''}`,
-      factor_en: `${h.category_en || h.category} · ${h.name_en || h.name}: ${h.risk}% risk`,
+      factor: `${h.category} · ${h.name}：关注信号 ${h.risk}%${h.recommendation ? ` — ${h.recommendation}` : ''}`,
+      factor_en: `${h.category_en || h.category} · ${h.name_en || h.name}: attention signal ${h.risk}%`,
       level: h.level === 'high' ? 'high' : 'moderate',
       source: 'screening',
     }, `hl:${h.name}:${h.risk}`);
@@ -232,8 +232,8 @@ function buildRiskFactors(patient, report) {
 
   (report.anomalies || []).slice(0, 4).forEach((a) => {
     push({
-      factor: `异常检测 · ${a.type}（置信度 ${a.confidence ?? '—'}%）${a.pattern ? `：${a.pattern}` : ''}`,
-      factor_en: `Anomaly · ${a.type_en || a.type} (${a.confidence ?? '—'}% confidence)`,
+      factor: `异常检测 · ${a.type}（信号强度 ${a.confidence ?? '—'}%）${a.pattern ? `：${a.pattern}` : ''}`,
+      factor_en: `Anomaly · ${a.type_en || a.type} (signal strength ${a.confidence ?? '—'}%)`,
       level: (a.confidence ?? 0) >= 85 ? 'high' : 'moderate',
       source: 'anomaly',
     }, `anomaly:${a.type}`);
@@ -246,8 +246,8 @@ function buildRiskFactors(patient, report) {
     .forEach((p) => {
       const factorList = (p.factors || []).slice(0, 2).join('、');
       push({
-        factor: `预测分析 · ${p.risk}：${p.probability}%（${p.timeframe}）${factorList ? ` — ${factorList}` : ''}`,
-        factor_en: `Prediction · ${p.risk}: ${p.probability}% (${p.timeframe})`,
+        factor: `预测性提示 · ${p.risk}：${p.probability}%（${p.timeframe}）${factorList ? ` — ${factorList}` : ''}`,
+        factor_en: `Predictive signal · ${p.risk}: ${p.probability}% (${p.timeframe})`,
         level: p.level === 'high' ? 'high' : p.level === 'medium' || p.level === 'moderate' ? 'moderate' : 'low',
         source: 'prediction',
       }, `pred:${p.id || p.risk}`);
@@ -264,8 +264,8 @@ function buildRiskFactors(patient, report) {
 
   if (!factors.length) {
     push({
-      factor: '当前未发现显著风险因素，建议维持监测并年度健康体检',
-      factor_en: 'No significant risk factors identified — maintain monitoring and annual checkup',
+      factor: '当前未发现显著需进一步评估的信号，建议维持监测并年度健康体检',
+      factor_en: 'No significant signals requiring further evaluation — maintain monitoring and annual checkup',
       level: 'low',
       source: 'composite',
     });

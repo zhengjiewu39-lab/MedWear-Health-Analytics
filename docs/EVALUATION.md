@@ -11,7 +11,7 @@
 
 | Role | Module | Purpose |
 |------|--------|---------|
-| Product pipeline | `MedWear-AnalyticsCore-v1` | Live alerts, anomaly, risk in the app |
+| Product pipeline | `MedWear-AnalyticsCore-v1` | Live alerts, anomaly, BHI watch-tier / attention-signal classification in the app |
 | Benchmark gold | `clinicalGoldStandard-v1` | Independent labels (stricter SpO₂, different score formula) |
 | Evaluation | `engine-vs-gold-agreement` | Measures disagreement — **not** engine self-labeling |
 
@@ -49,7 +49,7 @@ Output: `benchmarks/results/latest.json`
 |--------|------------|
 | Alert F1 | Micro-F1 over alert type sets (precision/recall also reported) |
 | Anomaly Accuracy | Binary match on anomalyDetected |
-| Risk Accuracy | 3-class BHI watch tier match on bhiWatchTier |
+| Risk Accuracy | 3-class BHI watch-tier match on bhiWatchTier |
 | Score agreement | BHI within ±8 pts of gold reference (`healthScore` field = BHI) |
 | 95% CI | Wilson score interval for accuracy metrics (n≥100) |
 
@@ -152,7 +152,7 @@ npm run validate:cohort   # → benchmarks/results/clinical-validation-latest.js
 
 | Metric | Definition |
 |--------|------------|
-| Sensitivity | TP / (TP + FN) — wearable risk flag vs simulated malignancy |
+| Sensitivity | TP / (TP + FN) — rule-derived flag versus simulated outcome label |
 | Specificity | TN / (TN + FP) |
 | PPV | TP / (TP + FP) |
 | AUC | ROC area under curve from riskScore thresholds (intervention arm) |
@@ -216,7 +216,7 @@ curl http://localhost:3001/api/research/validate
 
 ### Gold-tier ML comparison (clinicalGoldStandard-v1 labels)
 
-> Sklearn trained to predict **reference risk tier** from raw features. Regenerate: `npm run experiment:compare-vs-gold`.
+> Sklearn trained to predict **reference tier** from raw features. Regenerate: `npm run experiment:compare-vs-gold`.
 
 | Model | Gold-tier accuracy / Macro F1 | Notes |
 |-------|-------------------------------|-------|

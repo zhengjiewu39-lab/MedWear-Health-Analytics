@@ -19,10 +19,8 @@ function summarizeScreening(screening) {
   return {
     overallScore: screening.overallScore,
     overallBhiTier: screening.overallBhiTier ?? screening.overallRisk,
-    overallRisk: screening.overallRisk ?? screening.overallBhiTier,
     summary: screening.summary,
     topAttentionSignals: top,
-    topRisks: top,
     dataCoverage: screening.dataCoverage,
   };
 }
@@ -66,14 +64,14 @@ function buildClinicalContext(provider, dataMode) {
     } : null,
     screening: summarizeScreening(screening),
     anomalies: anomalies.slice(0, 6).map((a) => ({
-      type: a.type, pattern: a.pattern, severity: a.severity, confidence: a.confidence,
+      type: a.type, pattern: a.pattern, severity: a.severity, signalStrength: a.confidence,
     })),
     predictions: predictions.slice(0, 6).map((p) => ({
-      risk: p.risk, probability: p.probability, timeframe: p.timeframe, recommendation: p.recommendation,
+      signal: p.risk, probability: p.probability, timeframe: p.timeframe, recommendation: p.recommendation,
     })),
     doctorReport: doctorReport?.needsImport ? null : {
       summary: doctorReport?.summary || doctorReport?.executiveSummary,
-      riskLevel: doctorReport?.riskLevel,
+      bhiWatchTier: doctorReport?.overallBhiTier ?? doctorReport?.riskLevel,
     },
     interventions,
     cohortHeadline,
@@ -84,22 +82,23 @@ function buildClinicalContext(provider, dataMode) {
 }
 
 function formatContextForLLM(ctx) {
-  return `【MedWear 临床平台上下文 · ${ctx.mode === 'real' ? '真实模式' : '演示模式'}】
+  const isReal = ctx.mode === 'real';
+  return `【MedWear 临床平台上下文 · ${isReal ? '真实模式' : '演示模式'}】
 个人数据: ${ctx.hasPersonalData ? '已导入' : '未导入（可使用队列/演示信号）'}
 患者/用户: ${ctx.profile?.name || '—'} · 设备: ${ctx.profile?.device || '—'}
 
-${ctx.vitals ? `近期指标: 健康分 ${ctx.vitals.healthScore ?? '—'} · HR ${ctx.vitals.heartRate ?? '—'} · SpO₂ ${ctx.vitals.spo2 ?? '—'}% · HRV ${ctx.vitals.hrv ?? '—'} · 步数 ${ctx.vitals.steps ?? '—'}` : '（无个人可穿戴时序数据）'}
+${ctx.vitals ? `近期指标: BHI/健康分 ${ctx.vitals.healthScore ?? '—'} · HR ${ctx.vitals.heartRate ?? '—'} · SpO₂ ${ctx.vitals.spo2 ?? '—'}% · HRV ${ctx.vitals.hrv ?? '—'} · 步数 ${ctx.vitals.steps ?? '—'}` : '（无个人可穿戴时序数据）'}
 
-临床筛查: ${ctx.screening ? `BHI ${ctx.screening.overallScore}/100（${ctx.screening.overallBhiTier ?? ctx.screening.overallRisk}）· ${ctx.screening.summary || ''}` : '无'}
-关注信号: ${(ctx.screening?.topAttentionSignals || ctx.screening?.topRisks || []).map((r) => `${r.name} ${r.attentionScore ?? r.risk}%`).join('；') || '无'}
+筛查导向决策支持: ${ctx.screening ? `BHI ${ctx.screening.overallScore}/100（overallBhiTier=${ctx.screening.overallBhiTier ?? '—'}）· ${ctx.screening.summary || ''}` : '无'}
+关注信号: ${(ctx.screening?.topAttentionSignals || []).map((r) => `${r.name} ${r.attentionScore}%`).join('；') || '无'}
 
 异常信号 (${ctx.anomalies.length}): ${ctx.anomalies.map((a) => `${a.type}(${a.severity})`).join('；') || '无'}
-预测风险 (${ctx.predictions.length}): ${ctx.predictions.map((p) => `${p.risk} ${p.probability}%`).join('；') || '无'}
+预测性提示 (${ctx.predictions.length}): ${ctx.predictions.map((p) => `${p.signal} ${p.probability}%`).join('；') || '无'}
 
 AI 干预队列: 待审 ${ctx.interventions.pending} · 已批准 ${ctx.interventions.approved}
-队列研究指标: ${ctx.cohortHeadline ? `早诊率Δ ${(ctx.cohortHeadline.earlyDiagnosisRate?.delta * 100).toFixed(1)}% · 治疗率Δ ${(ctx.cohortHeadline.treatmentRate?.delta * 100).toFixed(1)}%` : '—'}
+${isReal ? '（真实模式不含合成队列模拟指标）' : `参数驱动的探索性模拟指标: ${ctx.cohortHeadline ? `早诊率Δ ${(ctx.cohortHeadline.earlyDiagnosisRate?.delta * 100).toFixed(1)}% · 治疗率Δ ${(ctx.cohortHeadline.treatmentRate?.delta * 100).toFixed(1)}%（非诊断性能，仅演示）` : '—'}`}
 
-当前 LLM: ${ctx.aiConfigured ? `${ctx.aiProvider} / ${ctx.aiModel}` : '未配置'}`;
+非诊断性输出，需专业人员审核。当前 LLM: ${ctx.aiConfigured ? `${ctx.aiProvider} / ${ctx.aiModel}` : '未配置'}`;
 }
 
 module.exports = { buildClinicalContext, formatContextForLLM, summarizeScreening };

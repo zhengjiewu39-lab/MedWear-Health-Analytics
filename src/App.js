@@ -86,7 +86,7 @@ function AppRoutes() {
             <Route path="/appointments" element={wrap(ExamAppointment, '预约体检', true)} />
             <Route path="/doctor-report" element={wrap(DoctorReport, '医生报告', true)} />
             <Route path="/ai/anomaly" element={wrap(AnomalyDetection, '异常检测', false, true)} />
-            <Route path="/ai/predictive" element={wrap(PredictiveAnalytics, '预测分析', false, true)} />
+            <Route path="/ai/predictive" element={wrap(PredictiveAnalytics, '预测性提示', false, true)} />
             <Route path="/ai/intervention" element={wrap(AIIntervention, 'AI 干预', true)} />
             <Route path="/ai/chat" element={wrap(DoctorAiChat, 'AI 临床助手', false, true)} />
             <Route path="/outcomes" element={wrap(OutcomesComparison, '结局对比', false)} />

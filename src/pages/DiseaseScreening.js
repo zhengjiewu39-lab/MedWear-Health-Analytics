@@ -98,7 +98,7 @@ function DiseaseScreening() {
         </Box>
         <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
           <Button variant="outlined" startIcon={<Assignment />} onClick={() => navigate('/ai/anomaly')}>{t('异常检测', 'Anomaly Detection')}</Button>
-          <Button variant="contained" startIcon={<Assignment />} onClick={() => navigate('/ai/predictive')}>{t('预测分析', 'Predictive Analytics')}</Button>
+          <Button variant="contained" startIcon={<Assignment />} onClick={() => navigate('/ai/predictive')}>{t('预测性提示', 'Predictive signals')}</Button>
         </Box>
       </Box>
 
@@ -108,7 +108,10 @@ function DiseaseScreening() {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Biotech sx={{ fontSize: 48 }} />
               <Box>
-                <Typography variant="h6" fontWeight={600}>{t('综合筛查结论', 'Overall Screening Conclusion')} · {bhiTierLabel(data.overallBhiTier ?? data.overallRisk, isEn) || t('评估中', 'Evaluating')}</Typography>
+                <Typography variant="h6" fontWeight={600}>{t('筛查导向决策支持', 'Screening-oriented decision support')} · {bhiTierLabel(data.overallBhiTier ?? data.overallRisk, isEn) || t('评估中', 'Evaluating')}</Typography>
+                <Typography variant="caption" sx={{ display: 'block', mt: 0.5, opacity: 0.85 }}>
+                  {t('非诊断性输出，需专业人员审核', 'Non-diagnostic output — requires professional review')}
+                </Typography>
                 <Typography variant="body2" sx={{ mt: 0.5, opacity: 0.95 }}>{pick(data, 'summary')}</Typography>
               </Box>
             </Box>
