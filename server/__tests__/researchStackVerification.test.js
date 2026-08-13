@@ -73,8 +73,10 @@ describe('ONNX inference (engine.js + onnxInference.js)', () => {
     assert.equal(pred.featureVector.length, 17);
   });
 
-  test('runFullAnalysis wires store → extractFeatures → ONNX', async () => {
+  test('runFullAnalysis wires store → extractFeatures → ONNX when enabled', async () => {
     const { runFullAnalysis } = require('../ai/engine');
+    const origEnable = process.env.MEDWEAR_ENABLE_ONNX;
+    process.env.MEDWEAR_ENABLE_ONNX = 'true';
     const store = {
       daily: {
         '2026-01-05': {
@@ -103,12 +105,85 @@ describe('ONNX inference (engine.js + onnxInference.js)', () => {
     assert.ok(result.optionalOnnxPrediction);
     assert.equal(result.optionalOnnxPrediction.engineType, 'onnx-runtime');
     assert.ok(result.conditions.length > 0);
+
+    if (origEnable !== undefined) process.env.MEDWEAR_ENABLE_ONNX = origEnable;
+    else delete process.env.MEDWEAR_ENABLE_ONNX;
+  });
+
+  test('runFullAnalysis uses rule-engine-only by default (ONNX off)', async () => {
+    const { runFullAnalysis } = require('../ai/engine');
+    const origEnable = process.env.MEDWEAR_ENABLE_ONNX;
+    delete process.env.MEDWEAR_ENABLE_ONNX;
+    const store = {
+      daily: {
+        '2026-01-07': {
+          steps: 8500,
+          heartRate: [70, 72],
+          spo2: [97],
+          hrv: [48],
+          restingHeartRate: 62,
+          sleepMinutes: { deep: 80, rem: 90, light: 180, awake: 10 },
+        },
+      },
+    };
+    const result = await runFullAnalysis({
+      store,
+      diseaseScreening: {
+        categories: [{ items: [{ name: '高血压', risk: 20, level: 'low' }] }],
+        overallScore: 20,
+        summary: 'default off',
+        dataCoverage: { quality: 90 },
+      },
+      stats: {},
+      profile: { name: 'DefaultOff' },
+    });
+    assert.equal(result.inferenceBackend, 'rule-engine-only');
+    assert.equal(result.optionalOnnxPrediction, null);
+    assert.equal(result.onnxEnabled, false);
+
+    if (origEnable !== undefined) process.env.MEDWEAR_ENABLE_ONNX = origEnable;
+  });
+
+  test('deriveConditionRisk ignores ONNX — uses item baseline + features only', async () => {
+    const { runFullAnalysis } = require('../ai/engine');
+    const origEnable = process.env.MEDWEAR_ENABLE_ONNX;
+    process.env.MEDWEAR_ENABLE_ONNX = 'true';
+    const store = {
+      daily: {
+        '2026-01-08': {
+          steps: 8500,
+          heartRate: [70, 72],
+          spo2: [97],
+          hrv: [48],
+          restingHeartRate: 62,
+          sleepMinutes: { deep: 80, rem: 90, light: 180, awake: 10 },
+        },
+      },
+    };
+    const result = await runFullAnalysis({
+      store,
+      diseaseScreening: {
+        categories: [{ items: [{ name: '高血压', risk: 22, level: 'low' }] }],
+        overallScore: 20,
+        summary: 'baseline test',
+        dataCoverage: { quality: 90 },
+      },
+      stats: {},
+      profile: { name: 'Baseline' },
+    });
+    assert.equal(result.conditions[0].rawRisk, 22);
+    assert.equal(result.conditions[0].signalKind, 'attention-not-diagnosis');
+
+    if (origEnable !== undefined) process.env.MEDWEAR_ENABLE_ONNX = origEnable;
+    else delete process.env.MEDWEAR_ENABLE_ONNX;
   });
 
   test('runFullAnalysis silently falls back when ONNX unavailable', async () => {
     const { runFullAnalysis, buildFeatureHeuristicPrediction } = require('../ai/engine');
     const { resetModel } = require('../ai/onnxInference');
     const origModel = process.env.MEDWEAR_ONNX_MODEL;
+    const origEnable = process.env.MEDWEAR_ENABLE_ONNX;
+    process.env.MEDWEAR_ENABLE_ONNX = 'true';
     process.env.MEDWEAR_ONNX_MODEL = 'nonexistent_onnx_model_xyz';
     resetModel();
 
@@ -142,6 +217,8 @@ describe('ONNX inference (engine.js + onnxInference.js)', () => {
 
     if (origModel !== undefined) process.env.MEDWEAR_ONNX_MODEL = origModel;
     else delete process.env.MEDWEAR_ONNX_MODEL;
+    if (origEnable !== undefined) process.env.MEDWEAR_ENABLE_ONNX = origEnable;
+    else delete process.env.MEDWEAR_ENABLE_ONNX;
     resetModel();
   });
 
@@ -297,5 +374,29 @@ describe('Zod validation (extractFeatures.js) + batch ingest (parser → dao)', 
     assert.equal(BATCH_SIZE, 1000);
     assert.match(parserSrc, /ingestRecordBatch/);
     assert.match(parserSrc, /batch\.length >= BATCH_SIZE/);
+  });
+});
+
+describe('WESAD proxy adapter (publicDatasetAdapter.js)', () => {
+  test('feature build does not read labels — no direct bhiProxy from stress', () => {
+    const {
+      generateWesadStressProxySample,
+      windowToFeatures,
+      evaluateProxyDataset,
+    } = require('../adapters/publicDatasetAdapter');
+    const dataset = generateWesadStressProxySample(120, 42, 15);
+    dataset.windows.forEach((w) => {
+      assert.equal(w.bhiProxy, undefined);
+      const f = windowToFeatures(w);
+      assert.ok(f.health_score_norm > 0 && f.health_score_norm <= 1);
+    });
+    const evalResult = evaluateProxyDataset(dataset);
+    assert.equal(evalResult.featureBuildUsesLabels, false);
+    assert.ok(evalResult.holdout);
+    assert.ok(evalResult.bhiTierConfusionMatrix);
+    assert.ok(evalResult.perSubjectAccuracy.nSubjects >= 1);
+    if (evalResult.holdout.stressBinaryAucBhi != null) {
+      assert.ok(evalResult.holdout.stressBinaryAucBhi <= 0.99, 'AUC should not be artificially ~1.0 after label decoupling');
+    }
   });
 });

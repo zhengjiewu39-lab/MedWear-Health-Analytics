@@ -86,7 +86,7 @@ function DiseaseScreening() {
               `6 categories · ${totalItems} screening items (Tumor / Cancer / Chronic / Cardio-Cerebrovascular / Common Ailments / Respiratory)`,
             )}
             {' · '}{t(`${data.dataCoverage?.days || 0} 天数据`, `${data.dataCoverage?.days || 0} days of data`)}
-            {' · '}{data.aiVersion || 'MedWear-ONNX-v1'}
+            {' · '}{data.aiVersion || 'MedWear-RuleEngine-v1'}
             {data.engineType && (
               <> · <Chip size="small" label={data.engineType} color="primary" variant="outlined" sx={{ verticalAlign: 'middle', ml: 0.5 }} /></>
             )}
@@ -161,8 +161,8 @@ function DiseaseScreening() {
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis type="number" domain={[0, 50]} unit="%" />
                 <YAxis type="category" dataKey="name" width={110} tick={{ fontSize: 11 }} />
-                <Tooltip formatter={(v) => [`${v}%`, t('风险概率', 'Risk Probability')]} />
-                <Bar dataKey="risk" name={t('风险', 'Risk')} radius={[0, 4, 4, 0]}>
+                <Tooltip formatter={(v) => [`${v}%`, t('关注信号强度', 'Attention signal score')]} />
+                <Bar dataKey="risk" name={t('关注提示', 'Attention signal')} radius={[0, 4, 4, 0]}>
                   {activeItems.map((item, idx) => (
                     <Cell key={idx} fill={riskColor[item.level] || riskColor.low} />
                   ))}
@@ -175,7 +175,7 @@ function DiseaseScreening() {
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1, flexWrap: 'wrap', gap: 1 }}>
                   <Typography fontWeight={600}>{item.name}</Typography>
                   <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
-                    <Chip label={`${item.calibratedRisk ?? item.risk}% · ${bhiTierShort(item.level, isEn)}`} size="small" color={riskChip[item.level]} />
+                    <Chip label={`${item.calibratedRisk ?? item.risk}% · ${t('需进一步评估', 'Further eval')} · ${bhiTierShort(item.level, isEn)}`} size="small" color={riskChip[item.level]} />
                     {item.evidenceLevel && <EvidenceBadge level={item.evidenceLevel} label={item.evidenceLabel} />}
                   </Box>
                 </Box>
@@ -199,7 +199,7 @@ function DiseaseScreening() {
         </Grid>
         <Grid item xs={12} md={5}>
           <Paper sx={{ p: 3, mb: 3 }}>
-            <Typography variant="h6" gutterBottom fontWeight={600}>{t('6 个月风险趋势', '6-Month Risk Trend')}</Typography>
+            <Typography variant="h6" gutterBottom fontWeight={600}>{t('6 个月关注信号趋势', '6-Month Attention Signal Trend')}</Typography>
             <ChartContainer width="100%" height={220}>
               <LineChart data={trendData}>
                 <CartesianGrid strokeDasharray="3 3" />
@@ -267,7 +267,7 @@ function DiseaseScreening() {
         <Button variant="outlined" startIcon={<Print />} onClick={() => navigate('/doctor-report')}>{t('生成医生报告', 'Generate Doctor Report')}</Button>
       </Box>
       <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 2 }}>
-        {t('免责声明：AI 筛查为风险分层辅助工具，常见小病预警不能替代临床诊断，异常请就医。', 'Disclaimer: AI screening is a risk-stratification aid. Alerts for common ailments cannot replace clinical diagnosis; please seek medical care if abnormalities occur.')}
+        {t('免责声明：筛查条目为基于可穿戴偏离的「关注提示」与「需进一步评估的信号」，非疾病风险预测；不能替代临床诊断，异常请就医。', 'Disclaimer: Screening items are wearable-derived attention signals for further evaluation — not disease risk predictions. They cannot replace clinical diagnosis; please seek medical care if abnormalities occur.')}
       </Typography>
       <ReferenceDialog item={refItem} open={Boolean(refItem)} onClose={() => setRefItem(null)} />
     </Box>

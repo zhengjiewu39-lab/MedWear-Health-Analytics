@@ -49,6 +49,7 @@ const { getDemoPatientData, getDemoPatientSummary, searchDemoPatients } = requir
 const { hasData } = require('./server/health/store');
 const { getSystemStack } = require('./server/config/systemStack');
 const { isModelLoaded, loadModel, getModelInfo } = require('./server/ai/onnxInference');
+const { isOnnxEnabled } = require('./server/config/onnxConfig');
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -180,15 +181,17 @@ app.get('/api/system/stack', (_, res) => {
 
 app.get('/api/ai/model', async (_, res) => {
   try {
-    if (!isModelLoaded()) await loadModel();
+    if (isOnnxEnabled() && !isModelLoaded()) await loadModel();
     res.json({
-      loaded: isModelLoaded(),
-      info: getModelInfo(),
+      loaded: isOnnxEnabled() && isModelLoaded(),
+      enabled: isOnnxEnabled(),
+      info: isOnnxEnabled() ? getModelInfo() : null,
       stack: getSystemStack().inference,
     });
   } catch (err) {
     res.status(503).json({
       loaded: false,
+      enabled: isOnnxEnabled(),
       error: err.message,
       stack: getSystemStack().inference,
     });

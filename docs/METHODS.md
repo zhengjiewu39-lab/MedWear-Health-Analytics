@@ -104,20 +104,21 @@ Removed claims: CardioNet-style declared accuracy; ensemble confidence clamped t
 
 ## Optional ONNX inference backend
 
-**The evidence-weighted rule engine (BHI + MAD + screening rules) is the default product core — not the ONNX model.**
+**The evidence-weighted rule engine (BHI + MAD + screening rules) is the default product core — ONNX is disabled unless explicitly enabled.**
 
 | Item | Detail |
 |------|--------|
+| Enable flag | `MEDWEAR_ENABLE_ONNX=false (default — opt-in only)` |
 | Artifact | `server/ai/models/medwear_rf.onnx + medwear_rf.meta.json` |
 | Training | `experiments/medwear/train.py (sklearn RandomForest → skl2onnx export)` |
 | Training data | MedWear-Wearable-Analytics-Clinical-v2 synthetic export (n=5000, seed=42) → experiments/data/medwear/features_v1.csv via scripts/export_features.js |
-| Label target | BHI watch tier (low/moderate/high) at export time — research comparison artifact only |
+| Label target | BHI watch tier (low/moderate/high) — experimental comparison display only; never feeds disease screening scores |
 | Runtime | onnxruntime-node via server/ai/onnxInference.js |
-| Used in | runFullAnalysis() in server/ai/engine.js only (screening AI analysis path) |
-| **Not used in** | npm run evaluate / MedWear-AnalyticsCore-v1 benchmark pipeline (rule engine only) |
-| Fallback | `feature-heuristic-fallback` — If ONNX load or inference fails, silently fall back to BHI/anomaly-derived heuristics — no thrown errors to callers. |
+| Used in | runFullAnalysis() when MEDWEAR_ENABLE_ONNX=true — experimentalBhiTierComparison field only |
+| **Not used in** | deriveConditionRisk / disease screening scores / npm run evaluate / MedWear-AnalyticsCore-v1 benchmark |
+| Fallback | `rule-engine-only (default) or feature-heuristic-fallback when enabled but load fails` — Default off. When enabled, ONNX failures silently skip to rule-engine BHI — no thrown errors. |
 
-Implementation: `server/ai/onnxInference.js → server/ai/engine.js`. Optional experimental backend — not validated for clinical use; rule engine remains authoritative.
+Implementation: `server/config/onnxConfig.js → server/ai/onnxInference.js → server/ai/engine.js`. Opt-in experimental backend — BHI tier comparison only; not validated for clinical use; rule engine remains authoritative for all screening signals.
 
 ## Robustness Testing
 

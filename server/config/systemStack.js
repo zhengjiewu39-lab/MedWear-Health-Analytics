@@ -4,6 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const { dbPath } = require('../health/db');
 const { MODELS_DIR, DEFAULT_MODEL } = require('../ai/onnxInference');
+const { isOnnxEnabled } = require('./onnxConfig');
 const { PHYSIO_LIMITS } = require('../services/physioValidation');
 const { SENSITIVITY_PRESETS } = require('../services/robustAnomaly');
 const { BATCH_SIZE } = require('../health/parser');
@@ -33,19 +34,26 @@ function getSystemStack() {
     version: '2.0.0',
     stackLabel: 'MedWear Research Stack v2',
     inference: {
-      engine: 'onnxruntime-node',
+      engine: isOnnxEnabled() ? 'onnxruntime-node' : 'evidence-weighted-rule-engine',
+      onnxEnabled: isOnnxEnabled(),
+      enableFlag: 'MEDWEAR_ENABLE_ONNX (default: false)',
       training: 'experiments/medwear/train.py → skl2onnx',
-      modelId: modelMeta?.model_id || (onnxModels[0] ?? null),
-      modelType: modelMeta?.model_type || null,
+      modelId: isOnnxEnabled() ? (modelMeta?.model_id || (onnxModels[0] ?? null)) : null,
+      modelType: isOnnxEnabled() ? (modelMeta?.model_type || null) : null,
       modelsAvailable: onnxModels,
       labelClasses: modelMeta?.label_classes || [],
       metrics: modelMeta?.metrics || null,
       featureDim: 17,
+      purpose: isOnnxEnabled()
+        ? 'experimental BHI tier comparison only — not disease risk'
+        : 'disabled — rule engine is default core',
     },
     storage: {
       engine: 'better-sqlite3',
       database: dbPath(),
-      legacyJson: 'health-store.json (auto-migrated)',
+      description_en: 'Apple Health records processed locally and persisted in SQLite; encrypted vault snapshots for backup where enabled.',
+      description_zh: 'Apple Health 记录在本地处理并持久化至 SQLite；启用时使用加密 vault 快照备份。',
+      legacyJson: 'health-store.json (one-time import migration only)',
       batchImportSize: BATCH_SIZE,
       walMode: true,
     },

@@ -118,8 +118,8 @@ function AnomalyDetection() {
         {t('个体异常检测（代理信号）', 'Individual Anomaly Detection (Proxy Signals)')}
       </Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
-        {t('消费级可穿戴代理信号 → BHI + 稳健 MAD Z-score（|Z|>2.5）异常检测 + ONNX 风险推理',
-          'Consumer wearable proxies → BHI + robust MAD Z-score (|Z|>2.5) anomalies + ONNX risk inference')}
+        {t('消费级可穿戴代理信号 → BHI + 稳健 MAD Z-score（|Z|>2.5）异常检测（规则引擎核心；ONNX 需显式开启）',
+          'Consumer wearable proxies → BHI + robust MAD Z-score (|Z|>2.5) anomalies (rule engine core; ONNX opt-in only)')}
       </Typography>
 
       <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', mb: 3 }}>

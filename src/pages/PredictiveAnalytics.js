@@ -91,8 +91,8 @@ function PredictiveAnalytics() {
       <AiGovernanceBanner compact />
       <Typography variant="h5" gutterBottom fontWeight={700}>{t('预测性健康分析', 'Predictive Health Analytics')}</Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-        {t('AI 多模型预测慢病与肿瘤风险窗口，结果将汇入 AI 干预中心供医师审批',
-          'AI multi-model forecasts chronic disease and cancer risk windows — results feed the AI Intervention Hub for physician approval')}
+        {t('基于可穿戴偏离与规则引擎的「需进一步评估的信号」汇总，结果将汇入 AI 干预中心供医师审批',
+          'Wearable-deviation and rule-engine attention signals for further evaluation — results feed the AI Intervention Hub for physician approval')}
       </Typography>
       {predictions.length > 0 && (
         <Button

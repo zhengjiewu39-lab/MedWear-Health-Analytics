@@ -11,7 +11,7 @@ Apple Health Export (XML/ZIP)
         ↓
   SAX Stream Parser
         ↓
-  data/health-store.json (local)
+  SQLite (data/medwear-health.db) — legacy health-store.json migrated once
         ↓
   Analytics Core — BHI + MAD heuristic + rule-engine alerts
         ↓
@@ -39,14 +39,15 @@ See [METHODS.md](./METHODS.md):
 
 ## Optional ONNX Inference Backend
 
-The **rule engine is the default core** for alerts, BHI, MAD anomalies, and benchmark evaluation (`npm run evaluate` never loads ONNX).
+The **rule engine is the default core** for alerts, BHI, MAD anomalies, screening signals, and benchmark evaluation. ONNX is **opt-in only** (`MEDWEAR_ENABLE_ONNX=false` by default).
 
 | Item | Detail |
 |------|--------|
+| Enable flag | `MEDWEAR_ENABLE_ONNX=false` (default) |
+| When enabled | `experimentalBhiTierComparison` in `/api/ai/analysis` only |
+| Not used for | Disease screening scores (`deriveConditionRisk`) — signals come from rules/metrics only |
+| Benchmark | `npm run evaluate` never loads ONNX |
 | Artifact | `server/ai/models/medwear_rf.onnx` (sklearn RF exported via `experiments/medwear/train.py`) |
-| Training data | Synthetic export `features_v1.csv` from `benchmarks/wearable-analytics-dataset.json` (n=5000, seed=42) |
-| Used in | `runFullAnalysis()` screening path only |
-| Fallback | Silent `feature-heuristic-fallback` when ONNX load/inference fails |
 
 See [METHODS.md](./METHODS.md) § Optional ONNX inference backend.
 

@@ -6,7 +6,7 @@ MedWear is a **research and education prototype** for consumer wearable analytic
 
 ## Data Privacy
 
-- Apple Health data is parsed **locally** and stored in `data/health-store.json`
+- Apple Health data is parsed **locally** and persisted in **SQLite** (`data/medwear-health.db`). Encrypted vault snapshots may be used for backup. Legacy `health-store.json` is one-time migration only.
 - No cloud upload of raw health records by default
 - Optional OpenAI calls send **summarized context**, not full XML exports
 - Encrypted vault (`data/health-vault.enc`) for local backup snapshots

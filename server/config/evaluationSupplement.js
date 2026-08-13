@@ -178,22 +178,24 @@ function renderSupplementMarkdown(isEn = true) {
 
   if (isEn) {
     lines.push('## Portable feature / external dataset baseline\n');
-    lines.push('> Descriptive check on exported 17-dim rows; WESAD/PPG-DaLiA require separate adapters. See [EXTERNAL-VALIDATION.md](./EXTERNAL-VALIDATION.md).\n');
+    lines.push('> Descriptive check on exported 17-dim rows. WESAD adapter implemented (sanity check only). See [EXTERNAL-VALIDATION.md](./EXTERNAL-VALIDATION.md).\n');
   } else {
     lines.push('## 可移植特征 / 外部数据集基线\n');
-    lines.push('> 17 维导出特征描述性检查；WESAD/PPG-DaLiA 需单独适配。见 [EXTERNAL-VALIDATION.zh.md](./EXTERNAL-VALIDATION.zh.md)。\n');
+    lines.push('> 17 维导出特征描述性检查。WESAD 适配器已实现（仅健全性检查）。见 [EXTERNAL-VALIDATION.zh.md](./EXTERNAL-VALIDATION.zh.md)。\n');
   }
 
   if (s.externalDescriptive) {
     const e = s.externalDescriptive;
     if (e.wesadStressProxy) {
       const w = e.wesadStressProxy;
-      lines.push(`- WESAD stress proxy (**sanity check only — not validation**): n=${w.n} · BHI-tier acc=${w.heuristicBhiTierAccuracy} · anomaly agree=${w.anomalyFlagAgreement ?? '—'} · stress-binary AUC(BHI)=${w.stressBinaryAucBhi ?? '—'} · AUC(anomaly)=${w.stressBinaryAucAnomaly ?? '—'}`);
+      const h = w.holdout || {};
+      const ps = w.perSubjectAccuracy || {};
+      lines.push(`- WESAD stress proxy (**sanity check only — not validation**): n=${w.n} · subjects=${w.nSubjects ?? '—'} · BHI-tier acc=${w.heuristicBhiTierAccuracy} (holdout n=${w.holdoutN ?? h.n ?? '—'} acc=${h.heuristicBhiTierAccuracy ?? '—'}) · per-subject acc range=${ps.min ?? '—'}–${ps.max ?? '—'} · stress-binary AUC(BHI)=${w.stressBinaryAucBhi ?? '—'} (holdout=${h.stressBinaryAucBhi ?? '—'}, 95% CI ${h.stressBinaryAucBhiCi95 ? `${h.stressBinaryAucBhiCi95.low}–${h.stressBinaryAucBhiCi95.high}` : '—'}) · featureBuildUsesLabels=${w.featureBuildUsesLabels ?? false}`);
     }
     if (e.internalExport) {
       lines.push(`- Internal export: n=${e.internalExport.n} · BHI-tier acc=${e.internalExport.heuristicBhiTierAccuracy}`);
     }
-    lines.push(`- Planned external: ${(e.externalDatasetsPlanned || []).join(', ')}`);
+    lines.push(`- Planned external: PPG-DaLiA (activity HR proxy)`);
     lines.push('');
   }
 

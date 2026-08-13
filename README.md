@@ -13,7 +13,7 @@ Connects consumer wearables to actionable health insights with **local-first pri
 | Capability | Description |
 |------------|-------------|
 | **Dual-mode architecture** | Demo (synthetic) vs Real (Apple Health) — fully isolated |
-| **Apple Health pipeline** | SAX streaming parser → local JSON store → analytics |
+| **Apple Health pipeline** | SAX streaming parser → SQLite local store → analytics |
 | **Transparent analytics** | BHI (behavioral health index), peak/single-reading alerts, robust MAD anomaly heuristic |
 | **Clinical workflow** | Screening → exam booking → structured doctor report |
 | **Analytics Lab** | In-app benchmark charts, methods transparency, evaluation metrics |
@@ -24,7 +24,7 @@ Connects consumer wearables to actionable health insights with **local-first pri
 ## Tech Stack
 
 - **Frontend:** React 18, MUI 5, Recharts, React Router 6
-- **Backend:** Express 5, SAX XML parser, local JSON persistence
+- **Backend:** Express 5, SAX XML parser, SQLite persistence (`better-sqlite3`)
 - **AI:** Rule engine (`MedWear-RuleEngine-v1`) + optional LLM (real mode) — not a trained ML ensemble
 - **Security:** JWT auth, audit log, AES-256-GCM health vault
 
@@ -97,7 +97,7 @@ macOS 也可 **双击** 项目根目录下的 `启动 MedWear.command`。
 
 Supported: HeartRate, OxygenSaturation, StepCount, SleepAnalysis, HRV, ActiveEnergyBurned, RespiratoryRate.
 
-> Data stays local in `data/health-store.json`.
+> Apple Health records are processed locally and persisted in **SQLite** (`data/medwear-health.db`). Encrypted vault snapshots are used for backup where enabled. Legacy `data/health-store.json` is migrated once on import only.
 
 ---
 

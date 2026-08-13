@@ -234,10 +234,10 @@ curl http://localhost:3001/api/research/validate
 
 ## 可移植特征 / 外部数据集基线
 
-> 17 维导出特征描述性检查；WESAD/PPG-DaLiA 需单独适配。见 [EXTERNAL-VALIDATION.zh.md](./EXTERNAL-VALIDATION.zh.md)。
+> 17 维导出特征描述性检查。WESAD 适配器已实现（仅健全性检查）。见 [EXTERNAL-VALIDATION.zh.md](./EXTERNAL-VALIDATION.zh.md)。
 
-- WESAD stress proxy (**sanity check only — not validation**): n=120 · BHI-tier acc=0.5583 · anomaly agree=0.6333 · stress-binary AUC(BHI)=0.9989 · AUC(anomaly)=0.6025
+- WESAD stress proxy (**sanity check only — not validation**): n=120 · subjects=15 · BHI-tier acc=0.5583 (holdout n=24 acc=0.5833) · per-subject acc range=0.375–0.875 · stress-binary AUC(BHI)=0.9936 (holdout=0.9792, 95% CI 0.9214–1) · featureBuildUsesLabels=false
 - Internal export: n=5000 · BHI-tier acc=0.7932
-- Planned external: WESAD (stress/arousal proxy), PPG-DaLiA (activity HR proxy)
+- Planned external: PPG-DaLiA (activity HR proxy)
 
 <!-- EVAL-SUPPLEMENT-END -->

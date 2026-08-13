@@ -148,23 +148,24 @@ const optionalOnnxBackend = {
   label_en: 'Optional ONNX inference backend',
   label_zh: '可选 ONNX 推理后端',
   isDefaultCore: false,
-  defaultCore_en: 'The evidence-weighted rule engine (BHI + MAD + screening rules) is the default product core — not the ONNX model.',
-  defaultCore_zh: '证据加权规则引擎（BHI + MAD + 筛查规则）为默认产品核心 — 非 ONNX 模型。',
+  enableFlag: 'MEDWEAR_ENABLE_ONNX=false (default — opt-in only)',
+  defaultCore_en: 'The evidence-weighted rule engine (BHI + MAD + screening rules) is the default product core — ONNX is disabled unless explicitly enabled.',
+  defaultCore_zh: '证据加权规则引擎（BHI + MAD + 筛查规则）为默认产品核心 — 除非显式开启，否则 ONNX 默认关闭。',
   modelArtifact: 'server/ai/models/medwear_rf.onnx + medwear_rf.meta.json',
   trainingScript: 'experiments/medwear/train.py (sklearn RandomForest → skl2onnx export)',
   trainingData_en: 'MedWear-Wearable-Analytics-Clinical-v2 synthetic export (n=5000, seed=42) → experiments/data/medwear/features_v1.csv via scripts/export_features.js',
   trainingData_zh: 'MedWear-Wearable-Analytics-Clinical-v2 合成导出（n=5000, seed=42）→ scripts/export_features.js 生成 experiments/data/medwear/features_v1.csv',
-  labelTarget_en: 'BHI watch tier (low/moderate/high) at export time — research comparison artifact only',
-  labelTarget_zh: '导出时的 BHI 关注分层（low/moderate/high）— 仅研究对比产物',
+  labelTarget_en: 'BHI watch tier (low/moderate/high) — experimental comparison display only; never feeds disease screening scores',
+  labelTarget_zh: 'BHI 关注分层（low/moderate/high）— 仅实验性对比展示；不参与疾病筛查分数',
   runtime: 'onnxruntime-node via server/ai/onnxInference.js',
-  usedIn: 'runFullAnalysis() in server/ai/engine.js only (screening AI analysis path)',
-  notUsedIn: 'npm run evaluate / MedWear-AnalyticsCore-v1 benchmark pipeline (rule engine only)',
-  fallback: 'feature-heuristic-fallback',
-  fallbackBehavior_en: 'If ONNX load or inference fails, silently fall back to BHI/anomaly-derived heuristics — no thrown errors to callers.',
-  fallbackBehavior_zh: 'ONNX 加载或推理失败时静默回退至 BHI/异常启发式 — 不向调用方抛错。',
-  implementation: 'server/ai/onnxInference.js → server/ai/engine.js',
-  disclaimer_en: 'Optional experimental backend — not validated for clinical use; rule engine remains authoritative.',
-  disclaimer_zh: '可选实验性后端 — 未经临床验证；规则引擎仍为权威路径。',
+  usedIn: 'runFullAnalysis() when MEDWEAR_ENABLE_ONNX=true — experimentalBhiTierComparison field only',
+  notUsedIn: 'deriveConditionRisk / disease screening scores / npm run evaluate / MedWear-AnalyticsCore-v1 benchmark',
+  fallback: 'rule-engine-only (default) or feature-heuristic-fallback when enabled but load fails',
+  fallbackBehavior_en: 'Default off. When enabled, ONNX failures silently skip to rule-engine BHI — no thrown errors.',
+  fallbackBehavior_zh: '默认关闭。开启后 ONNX 失败时静默跳过，仍用规则引擎 BHI — 不向调用方抛错。',
+  implementation: 'server/config/onnxConfig.js → server/ai/onnxInference.js → server/ai/engine.js',
+  disclaimer_en: 'Opt-in experimental backend — BHI tier comparison only; not validated for clinical use; rule engine remains authoritative for all screening signals.',
+  disclaimer_zh: '需显式开启的实验性后端 — 仅 BHI 分层对比；未经临床验证；筛查信号仍由规则引擎生成。',
 };
 
 const robustnessTests = {
@@ -340,6 +341,7 @@ Removed claims: ${re.removedClaims.join('; ')}.
 
 | Item | Detail |
 |------|--------|
+| Enable flag | \`${onnx.enableFlag}\` |
 | Artifact | \`${onnx.modelArtifact}\` |
 | Training | \`${onnx.trainingScript}\` |
 | Training data | ${onnx.trainingData_en} |
@@ -466,6 +468,7 @@ ${re.domainWeights.map((d) => `| ${d.domain} | ${(d.weight * 100).toFixed(0)}% |
 
 | 项 | 说明 |
 |----|------|
+| 开启开关 | \`${onnx.enableFlag}\` |
 | 模型文件 | \`${onnx.modelArtifact}\` |
 | 训练脚本 | \`${onnx.trainingScript}\` |
 | 训练数据 | ${onnx.trainingData_zh} |

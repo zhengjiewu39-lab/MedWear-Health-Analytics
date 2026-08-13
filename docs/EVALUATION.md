@@ -239,10 +239,10 @@ curl http://localhost:3001/api/research/validate
 
 ## Portable feature / external dataset baseline
 
-> Descriptive check on exported 17-dim rows; WESAD/PPG-DaLiA require separate adapters. See [EXTERNAL-VALIDATION.md](./EXTERNAL-VALIDATION.md).
+> Descriptive check on exported 17-dim rows. WESAD adapter implemented (sanity check only). See [EXTERNAL-VALIDATION.md](./EXTERNAL-VALIDATION.md).
 
-- WESAD stress proxy (**sanity check only — not validation**): n=120 · BHI-tier acc=0.5583 · anomaly agree=0.6333 · stress-binary AUC(BHI)=0.9989 · AUC(anomaly)=0.6025
+- WESAD stress proxy (**sanity check only — not validation**): n=120 · subjects=15 · BHI-tier acc=0.5583 (holdout n=24 acc=0.5833) · per-subject acc range=0.375–0.875 · stress-binary AUC(BHI)=0.9936 (holdout=0.9792, 95% CI 0.9214–1) · featureBuildUsesLabels=false
 - Internal export: n=5000 · BHI-tier acc=0.7932
-- Planned external: WESAD (stress/arousal proxy), PPG-DaLiA (activity HR proxy)
+- Planned external: PPG-DaLiA (activity HR proxy)
 
 <!-- EVAL-SUPPLEMENT-END -->

@@ -45,7 +45,8 @@ function main() {
       note_zh: 'PPG-DaLiA 适配器占位 — 需下载数据集并映射活动-心率窗口。',
     },
     portableSchema: 'server/services/extractFeatures.js → FEATURE_NAMES (17 dims)',
-    externalDatasetsPlanned: ['WESAD (stress/arousal proxy)', 'PPG-DaLiA (activity HR proxy)'],
+    externalDatasetsPlanned: ['PPG-DaLiA (activity HR proxy)'],
+    wesadStatus: 'implemented-sanity-check-only',
     note_en:
       'WESAD proxy uses literature-calibrated synthetic windows; internal export uses n=5000 synthetic benchmark. Not substitute for full external validation.',
     note_zh: 'WESAD 代理为文献校准合成窗口；内部导出为 n=5000 合成基准。不能替代完整外部验证。',
@@ -54,7 +55,7 @@ function main() {
   fs.mkdirSync(path.dirname(OUT), { recursive: true });
   fs.writeFileSync(OUT, JSON.stringify(payload, null, 2));
   console.log(`Public dataset evaluation → ${OUT}`);
-  console.log(`  WESAD proxy n=${wesadEval.n} BHI-tier acc=${wesadEval.heuristicBhiTierAccuracy} stress-binary AUC(BHI)=${wesadEval.stressBinaryAucBhi}`);
+  console.log(`  WESAD proxy n=${wesadEval.n} subjects=${wesadEval.nSubjects} BHI-tier acc=${wesadEval.heuristicBhiTierAccuracy} holdout AUC=${wesadEval.holdout?.stressBinaryAucBhi ?? '—'}`);
   if (internal) console.log(`  Internal export n=${internal.n} BHI-tier acc=${internal.heuristicBhiTierAccuracy}`);
 }
 

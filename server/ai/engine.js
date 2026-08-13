@@ -5,6 +5,7 @@
 const { getReference, getAllReferences, EVIDENCE_LABELS } = require('../data/researchReferences');
 const { extractFeatures } = require('../services/extractFeatures');
 const { predictRisk, isModelLoaded, getModelInfo, loadModel } = require('./onnxInference');
+const { isOnnxEnabled } = require('../config/onnxConfig');
 
 const ENGINE_TYPE = 'evidence-weighted-rule-engine';
 const LEGACY_FIELDS_NOTE =
@@ -106,6 +107,12 @@ function analyzeCondition(name, risk, level, prediction) {
   };
 }
 
+function deriveBaselineAttentionScore(item, features) {
+  if (item?.risk != null) return item.risk;
+  if (!features || features.health_score_norm == null) return 20;
+  return features.health_score_norm < 0.65 ? 45 : 20;
+}
+
 function deriveConditionRisk(baseRisk, itemName, features) {
   let risk = baseRisk;
   if (itemName.includes('高血压') || itemName.includes('冠心病') || itemName.includes('心律')) {
@@ -119,6 +126,15 @@ function deriveConditionRisk(baseRisk, itemName, features) {
   }
   if (features.anomaly_flag) risk += 8;
   return Math.min(85, Math.max(5, Math.round(risk)));
+}
+
+function ruleEngineBhiFromFeatures(features) {
+  if (!features || features.health_score_norm == null) {
+    return { label: 'unknown', score: 0 };
+  }
+  const score = Math.round(features.health_score_norm * 100);
+  const label = features.health_score_norm >= 0.8 ? 'low' : features.health_score_norm >= 0.6 ? 'moderate' : 'high';
+  return { label, score };
 }
 
 function buildDomainWeightedSummaries(conditions) {
@@ -149,14 +165,16 @@ function buildFeatureHeuristicPrediction(features) {
   };
 }
 
-/** Optional ONNX path — returns null on any failure (silent fallback). */
+/** Optional ONNX path — opt-in via MEDWEAR_ENABLE_ONNX; returns null on disable or failure. */
 async function tryOptionalOnnxInference(features) {
+  if (!isOnnxEnabled()) return null;
   try {
     if (!isModelLoaded()) {
       const loaded = await loadModel();
       if (!loaded) return null;
     }
-    return await predictRisk(features);
+    const pred = await predictRisk(features);
+    return pred ? { ...pred, purpose: 'experimental-bhi-tier-comparison-only' } : null;
   } catch {
     return null;
   }
@@ -168,48 +186,55 @@ async function runFullAnalysis(patientData) {
   const stats = patientData?.dashboard?.stats || patientData?.stats || {};
   const profile = patientData?.profile || { name: 'Patient', age: 35, sex: 'M' };
 
-  let prediction = null;
   let features = null;
   let inferenceBackend = null;
+  let experimentalBhiTierComparison = null;
+  let ruleBhi = { label: 'unknown', score: 0 };
 
   if (store?.daily && Object.keys(store.daily).length) {
     features = extractFeatures({
       days: store.daily,
       targetDay: Object.keys(store.daily).sort().pop(),
     });
-    const onnxPred = await tryOptionalOnnxInference(features);
-    if (onnxPred) {
-      prediction = onnxPred;
+    ruleBhi = ruleEngineBhiFromFeatures(features);
+    experimentalBhiTierComparison = await tryOptionalOnnxInference(features);
+    if (experimentalBhiTierComparison) {
       inferenceBackend = 'onnx-runtime';
-    } else {
+    } else if (isOnnxEnabled()) {
       inferenceBackend = 'feature-heuristic-fallback';
-      prediction = buildFeatureHeuristicPrediction(features);
+    } else {
+      inferenceBackend = 'rule-engine-only';
     }
   } else {
     inferenceBackend = 'insufficient-data';
-    prediction = { label: 'unknown', riskPercent: 0, confidence: null };
   }
 
   const conditions = screening
     ? screening.categories.flatMap((cat) =>
       cat.items.map((item) => {
         const risk = deriveConditionRisk(
-          prediction.riskPercent ?? item.risk ?? 20,
+          deriveBaselineAttentionScore(item, features),
           item.name,
           features || {},
         );
-        return analyzeCondition(item.name, risk, HIGH_LEVEL(risk), prediction);
+        return {
+          ...analyzeCondition(item.name, risk, HIGH_LEVEL(risk), null),
+          signalKind: 'attention-not-diagnosis',
+          signalLabel_zh: '需进一步评估的信号',
+          signalLabel_en: 'Signal for further evaluation',
+        };
       }),
     )
     : [];
 
   const domainWeightedSummaries = buildDomainWeightedSummaries(conditions);
-  const heuristicConfidence = prediction?.confidence ?? 0.55;
+  const heuristicConfidence = experimentalBhiTierComparison?.confidence ?? 0.55;
 
   return attachLegacyEngineFields({
     version: 'MedWear-RuleEngine-v1',
     engineType: ENGINE_TYPE,
     inferenceBackend,
+    onnxEnabled: isOnnxEnabled(),
     generatedAt: new Date().toISOString(),
     patient: profile,
     heuristicConfidence,
@@ -218,10 +243,12 @@ async function runFullAnalysis(patientData) {
     domainWeightedSummaries,
     conditions,
     summary: screening?.summary,
-    overallRisk: prediction.label,
-    overallScore: prediction.riskPercent ?? screening?.overallScore ?? 0,
-    optionalOnnxPrediction: inferenceBackend === 'onnx-runtime' ? prediction : null,
-    modelInfo: getModelInfo(),
+    overallRisk: ruleBhi.label,
+    overallScore: ruleBhi.score ?? screening?.overallScore ?? 0,
+    experimentalBhiTierComparison,
+    optionalOnnxPrediction: experimentalBhiTierComparison,
+    usesOnnx: Boolean(experimentalBhiTierComparison),
+    modelInfo: isOnnxEnabled() ? getModelInfo() : null,
     fusionWeights: { wearable: 0.55, clinical: 0.30, behavioral: 0.15 },
     dataQuality: screening?.dataCoverage?.quality || 'from-wearable-store',
     disclaimer: LEGACY_FIELDS_NOTE,
@@ -274,11 +301,16 @@ function enrichScreeningData(screening, store) {
         const rid = ITEM_RESEARCH_MAP[item.name];
         const ref = rid ? getReference(rid) : null;
         const risk = deriveConditionRisk(
-          item.risk ?? (features.health_score_norm < 0.65 ? 45 : 20),
+          deriveBaselineAttentionScore(item, features),
           item.name,
           features,
         );
-        return enrichScreeningItem(item, ref, features, risk);
+        return {
+          ...enrichScreeningItem(item, ref, features, risk),
+          signalKind: 'attention-not-diagnosis',
+          signalLabel_zh: '需进一步评估的信号',
+          signalLabel_en: 'Signal for further evaluation',
+        };
       }),
     })),
   };
@@ -323,4 +355,7 @@ module.exports = {
   referenceDomainLabel,
   buildFeatureHeuristicPrediction,
   tryOptionalOnnxInference,
+  deriveBaselineAttentionScore,
+  ruleEngineBhiFromFeatures,
+  isOnnxEnabled,
 };

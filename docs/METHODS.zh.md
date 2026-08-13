@@ -104,20 +104,21 @@
 
 ## 可选 ONNX 推理后端
 
-**证据加权规则引擎（BHI + MAD + 筛查规则）为默认产品核心 — 非 ONNX 模型。**
+**证据加权规则引擎（BHI + MAD + 筛查规则）为默认产品核心 — 除非显式开启，否则 ONNX 默认关闭。**
 
 | 项 | 说明 |
 |----|------|
+| 开启开关 | `MEDWEAR_ENABLE_ONNX=false (default — opt-in only)` |
 | 模型文件 | `server/ai/models/medwear_rf.onnx + medwear_rf.meta.json` |
 | 训练脚本 | `experiments/medwear/train.py (sklearn RandomForest → skl2onnx export)` |
 | 训练数据 | MedWear-Wearable-Analytics-Clinical-v2 合成导出（n=5000, seed=42）→ scripts/export_features.js 生成 experiments/data/medwear/features_v1.csv |
-| 标签目标 | 导出时的 BHI 关注分层（low/moderate/high）— 仅研究对比产物 |
+| 标签目标 | BHI 关注分层（low/moderate/high）— 仅实验性对比展示；不参与疾病筛查分数 |
 | 运行时 | onnxruntime-node via server/ai/onnxInference.js |
-| 用于 | runFullAnalysis() in server/ai/engine.js only (screening AI analysis path) |
-| **不用于** | npm run evaluate / MedWear-AnalyticsCore-v1 benchmark pipeline (rule engine only) |
-| 回退 | `feature-heuristic-fallback` — ONNX 加载或推理失败时静默回退至 BHI/异常启发式 — 不向调用方抛错。 |
+| 用于 | runFullAnalysis() when MEDWEAR_ENABLE_ONNX=true — experimentalBhiTierComparison field only |
+| **不用于** | deriveConditionRisk / disease screening scores / npm run evaluate / MedWear-AnalyticsCore-v1 benchmark |
+| 回退 | `rule-engine-only (default) or feature-heuristic-fallback when enabled but load fails` — 默认关闭。开启后 ONNX 失败时静默跳过，仍用规则引擎 BHI — 不向调用方抛错。 |
 
-实现：`server/ai/onnxInference.js → server/ai/engine.js`。可选实验性后端 — 未经临床验证；规则引擎仍为权威路径。
+实现：`server/config/onnxConfig.js → server/ai/onnxInference.js → server/ai/engine.js`。需显式开启的实验性后端 — 仅 BHI 分层对比；未经临床验证；筛查信号仍由规则引擎生成。
 
 ## 鲁棒性测试
 
