@@ -820,6 +820,7 @@ function buildRealScreening(store) {
       dataCoverage: { days: 0, samples: 0, devices: 0, quality: 0 },
       summary: '真实模式：请先导入 Apple Health 数据。导入后将基于您的真实心率、血氧、睡眠等计算筛查风险，不会使用任何模拟数据。',
       summary_en: 'Real mode: please import Apple Health data first. Once imported, screening risk will be computed from your real heart rate, SpO₂, sleep, and more, with no simulated data used.',
+      overallBhiTier: 'unknown',
       overallRisk: 'unknown',
       overallScore: 0,
       categories: [],
@@ -833,7 +834,7 @@ function buildRealScreening(store) {
   const predictions = buildPredictions(store);
   const dayCount = store.meta?.dayCount || Object.keys(store.daily || {}).length;
   const overallScore = stats.healthScore ?? 0;
-  const overallRisk = !dayCount || stats.healthScore == null
+  const overallBhiTier = !dayCount || stats.healthScore == null
     ? 'unknown'
     : overallScore >= 80 ? 'low' : overallScore >= 60 ? 'moderate' : 'high';
   const biomarkers = [
@@ -857,7 +858,8 @@ function buildRealScreening(store) {
     },
     summary: `基于您 ${store.meta?.dayCount || 0} 天 Apple Health 真实数据的全品类 AI 筛查（肿瘤/癌症/慢病/心脑血管/常见小病/呼吸），非模拟数据。`,
     summary_en: `Full-category AI screening based on your ${store.meta?.dayCount || 0} days of real Apple Health data (tumor / cancer / chronic disease / cardio-cerebrovascular / common ailments / respiratory), not simulated data.`,
-    overallRisk,
+    overallBhiTier,
+    overallRisk: overallBhiTier,
     overallScore,
     overallScoreType: 'health',
     biomarkers,
@@ -901,7 +903,8 @@ function buildRealDoctorReport(store) {
     },
     physicianSummary: `【真实 Apple Health 数据】${buildAiSummary(store)}`,
     physicianSummary_en: `[Real Apple Health data] ${screening.summary_en}`,
-    overallRisk: screening.overallRisk,
+    overallBhiTier: screening.overallBhiTier ?? screening.overallRisk,
+    overallRisk: screening.overallRisk ?? screening.overallBhiTier,
     overallScore: screening.overallScore,
     vitalsSnapshot: [
       { label: '静息心率', label_en: 'Resting HR', value: stats.restingHR, unit: 'bpm', ref: '60-80', flag: stats.restingHR > 85 || stats.restingHR < 50 ? 'watch' : 'normal' },

@@ -92,8 +92,8 @@ function appendCategoryScreeningInsights(base, categories) {
     if (top && top.risk >= 22) {
       extra.push({
         type: top.level === 'high' ? 'warning' : 'info',
-        text: `【${cat.name}】${top.name} 融合校准风险 ${top.calibratedRisk ?? top.risk}%（证据 ${top.evidenceLabel || 'C'}）· ${top.recommendation}`,
-        text_en: `[${cat.name_en || cat.name}] ${top.name_en || top.name} calibrated risk ${top.calibratedRisk ?? top.risk}% (evidence ${top.evidenceLabel || 'C'}) · ${top.recommendation_en || top.recommendation}`,
+        text: `【${cat.name}】${top.name} 关注信号 ${top.evidenceAdjustedAttentionScore ?? top.attentionScore ?? top.calibratedRisk ?? top.risk}%（证据 ${top.evidenceLabel || 'C'}）· ${top.recommendation}`,
+        text_en: `[${cat.name_en || cat.name}] ${top.name_en || top.name} attention signal ${top.evidenceAdjustedAttentionScore ?? top.attentionScore ?? top.calibratedRisk ?? top.risk}% (evidence ${top.evidenceLabel || 'C'}) · ${top.recommendation_en || top.recommendation}`,
       });
     }
   });

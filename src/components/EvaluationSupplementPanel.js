@@ -13,6 +13,8 @@ export default function EvaluationSupplementPanel({ data }) {
   const fp = data.fpBurden;
   const ml = data.mlComparison;
   const ext = data.externalDescriptive;
+  const wesad = ext?.wesadStressProxy;
+  const holdout = wesad?.holdout;
 
   return (
     <Paper variant="outlined" sx={{ p: 2.5, mb: 2 }}>
@@ -25,8 +27,8 @@ export default function EvaluationSupplementPanel({ data }) {
 
       <Alert severity="info" sx={{ mb: 2 }}>
         {t(
-          '情景模拟、假阳性负担、ML 对比与外部代理基线 — 由 npm run evaluate:supplement 生成',
-          'Scenario sensitivity, FP burden, ML comparison & external proxy baselines — from npm run evaluate:supplement',
+          '情景模拟、假阳性负担、ML 对比与公开数据集启发代理健全性检查 — 由 npm run evaluate:supplement 生成',
+          'Scenario sensitivity, FP burden, ML comparison & public-dataset-inspired proxy sanity checks — from npm run evaluate:supplement',
         )}
       </Alert>
 
@@ -89,7 +91,7 @@ export default function EvaluationSupplementPanel({ data }) {
             <TableBody>
               <TableRow>
                 <TableCell>MedWear-RuleEngine-v1</TableCell>
-                <TableCell>risk {ml.ruleEngine.riskAccuracy} · F1 {ml.ruleEngine.alertF1}</TableCell>
+                <TableCell>engine-vs-gold {ml.ruleEngine.riskAccuracy} · alert F1 {ml.ruleEngine.alertF1}</TableCell>
               </TableRow>
               {(ml.nodeBaselines || []).map((b) => (
                 <TableRow key={b.name}>
@@ -122,12 +124,35 @@ export default function EvaluationSupplementPanel({ data }) {
       {ext && (
         <Box>
           <Typography variant="subtitle2" fontWeight={700} gutterBottom>
-            {t('外部/可移植特征基线', 'External / portable feature baseline')}
+            {t('公开数据集启发代理健全性检查', 'Public-dataset-inspired proxy sanity checks')}
           </Typography>
-          {ext.wesadStressProxy && (
-            <Typography variant="body2" color="text.secondary">
-              WESAD proxy: n={ext.wesadStressProxy.n} · BHI-tier {ext.wesadStressProxy.heuristicBhiTierAccuracy}
-            </Typography>
+          <Alert severity="warning" sx={{ mb: 1.5 }}>
+            {t(
+              '非外部验证 · 非 WESAD 原始数据验证 · 合成 HR/HRV 代理窗口',
+              'Not external validation · not raw WESAD validation · synthetic HR/HRV proxy windows',
+            )}
+          </Alert>
+          {wesad && (
+            <Box sx={{ mb: 1 }}>
+              <Typography variant="body2" gutterBottom>
+                WESAD-inspired proxy · n={wesad.n} · subjects={wesad.nSubjects ?? '—'} · BHI-tier acc={wesad.heuristicBhiTierAccuracy}
+                {holdout ? ` · holdout acc=${holdout.heuristicBhiTierAccuracy}` : ''}
+                {wesad.perSubjectAccuracy ? ` · per-subject ${wesad.perSubjectAccuracy.min}–${wesad.perSubjectAccuracy.max}` : ''}
+              </Typography>
+              <Typography variant="caption" color="text.secondary" display="block">
+                featureBuildUsesLabels={String(wesad.featureBuildUsesLabels ?? false)}
+              </Typography>
+              {(wesad.stressBinaryAucBhi != null || holdout?.stressBinaryAucBhi != null) && (
+                <Alert severity="info" sx={{ mt: 1 }}>
+                  {t(
+                    '补充材料专用 — stress-binary AUC 可能反映代理映射可分性，勿放入摘要/主结果：',
+                    'Supplement only — stress-binary AUC may reflect proxy separability; do not place in abstract/main results:',
+                  )}
+                  {' '}full={wesad.stressBinaryAucBhi ?? '—'} · holdout={holdout?.stressBinaryAucBhi ?? '—'}
+                  {holdout?.stressBinaryAucBhiCi95 ? ` · 95% CI ${holdout.stressBinaryAucBhiCi95.low}–${holdout.stressBinaryAucBhiCi95.high}` : ''}
+                </Alert>
+              )}
+            </Box>
           )}
           {ext.internalExport && (
             <Typography variant="body2" color="text.secondary">

@@ -9,17 +9,19 @@ const { isAiConfigured, loadConfig } = require('./config');
 function summarizeScreening(screening) {
   if (!screening || screening.needsImport) return null;
   const top = (screening.categories || []).flatMap((c) =>
-    (c.items || []).filter((i) => i.level === 'moderate' || i.level === 'high').map((i) => ({
+    (c.items || []).filter((i) => (i.signalLevel ?? i.level) === 'moderate' || (i.signalLevel ?? i.level) === 'high').map((i) => ({
       name: i.name,
-      risk: i.calibratedRisk ?? i.risk,
-      level: i.level,
+      attentionScore: i.evidenceAdjustedAttentionScore ?? i.attentionScore ?? i.calibratedRisk ?? i.risk,
+      signalLevel: i.signalLevel ?? i.level,
       recommendation: i.recommendation,
     })),
   ).slice(0, 8);
   return {
     overallScore: screening.overallScore,
-    overallRisk: screening.overallRisk,
+    overallBhiTier: screening.overallBhiTier ?? screening.overallRisk,
+    overallRisk: screening.overallRisk ?? screening.overallBhiTier,
     summary: screening.summary,
+    topAttentionSignals: top,
     topRisks: top,
     dataCoverage: screening.dataCoverage,
   };
@@ -88,8 +90,8 @@ function formatContextForLLM(ctx) {
 
 ${ctx.vitals ? `近期指标: 健康分 ${ctx.vitals.healthScore ?? '—'} · HR ${ctx.vitals.heartRate ?? '—'} · SpO₂ ${ctx.vitals.spo2 ?? '—'}% · HRV ${ctx.vitals.hrv ?? '—'} · 步数 ${ctx.vitals.steps ?? '—'}` : '（无个人可穿戴时序数据）'}
 
-临床筛查: ${ctx.screening ? `综合风险 ${ctx.screening.overallScore}/100（${ctx.screening.overallRisk}）· ${ctx.screening.summary || ''}` : '无'}
-重点关注: ${(ctx.screening?.topRisks || []).map((r) => `${r.name} ${r.risk}%`).join('；') || '无'}
+临床筛查: ${ctx.screening ? `BHI ${ctx.screening.overallScore}/100（${ctx.screening.overallBhiTier ?? ctx.screening.overallRisk}）· ${ctx.screening.summary || ''}` : '无'}
+关注信号: ${(ctx.screening?.topAttentionSignals || ctx.screening?.topRisks || []).map((r) => `${r.name} ${r.attentionScore ?? r.risk}%`).join('；') || '无'}
 
 异常信号 (${ctx.anomalies.length}): ${ctx.anomalies.map((a) => `${a.type}(${a.severity})`).join('；') || '无'}
 预测风险 (${ctx.predictions.length}): ${ctx.predictions.map((p) => `${p.risk} ${p.probability}%`).join('；') || '无'}

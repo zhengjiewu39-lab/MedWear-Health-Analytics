@@ -171,6 +171,7 @@ describe('ONNX inference (engine.js + onnxInference.js)', () => {
       stats: {},
       profile: { name: 'Baseline' },
     });
+    assert.equal(result.conditions[0].attentionScore, 22);
     assert.equal(result.conditions[0].rawRisk, 22);
     assert.equal(result.conditions[0].signalKind, 'attention-not-diagnosis');
 

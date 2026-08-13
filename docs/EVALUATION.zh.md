@@ -82,7 +82,7 @@ curl http://localhost:3001/api/research/results
 
 - 在 v2 生成器内扩展边界案例（缺失传感器、稀疏数据等）
 - 与朴素基线对比（人群固定阈值）
-- 在公开可穿戴数据集上交叉验证（WESAD、PPG-DaLiA 子集等）
+- 公开数据集启发代理健全性检查（WESAD 启发 stress 代理、PPG-DaLiA 计划中）— 非外部验证
 - 临床专家对筛查类别映射的审阅
 
 ---
@@ -232,11 +232,12 @@ curl http://localhost:3001/api/research/validate
 | CHRONIC_CONTROL_RATE.intervention (+8%) | chronicControlRate (intervention) | 0.74 | 0.7992 | 0.0592 |
 | simulated 5y survival headline (frozen cohort) | survival5y.absoluteDelta | 0.2464 | 0.2464 | 0 |
 
-## 可移植特征 / 外部数据集基线
+## 可移植特征 / 公开数据集启发代理健全性检查
 
-> 17 维导出特征描述性检查。WESAD 适配器已实现（仅健全性检查）。见 [EXTERNAL-VALIDATION.zh.md](./EXTERNAL-VALIDATION.zh.md)。
+> 17 维导出特征描述性检查。WESAD 行为 **public-dataset-inspired proxy sanity check** — 非外部验证。见 [EXTERNAL-VALIDATION.zh.md](./EXTERNAL-VALIDATION.zh.md)。
 
-- WESAD stress proxy (**sanity check only — not validation**): n=120 · subjects=15 · BHI-tier acc=0.5583 (holdout n=24 acc=0.5833) · per-subject acc range=0.375–0.875 · stress-binary AUC(BHI)=0.9936 (holdout=0.9792, 95% CI 0.9214–1) · featureBuildUsesLabels=false
+- WESAD-inspired proxy (**sanity check only — not external validation**): n=120 · subjects=15 · BHI-tier acc=0.5583 (holdout n=24 acc=0.5833) · per-subject acc range=0.375–0.875 · featureBuildUsesLabels=false
+- WESAD proxy AUC (supplement only — may reflect proxy separability, not generalization): full=0.9936 · holdout=0.9792 · 95% CI 0.9214–1
 - Internal export: n=5000 · BHI-tier acc=0.7932
 - Planned external: PPG-DaLiA (activity HR proxy)
 

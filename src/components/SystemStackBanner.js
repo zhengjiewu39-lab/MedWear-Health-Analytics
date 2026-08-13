@@ -5,10 +5,10 @@ import { systemApi } from '../services/api';
 import { useLang } from '../contexts/LanguageContext';
 
 /**
- * Compact banner showing ONNX / SQLite / MAD / Zod research stack (from GET /api/system/stack).
+ * Compact banner showing rule-engine core, opt-in ONNX, SQLite / MAD / Zod stack.
  */
 export default function SystemStackBanner({ compact = false }) {
-  const { t } = useLang();
+  const { t, isEn } = useLang();
   const [stack, setStack] = useState(null);
 
   useEffect(() => {
@@ -17,20 +17,32 @@ export default function SystemStackBanner({ compact = false }) {
 
   if (!stack) return null;
 
-  const modelLabel = stack.inference?.modelId
-    ? `${stack.inference.modelId}${stack.inference.modelType ? ` (${stack.inference.modelType})` : ''}`
-    : t('未加载 ONNX 模型', 'ONNX model not loaded');
+  const onnxEnabled = stack.inference?.onnxEnabled;
+  const inferenceLabel = onnxEnabled
+    ? `${stack.inference?.engine} · ${stack.inference?.modelId || 'ONNX'}`
+    : t('规则引擎核心（ONNX 默认关闭）', 'Rule engine core (ONNX off by default)');
 
   if (compact) {
     return (
-      <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ mb: 2 }}>
-        <Chip size="small" icon={<Psychology />} color="primary" variant="outlined" label={`ONNX · ${modelLabel}`} />
-        <Chip size="small" icon={<Storage />} variant="outlined" label="SQLite" />
-        <Chip size="small" icon={<Memory />} variant="outlined" label={`MAD Z>${stack.analytics?.zThreshold ?? 2.5}`} />
-        <Chip size="small" icon={<VerifiedUser />} variant="outlined" label="Zod" />
+      <Stack spacing={1} sx={{ mb: 2 }}>
+        <Stack direction="row" spacing={1} flexWrap="wrap">
+          <Chip
+            size="small"
+            icon={<Psychology />}
+            color={onnxEnabled ? 'secondary' : 'primary'}
+            variant="outlined"
+            label={inferenceLabel}
+          />
+          <Chip size="small" icon={<Storage />} variant="outlined" label="SQLite" />
+          <Chip size="small" icon={<Memory />} variant="outlined" label={`MAD Z>${stack.analytics?.zThreshold ?? 2.5}`} />
+          <Chip size="small" icon={<VerifiedUser />} variant="outlined" label="Zod" />
+        </Stack>
       </Stack>
     );
   }
+
+  const fusion = stack.fusionWeights;
+  const fusionDisclaimer = isEn ? fusion?.disclaimer_en : fusion?.disclaimer_zh;
 
   return (
     <Alert severity="info" sx={{ mb: 2 }} icon={false}>
@@ -40,27 +52,34 @@ export default function SystemStackBanner({ compact = false }) {
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 1.5 }}>
         <Box>
           <Typography variant="caption" color="text.secondary">{t('推理', 'Inference')}</Typography>
-          <Typography variant="body2">{stack.inference?.engine} · {modelLabel}</Typography>
+          <Typography variant="body2">{inferenceLabel}</Typography>
           <Typography variant="caption" color="text.secondary">
-            {t('17 维特征', '17-dim features')} · {t('训练', 'Train')}: npm run experiment:train
+            {onnxEnabled
+              ? t('实验性 BHI 分层对比 · MEDWEAR_ENABLE_ONNX=true', 'Experimental BHI tier comparison · MEDWEAR_ENABLE_ONNX=true')
+              : t('默认规则引擎 · 设置 MEDWEAR_ENABLE_ONNX=true 可开启 ONNX', 'Rule engine default · set MEDWEAR_ENABLE_ONNX=true for ONNX')}
           </Typography>
         </Box>
         <Box>
           <Typography variant="caption" color="text.secondary">{t('存储', 'Storage')}</Typography>
           <Typography variant="body2">{stack.storage?.engine} · {t('批量', 'Batch')} {stack.storage?.batchImportSize}</Typography>
-          <Typography variant="caption" color="text.secondary" sx={{ wordBreak: 'break-all' }}>{stack.storage?.database}</Typography>
-        </Box>
-        <Box>
-          <Typography variant="caption" color="text.secondary">{t('异常检测', 'Anomaly detection')}</Typography>
-          <Typography variant="body2">
-            {t('稳健 MAD Z-score', 'Robust MAD Z-score')} · |Z| &gt; {stack.analytics?.zThreshold}
+          <Typography variant="caption" color="text.secondary">
+            {isEn ? stack.storage?.description_en : stack.storage?.description_zh}
           </Typography>
         </Box>
         <Box>
-          <Typography variant="caption" color="text.secondary">{t('数据校验', 'Validation')}</Typography>
-          <Typography variant="body2">
-            Zod · SpO₂ &lt; {stack.validation?.limits?.spo2MinPercent}% / HR &gt; {stack.validation?.limits?.hrMaxBpm} {t('清洗', 'cleaning')}
+          <Typography variant="caption" color="text.secondary">{t('筛查 API 字段', 'Screening API fields')}</Typography>
+          <Typography variant="body2" sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }}>
+            overallBhiTier · attentionScore · signalLevel · heuristicSupport
           </Typography>
+        </Box>
+        <Box>
+          <Typography variant="caption" color="text.secondary">{t('融合展示权重', 'Fusion presentation weights')}</Typography>
+          <Typography variant="body2">
+            wearable {fusion?.wearable} · clinical {fusion?.clinical} · behavioral {fusion?.behavioral}
+          </Typography>
+          {fusionDisclaimer && (
+            <Typography variant="caption" color="text.secondary" display="block">{fusionDisclaimer}</Typography>
+          )}
         </Box>
       </Box>
     </Alert>

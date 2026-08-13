@@ -1,6 +1,6 @@
 /**
  * MedWear evidence-weighted rule engine — domain placeholders + optional ONNX backend.
- * Honest API field names; legacy ML-style aliases retained for backward compatibility only.
+ * Primary API fields use BHI / attention-signal naming; legacy risk aliases are compatibility-only.
  */
 const { getReference, getAllReferences, EVIDENCE_LABELS } = require('../data/researchReferences');
 const { extractFeatures } = require('../services/extractFeatures');
@@ -9,7 +9,18 @@ const { isOnnxEnabled } = require('../config/onnxConfig');
 
 const ENGINE_TYPE = 'evidence-weighted-rule-engine';
 const LEGACY_FIELDS_NOTE =
-  'Deprecated aliases (aiModel, models, modelVotes, ensembleConfidence) are compatibility-only — not trained ML outputs.';
+  'Deprecated aliases (overallRisk, risk, calibratedRisk, heuristicConfidence, aiModel, models, modelVotes, ensembleConfidence) are compatibility-only — not disease-risk predictions.';
+
+/** Configurable presentation weights — not learned coefficients; not externally validated. */
+const FUSION_WEIGHTS = Object.freeze({
+  wearable: 0.55,
+  clinical: 0.30,
+  behavioral: 0.15,
+});
+const FUSION_WEIGHTS_DISCLAIMER_EN =
+  'Configurable presentation weights selected for prototype demonstration — not learned coefficients and not externally validated.';
+const FUSION_WEIGHTS_DISCLAIMER_ZH =
+  '原型演示用可配置展示权重 — 非学习系数，未经外部验证。';
 
 const ITEM_RESEARCH_MAP = {
   '肺结节/肺癌': 'lung_cancer',
@@ -47,19 +58,52 @@ const DOMAIN_WEIGHTS = [
   { id: 'sleep-rules', domain: '睡眠呼吸', domain_en: 'Sleep & respiration', weight: 0.16, role: 'domain-weight-placeholder' },
 ];
 
-const HIGH_LEVEL = (risk) => (risk >= 55 ? 'high' : risk >= 35 ? 'moderate' : 'low');
+const SIGNAL_LEVEL = (score) => (score >= 55 ? 'high' : score >= 35 ? 'moderate' : 'low');
 
-function evidenceAdjustedRisk(risk, evidenceLevel) {
+function evidenceAdjustedAttentionScore(score, evidenceLevel) {
   const evidenceFactor = { A: 1.0, B: 0.97, C: 0.92 }[evidenceLevel] || 0.9;
-  return Math.round(risk * evidenceFactor * 10) / 10;
+  return Math.round(score * evidenceFactor * 10) / 10;
 }
 
-function computeHeuristicConfidence(prediction, evidenceLevel) {
-  if (prediction?.confidence != null) {
-    const evidenceBoost = { A: 0.04, B: 0.02, C: 0.01 }[evidenceLevel] || 0;
-    return Math.min(0.85, Math.max(0.45, prediction.confidence + evidenceBoost));
-  }
-  return 0.55;
+function computeHeuristicSupport(_prediction, evidenceLevel) {
+  const base = 0.55;
+  const evidenceBoost = { A: 0.04, B: 0.02, C: 0.01 }[evidenceLevel] || 0;
+  return Math.min(0.85, Math.max(0.45, base + evidenceBoost));
+}
+
+function attachScreeningSignalAliases(signal) {
+  const attentionScore = signal.attentionScore;
+  const evidenceAdjustedAttentionScoreVal = signal.evidenceAdjustedAttentionScore;
+  const signalLevel = signal.signalLevel;
+  const heuristicSupport = signal.heuristicSupport;
+  return {
+    ...signal,
+    attentionScore,
+    evidenceAdjustedAttentionScore: evidenceAdjustedAttentionScoreVal,
+    signalLevel,
+    heuristicSupport,
+    ruleSupportScore: heuristicSupport,
+    evidenceDisplayWeight: heuristicSupport,
+    rawRisk: attentionScore,
+    risk: attentionScore,
+    calibratedRisk: evidenceAdjustedAttentionScoreVal,
+    level: signalLevel,
+    heuristicConfidence: heuristicSupport,
+    confidence: heuristicSupport,
+    ensembleConfidence: heuristicSupport,
+  };
+}
+
+function attachAnalysisResultAliases(result) {
+  return {
+    ...result,
+    overallBhiTier: result.overallBhiTier,
+    heuristicSupport: result.heuristicSupport,
+    ruleSupportScore: result.heuristicSupport,
+    overallRisk: result.overallBhiTier,
+    heuristicConfidence: result.heuristicSupport,
+    ensembleConfidence: result.heuristicSupport,
+  };
 }
 
 function buildEvidenceChain(researchId) {
@@ -77,21 +121,19 @@ function referenceDomainLabel(ref, prediction) {
   return prediction?.modelId || 'MedWear-RuleEngine-v1';
 }
 
-function analyzeCondition(name, risk, level, prediction) {
+function analyzeCondition(name, attentionScore, signalLevel, prediction) {
   const researchId = ITEM_RESEARCH_MAP[name];
   const ref = researchId ? getReference(researchId) : null;
   const evidenceLevel = ref?.evidenceLevel || 'C';
   const domainLabel = referenceDomainLabel(ref, prediction);
-  const hc = computeHeuristicConfidence(prediction, evidenceLevel);
-  return {
+  const support = computeHeuristicSupport(prediction, evidenceLevel);
+  return attachScreeningSignalAliases({
     name,
-    rawRisk: risk,
-    calibratedRisk: evidenceAdjustedRisk(risk, evidenceLevel),
-    level,
+    attentionScore,
+    evidenceAdjustedAttentionScore: evidenceAdjustedAttentionScore(attentionScore, evidenceLevel),
+    signalLevel,
     evidenceLevel,
     evidenceLabel: EVIDENCE_LABELS[evidenceLevel],
-    confidence: hc,
-    heuristicConfidence: hc,
     engineType: ENGINE_TYPE,
     referenceDomainLabel: domainLabel,
     metrics: ref?.metrics || [],
@@ -99,34 +141,37 @@ function analyzeCondition(name, risk, level, prediction) {
     references: ref?.references || [],
     evidenceChain: researchId ? buildEvidenceChain(researchId) : [],
     evidenceRationale: ref?.evidenceRationale || null,
-    // deprecated aliases — do not display in UI
+    heuristicSupport: support,
     engine: domainLabel,
     model: domainLabel,
     aiModel: domainLabel,
-    ensembleConfidence: hc,
-  };
+  });
 }
 
 function deriveBaselineAttentionScore(item, features) {
+  if (item?.attentionScore != null) return item.attentionScore;
   if (item?.risk != null) return item.risk;
   if (!features || features.health_score_norm == null) return 20;
   return features.health_score_norm < 0.65 ? 45 : 20;
 }
 
-function deriveConditionRisk(baseRisk, itemName, features) {
-  let risk = baseRisk;
+function deriveConditionAttentionScore(baseScore, itemName, features) {
+  let score = baseScore;
   if (itemName.includes('高血压') || itemName.includes('冠心病') || itemName.includes('心律')) {
-    if (features.avg_hr > 85 || features.resting_hr > 80) risk += 12;
+    if (features.avg_hr > 85 || features.resting_hr > 80) score += 12;
   }
   if (itemName.includes('糖尿病') || itemName.includes('活动')) {
-    if (features.low_activity) risk += 10;
+    if (features.low_activity) score += 10;
   }
   if (itemName.includes('肺') || itemName.includes('呼吸') || itemName.includes('SpO')) {
-    if (features.spo2_below_threshold) risk += 15;
+    if (features.spo2_below_threshold) score += 15;
   }
-  if (features.anomaly_flag) risk += 8;
-  return Math.min(85, Math.max(5, Math.round(risk)));
+  if (features.anomaly_flag) score += 8;
+  return Math.min(85, Math.max(5, Math.round(score)));
 }
+
+/** @deprecated use deriveConditionAttentionScore */
+const deriveConditionRisk = deriveConditionAttentionScore;
 
 function ruleEngineBhiFromFeatures(features) {
   if (!features || features.health_score_norm == null) {
@@ -140,20 +185,18 @@ function ruleEngineBhiFromFeatures(features) {
 function buildDomainWeightedSummaries(conditions) {
   return DOMAIN_WEIGHTS.map((m) => ({
     ...m,
-    weightedSummary: conditions.reduce((s, c) => s + c.calibratedRisk * m.weight, 0) / Math.max(1, conditions.length),
-    // deprecated alias
-    vote: conditions.reduce((s, c) => s + c.calibratedRisk * m.weight, 0) / Math.max(1, conditions.length),
+    weightedSummary: conditions.reduce((s, c) => s + c.evidenceAdjustedAttentionScore * m.weight, 0) / Math.max(1, conditions.length),
+    vote: conditions.reduce((s, c) => s + c.evidenceAdjustedAttentionScore * m.weight, 0) / Math.max(1, conditions.length),
   }));
 }
 
 function attachLegacyEngineFields(result) {
-  return {
+  return attachAnalysisResultAliases({
     ...result,
-    ensembleConfidence: result.heuristicConfidence,
     modelVotes: result.domainWeightedSummaries,
     models: result.domainWeightPlaceholders,
     legacyFieldsNote: LEGACY_FIELDS_NOTE,
-  };
+  });
 }
 
 function buildFeatureHeuristicPrediction(features) {
@@ -165,7 +208,6 @@ function buildFeatureHeuristicPrediction(features) {
   };
 }
 
-/** Optional ONNX path — opt-in via MEDWEAR_ENABLE_ONNX; returns null on disable or failure. */
 async function tryOptionalOnnxInference(features) {
   if (!isOnnxEnabled()) return null;
   try {
@@ -212,13 +254,13 @@ async function runFullAnalysis(patientData) {
   const conditions = screening
     ? screening.categories.flatMap((cat) =>
       cat.items.map((item) => {
-        const risk = deriveConditionRisk(
+        const attentionScore = deriveConditionAttentionScore(
           deriveBaselineAttentionScore(item, features),
           item.name,
           features || {},
         );
         return {
-          ...analyzeCondition(item.name, risk, HIGH_LEVEL(risk), null),
+          ...analyzeCondition(item.name, attentionScore, SIGNAL_LEVEL(attentionScore), null),
           signalKind: 'attention-not-diagnosis',
           signalLabel_zh: '需进一步评估的信号',
           signalLabel_en: 'Signal for further evaluation',
@@ -228,7 +270,7 @@ async function runFullAnalysis(patientData) {
     : [];
 
   const domainWeightedSummaries = buildDomainWeightedSummaries(conditions);
-  const heuristicConfidence = experimentalBhiTierComparison?.confidence ?? 0.55;
+  const heuristicSupport = 0.55;
 
   return attachLegacyEngineFields({
     version: 'MedWear-RuleEngine-v1',
@@ -237,19 +279,21 @@ async function runFullAnalysis(patientData) {
     onnxEnabled: isOnnxEnabled(),
     generatedAt: new Date().toISOString(),
     patient: profile,
-    heuristicConfidence,
+    heuristicSupport,
     domainWeights: DOMAIN_WEIGHTS,
     domainWeightPlaceholders: DOMAIN_WEIGHTS.map((m) => ({ ...m, disclaimer: 'Configurable domain weight — not a trained model' })),
     domainWeightedSummaries,
     conditions,
     summary: screening?.summary,
-    overallRisk: ruleBhi.label,
+    overallBhiTier: ruleBhi.label,
     overallScore: ruleBhi.score ?? screening?.overallScore ?? 0,
     experimentalBhiTierComparison,
     optionalOnnxPrediction: experimentalBhiTierComparison,
     usesOnnx: Boolean(experimentalBhiTierComparison),
     modelInfo: isOnnxEnabled() ? getModelInfo() : null,
-    fusionWeights: { wearable: 0.55, clinical: 0.30, behavioral: 0.15 },
+    fusionWeights: { ...FUSION_WEIGHTS },
+    fusionWeightsDisclaimer_en: FUSION_WEIGHTS_DISCLAIMER_EN,
+    fusionWeightsDisclaimer_zh: FUSION_WEIGHTS_DISCLAIMER_ZH,
     dataQuality: screening?.dataCoverage?.quality || 'from-wearable-store',
     disclaimer: LEGACY_FIELDS_NOTE,
     vitalsUsed: {
@@ -265,59 +309,90 @@ async function runFullAnalysis(patientData) {
   });
 }
 
-function enrichScreeningItem(item, ref, features, riskOverride) {
-  const risk = riskOverride ?? item.risk ?? 20;
+function enrichScreeningItem(item, ref, features, scoreOverride) {
+  const attentionScore = scoreOverride ?? item.attentionScore ?? item.risk ?? 20;
   const domainLabel = referenceDomainLabel(ref, null);
-  const hc = computeHeuristicConfidence(null, ref?.evidenceLevel || 'C');
-  return {
+  const support = computeHeuristicSupport(null, ref?.evidenceLevel || 'C');
+  return attachScreeningSignalAliases({
     ...item,
-    risk,
-    level: HIGH_LEVEL(risk),
+    attentionScore,
+    signalLevel: SIGNAL_LEVEL(attentionScore),
     researchId: ref?.id,
     evidenceLevel: ref?.evidenceLevel,
     evidenceLabel: ref ? EVIDENCE_LABELS[ref.evidenceLevel] : undefined,
     evidenceRationale: ref?.evidenceRationale,
     engineType: ENGINE_TYPE,
     referenceDomainLabel: domainLabel,
-    calibratedRisk: ref ? evidenceAdjustedRisk(risk, ref.evidenceLevel) : risk,
-    heuristicConfidence: hc,
-    confidence: hc,
+    evidenceAdjustedAttentionScore: ref ? evidenceAdjustedAttentionScore(attentionScore, ref.evidenceLevel) : attentionScore,
+    heuristicSupport: support,
     references: ref?.references,
-  };
+  });
+}
+
+function normalizeScreeningItem(item) {
+  if (!item) return item;
+  const attentionScore = item.attentionScore ?? item.risk ?? 20;
+  const signalLevel = item.signalLevel ?? item.level ?? SIGNAL_LEVEL(attentionScore);
+  const evidenceAdjustedAttentionScore = item.evidenceAdjustedAttentionScore ?? item.calibratedRisk ?? attentionScore;
+  const heuristicSupport = item.heuristicSupport ?? item.heuristicConfidence ?? item.confidence ?? 0.55;
+  return attachScreeningSignalAliases({
+    ...item,
+    attentionScore,
+    signalLevel,
+    evidenceAdjustedAttentionScore,
+    heuristicSupport,
+    signalKind: item.signalKind || 'attention-not-diagnosis',
+    signalLabel_zh: item.signalLabel_zh || '需进一步评估的信号',
+    signalLabel_en: item.signalLabel_en || 'Signal for further evaluation',
+  });
+}
+
+function normalizeScreeningEnvelope(screening) {
+  if (!screening) return screening;
+  const overallBhiTier = screening.overallBhiTier ?? screening.overallRisk ?? 'unknown';
+  return attachAnalysisResultAliases({
+    ...screening,
+    overallBhiTier,
+    overallScore: screening.overallScore ?? 0,
+    categories: (screening.categories || []).map((cat) => ({
+      ...cat,
+      items: (cat.items || []).map((item) => normalizeScreeningItem(item)),
+    })),
+  });
 }
 
 function enrichScreeningData(screening, store) {
-  const base = { ...screening, aiVersion: 'MedWear-RuleEngine-v1', engineType: ENGINE_TYPE };
+  const base = normalizeScreeningEnvelope({ ...screening, aiVersion: 'MedWear-RuleEngine-v1', engineType: ENGINE_TYPE });
   if (!store?.daily) return enrichScreeningDataSync(screening);
 
   const days = Object.keys(store.daily).sort();
   const features = extractFeatures({ days: store.daily, targetDay: days[days.length - 1] });
 
-  return {
+  return normalizeScreeningEnvelope({
     ...base,
     categories: screening.categories.map((cat) => ({
       ...cat,
       items: cat.items.map((item) => {
         const rid = ITEM_RESEARCH_MAP[item.name];
         const ref = rid ? getReference(rid) : null;
-        const risk = deriveConditionRisk(
+        const attentionScore = deriveConditionAttentionScore(
           deriveBaselineAttentionScore(item, features),
           item.name,
           features,
         );
         return {
-          ...enrichScreeningItem(item, ref, features, risk),
+          ...enrichScreeningItem(item, ref, features, attentionScore),
           signalKind: 'attention-not-diagnosis',
           signalLabel_zh: '需进一步评估的信号',
           signalLabel_en: 'Signal for further evaluation',
         };
       }),
     })),
-  };
+  });
 }
 
 function enrichScreeningDataSync(screening) {
-  return {
+  return normalizeScreeningEnvelope({
     ...screening,
     aiVersion: 'MedWear-RuleEngine-v1',
     engineType: ENGINE_TYPE,
@@ -326,36 +401,43 @@ function enrichScreeningDataSync(screening) {
       items: cat.items.map((item) => {
         const rid = ITEM_RESEARCH_MAP[item.name];
         const ref = rid ? getReference(rid) : null;
-        if (!ref) return { ...item, engineType: ENGINE_TYPE };
+        if (!ref) return normalizeScreeningItem({ ...item, engineType: ENGINE_TYPE });
         return enrichScreeningItem(item, ref, null);
       }),
     })),
-  };
+  });
 }
 
 module.exports = {
   ENGINE_TYPE,
   LEGACY_FIELDS_NOTE,
+  FUSION_WEIGHTS,
+  FUSION_WEIGHTS_DISCLAIMER_EN,
+  FUSION_WEIGHTS_DISCLAIMER_ZH,
   DOMAIN_WEIGHTS,
-  /** @deprecated use DOMAIN_WEIGHTS */
   MODELS: DOMAIN_WEIGHTS,
   ITEM_RESEARCH_MAP,
   runFullAnalysis,
   enrichScreeningData,
   enrichScreeningDataSync,
+  normalizeScreeningEnvelope,
+  normalizeScreeningItem,
   analyzeCondition,
-  evidenceAdjustedRisk,
-  computeHeuristicConfidence,
-  /** @deprecated */
-  ensembleScore: evidenceAdjustedRisk,
-  /** @deprecated */
-  calibrateConfidence: computeHeuristicConfidence,
+  evidenceAdjustedAttentionScore,
+  evidenceAdjustedRisk: evidenceAdjustedAttentionScore,
+  computeHeuristicSupport,
+  computeHeuristicConfidence: computeHeuristicSupport,
+  ensembleScore: evidenceAdjustedAttentionScore,
+  calibrateConfidence: computeHeuristicSupport,
   getAllReferences,
   buildDomainWeightedSummaries,
   referenceDomainLabel,
   buildFeatureHeuristicPrediction,
   tryOptionalOnnxInference,
   deriveBaselineAttentionScore,
+  deriveConditionAttentionScore,
+  deriveConditionRisk,
   ruleEngineBhiFromFeatures,
+  attachScreeningSignalAliases,
   isOnnxEnabled,
 };

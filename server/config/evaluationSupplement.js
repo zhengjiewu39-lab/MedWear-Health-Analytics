@@ -177,11 +177,11 @@ function renderSupplementMarkdown(isEn = true) {
   }
 
   if (isEn) {
-    lines.push('## Portable feature / external dataset baseline\n');
-    lines.push('> Descriptive check on exported 17-dim rows. WESAD adapter implemented (sanity check only). See [EXTERNAL-VALIDATION.md](./EXTERNAL-VALIDATION.md).\n');
+    lines.push('## Portable feature / public-dataset-inspired proxy sanity checks\n');
+    lines.push('> Descriptive check on exported 17-dim rows. WESAD row is a **public-dataset-inspired proxy sanity check** — not external validation. See [EXTERNAL-VALIDATION.md](./EXTERNAL-VALIDATION.md).\n');
   } else {
-    lines.push('## 可移植特征 / 外部数据集基线\n');
-    lines.push('> 17 维导出特征描述性检查。WESAD 适配器已实现（仅健全性检查）。见 [EXTERNAL-VALIDATION.zh.md](./EXTERNAL-VALIDATION.zh.md)。\n');
+    lines.push('## 可移植特征 / 公开数据集启发代理健全性检查\n');
+    lines.push('> 17 维导出特征描述性检查。WESAD 行为 **public-dataset-inspired proxy sanity check** — 非外部验证。见 [EXTERNAL-VALIDATION.zh.md](./EXTERNAL-VALIDATION.zh.md)。\n');
   }
 
   if (s.externalDescriptive) {
@@ -190,7 +190,8 @@ function renderSupplementMarkdown(isEn = true) {
       const w = e.wesadStressProxy;
       const h = w.holdout || {};
       const ps = w.perSubjectAccuracy || {};
-      lines.push(`- WESAD stress proxy (**sanity check only — not validation**): n=${w.n} · subjects=${w.nSubjects ?? '—'} · BHI-tier acc=${w.heuristicBhiTierAccuracy} (holdout n=${w.holdoutN ?? h.n ?? '—'} acc=${h.heuristicBhiTierAccuracy ?? '—'}) · per-subject acc range=${ps.min ?? '—'}–${ps.max ?? '—'} · stress-binary AUC(BHI)=${w.stressBinaryAucBhi ?? '—'} (holdout=${h.stressBinaryAucBhi ?? '—'}, 95% CI ${h.stressBinaryAucBhiCi95 ? `${h.stressBinaryAucBhiCi95.low}–${h.stressBinaryAucBhiCi95.high}` : '—'}) · featureBuildUsesLabels=${w.featureBuildUsesLabels ?? false}`);
+      lines.push(`- WESAD-inspired proxy (**sanity check only — not external validation**): n=${w.n} · subjects=${w.nSubjects ?? '—'} · BHI-tier acc=${w.heuristicBhiTierAccuracy} (holdout n=${w.holdoutN ?? h.n ?? '—'} acc=${h.heuristicBhiTierAccuracy ?? '—'}) · per-subject acc range=${ps.min ?? '—'}–${ps.max ?? '—'} · featureBuildUsesLabels=${w.featureBuildUsesLabels ?? false}`);
+      lines.push(`- WESAD proxy AUC (supplement only — may reflect proxy separability, not generalization): full=${w.stressBinaryAucBhi ?? '—'} · holdout=${h.stressBinaryAucBhi ?? '—'} · 95% CI ${h.stressBinaryAucBhiCi95 ? `${h.stressBinaryAucBhiCi95.low}–${h.stressBinaryAucBhiCi95.high}` : '—'}`);
     }
     if (e.internalExport) {
       lines.push(`- Internal export: n=${e.internalExport.n} · BHI-tier acc=${e.internalExport.heuristicBhiTierAccuracy}`);

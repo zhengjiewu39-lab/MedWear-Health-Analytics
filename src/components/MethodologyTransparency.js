@@ -27,6 +27,7 @@ export default function MethodologyTransparency({ data, scenarios }) {
   const al = data.alerts;
   const an = data.anomalyDetection;
   const re = data.ruleEngine;
+  const onnx = data.optionalOnnxBackend;
   const co = data.cohortSimulation;
   const presetNames = an?.sensitivityPresets ? Object.keys(an.sensitivityPresets) : [];
 
@@ -116,6 +117,39 @@ export default function MethodologyTransparency({ data, scenarios }) {
           ))}
         </TableBody>
       </Table>
+      <Typography variant="subtitle2" fontWeight={700} gutterBottom sx={{ mt: 1 }}>
+        {t('诚实 API 字段', 'Honest API fields')}
+      </Typography>
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 1 }}>
+        {['overallBhiTier', 'attentionScore', 'evidenceAdjustedAttentionScore', 'signalLevel', 'heuristicSupport'].map((f) => (
+          <Chip key={f} size="small" variant="outlined" label={f} />
+        ))}
+      </Box>
+      <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>
+        {t('已弃用别名', 'Deprecated')}: {(re?.apiFields?.deprecatedAliases || []).join(', ')}
+      </Typography>
+      {re?.fusionWeights && (
+        <Alert severity="info" sx={{ mb: 1 }}>
+          {t('融合展示权重', 'Fusion presentation weights')}: wearable {re.fusionWeights.wearable} · clinical {re.fusionWeights.clinical} · behavioral {re.fusionWeights.behavioral}
+          <Typography variant="caption" display="block" sx={{ mt: 0.5 }}>
+            {t(re?.fusionWeightsDisclaimer_zh, re?.fusionWeightsDisclaimer_en)}
+          </Typography>
+        </Alert>
+      )}
+
+      {onnx && (
+        <>
+          <Typography variant="subtitle1" fontWeight={700} gutterBottom sx={{ mt: 2 }}>
+            4b. {t('可选 ONNX 后端（默认关闭）', 'Optional ONNX backend (default off)')}
+          </Typography>
+          <Alert severity="warning" sx={{ mb: 1 }}>
+            {t(onnx.defaultCore_zh, onnx.defaultCore_en)}
+          </Alert>
+          <Typography variant="body2" sx={{ fontFamily: 'monospace', fontSize: '0.8rem' }}>
+            {onnx.enableFlag}
+          </Typography>
+        </>
+      )}
 
       <Typography variant="subtitle1" fontWeight={700} gutterBottom sx={{ mt: 2 }}>
         5. {t('探索性情景模拟', 'Exploratory scenario simulation')}

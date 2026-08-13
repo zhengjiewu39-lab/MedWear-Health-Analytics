@@ -98,7 +98,9 @@
 | metabolic | 16% |
 | sleep | 16% |
 
-诚实 API 字段：`referenceDomainLabel`、`domainWeightedSummaries`、`heuristicConfidence`。已弃用别名（前端不展示）：aiModel、models、modelVotes、ensembleConfidence。
+诚实 API 字段：`overallBhiTier`、`attentionScore`、`evidenceAdjustedAttentionScore`、`signalLevel`、`heuristicSupport`、`referenceDomainLabel`、`domainWeightedSummaries`。已弃用别名（前端不展示）：overallRisk、risk、rawRisk、calibratedRisk、level、heuristicConfidence、confidence、aiModel、models、modelVotes、ensembleConfidence。
+
+融合展示权重（wearable 0.55 / clinical 0.3 / behavioral 0.15）：原型演示用可配置展示权重 — 非学习系数，未经外部验证。
 
 已移除声明：CardioNet-style declared accuracy；ensemble confidence clamped to 0.98；fake model validation AUC。
 

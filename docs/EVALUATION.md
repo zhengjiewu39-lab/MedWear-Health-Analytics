@@ -83,7 +83,7 @@ curl http://localhost:3001/api/research/results
 
 - Expand edge cases (missing sensors, sparse data) within v2 generator
 - Compare against naive baselines (population fixed thresholds)
-- Cross-dataset validation on public wearable datasets (WESAD, PPG-DaLiA subsets)
+- Public-dataset-inspired proxy sanity checks (WESAD-inspired stress proxy, PPG-DaLiA planned) — not external validation
 - Clinician review of screening category mappings
 
 ---
@@ -237,11 +237,12 @@ curl http://localhost:3001/api/research/validate
 | CHRONIC_CONTROL_RATE.intervention (+8%) | chronicControlRate (intervention) | 0.74 | 0.7992 | 0.0592 |
 | simulated 5y survival headline (frozen cohort) | survival5y.absoluteDelta | 0.2464 | 0.2464 | 0 |
 
-## Portable feature / external dataset baseline
+## Portable feature / public-dataset-inspired proxy sanity checks
 
-> Descriptive check on exported 17-dim rows. WESAD adapter implemented (sanity check only). See [EXTERNAL-VALIDATION.md](./EXTERNAL-VALIDATION.md).
+> Descriptive check on exported 17-dim rows. WESAD row is a **public-dataset-inspired proxy sanity check** — not external validation. See [EXTERNAL-VALIDATION.md](./EXTERNAL-VALIDATION.md).
 
-- WESAD stress proxy (**sanity check only — not validation**): n=120 · subjects=15 · BHI-tier acc=0.5583 (holdout n=24 acc=0.5833) · per-subject acc range=0.375–0.875 · stress-binary AUC(BHI)=0.9936 (holdout=0.9792, 95% CI 0.9214–1) · featureBuildUsesLabels=false
+- WESAD-inspired proxy (**sanity check only — not external validation**): n=120 · subjects=15 · BHI-tier acc=0.5583 (holdout n=24 acc=0.5833) · per-subject acc range=0.375–0.875 · featureBuildUsesLabels=false
+- WESAD proxy AUC (supplement only — may reflect proxy separability, not generalization): full=0.9936 · holdout=0.9792 · 95% CI 0.9214–1
 - Internal export: n=5000 · BHI-tier acc=0.7932
 - Planned external: PPG-DaLiA (activity HR proxy)
 

@@ -124,10 +124,17 @@ const ruleEngine = {
   label_en: 'Evidence-weighted rule engine (not ML ensemble)',
   label_zh: '证据加权规则引擎（非 ML 集成）',
   apiFields: {
+    overallBhiTier: 'BHI watch tier from rule engine — not disease risk',
+    attentionScore: 'Rule-derived attention signal score — not disease probability',
+    evidenceAdjustedAttentionScore: 'Evidence-tier adjusted attention score — not calibrated disease risk',
+    signalLevel: 'Low/moderate/high attention tier for UI',
+    heuristicSupport: 'Evidence-display support weight — not statistical confidence',
     referenceDomainLabel: 'Configurable reference domain label — not a trained model name',
     domainWeightedSummaries: 'Domain-weight placeholders — not model votes',
-    heuristicConfidence: 'Evidence-adjusted heuristic — not ensemble confidence',
-    deprecatedAliases: ['aiModel', 'models', 'modelVotes', 'ensembleConfidence'],
+    deprecatedAliases: [
+      'overallRisk', 'risk', 'rawRisk', 'calibratedRisk', 'level',
+      'heuristicConfidence', 'confidence', 'aiModel', 'models', 'modelVotes', 'ensembleConfidence',
+    ],
   },
   removedClaims: ['CardioNet-style declared accuracy', 'ensemble confidence clamped to 0.98', 'fake model validation AUC'],
   domainWeights: [
@@ -138,6 +145,10 @@ const ruleEngine = {
     { domain: 'sleep', weight: 0.16 },
   ],
   fusionWeights: { wearable: 0.55, clinical: 0.30, behavioral: 0.15 },
+  fusionWeightsDisclaimer_en:
+    'Configurable presentation weights selected for prototype demonstration — not learned coefficients and not externally validated.',
+  fusionWeightsDisclaimer_zh:
+    '原型演示用可配置展示权重 — 非学习系数，未经外部验证。',
   confidenceCap: 0.85,
   implementation: 'server/ai/engine.js',
   disclaimer_en: 'Domain weights are configurable placeholders — not trained model votes.',
@@ -331,7 +342,9 @@ Implementation: \`${ev.implementation}\`
 |--------|--------|
 ${re.domainWeights.map((d) => `| ${d.domain} | ${(d.weight * 100).toFixed(0)}% |`).join('\n')}
 
-Honest API fields: \`referenceDomainLabel\`, \`domainWeightedSummaries\`, \`heuristicConfidence\`. Deprecated aliases (not shown in UI): ${re.apiFields.deprecatedAliases.join(', ')}.
+Honest API fields: \`overallBhiTier\`, \`attentionScore\`, \`evidenceAdjustedAttentionScore\`, \`signalLevel\`, \`heuristicSupport\`, \`referenceDomainLabel\`, \`domainWeightedSummaries\`. Deprecated aliases (not shown in UI): ${re.apiFields.deprecatedAliases.join(', ')}.
+
+Fusion presentation weights (wearable ${re.fusionWeights.wearable} / clinical ${re.fusionWeights.clinical} / behavioral ${re.fusionWeights.behavioral}): ${re.fusionWeightsDisclaimer_en}
 
 Removed claims: ${re.removedClaims.join('; ')}.
 
@@ -458,7 +471,9 @@ ${Object.entries(an.sensitivityPresets).map(([name, p]) => `| ${name} | ${p.wind
 |------|------|
 ${re.domainWeights.map((d) => `| ${d.domain} | ${(d.weight * 100).toFixed(0)}% |`).join('\n')}
 
-诚实 API 字段：\`referenceDomainLabel\`、\`domainWeightedSummaries\`、\`heuristicConfidence\`。已弃用别名（前端不展示）：${re.apiFields.deprecatedAliases.join('、')}。
+诚实 API 字段：\`overallBhiTier\`、\`attentionScore\`、\`evidenceAdjustedAttentionScore\`、\`signalLevel\`、\`heuristicSupport\`、\`referenceDomainLabel\`、\`domainWeightedSummaries\`。已弃用别名（前端不展示）：${re.apiFields.deprecatedAliases.join('、')}。
+
+融合展示权重（wearable ${re.fusionWeights.wearable} / clinical ${re.fusionWeights.clinical} / behavioral ${re.fusionWeights.behavioral}）：${re.fusionWeightsDisclaimer_zh}
 
 已移除声明：${re.removedClaims.join('；')}。
 

@@ -98,7 +98,9 @@ Implementation: `server/data/researchReferences.js → EVIDENCE_LEVEL_RULES + EV
 | metabolic | 16% |
 | sleep | 16% |
 
-Honest API fields: `referenceDomainLabel`, `domainWeightedSummaries`, `heuristicConfidence`. Deprecated aliases (not shown in UI): aiModel, models, modelVotes, ensembleConfidence.
+Honest API fields: `overallBhiTier`, `attentionScore`, `evidenceAdjustedAttentionScore`, `signalLevel`, `heuristicSupport`, `referenceDomainLabel`, `domainWeightedSummaries`. Deprecated aliases (not shown in UI): overallRisk, risk, rawRisk, calibratedRisk, level, heuristicConfidence, confidence, aiModel, models, modelVotes, ensembleConfidence.
+
+Fusion presentation weights (wearable 0.55 / clinical 0.3 / behavioral 0.15): Configurable presentation weights selected for prototype demonstration — not learned coefficients and not externally validated.
 
 Removed claims: CardioNet-style declared accuracy; ensemble confidence clamped to 0.98; fake model validation AUC.
 

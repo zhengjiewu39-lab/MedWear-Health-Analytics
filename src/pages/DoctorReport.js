@@ -15,6 +15,7 @@ import { CHART } from '../config/chartTheme';
 import ChartContainer from '../components/ChartContainer';
 import InterventionPathway from '../components/InterventionPathway';
 import AiGovernanceBanner from '../components/AiGovernanceBanner';
+import ScreeningHonestyBanner from '../components/ScreeningHonestyBanner';
 import { screeningApi } from '../services/api';
 import useModeRefresh from '../hooks/useModeRefresh';
 import { useLang } from '../contexts/LanguageContext';
@@ -176,6 +177,7 @@ function DoctorReport() {
       <Box sx={{ '@media print': { display: 'none' } }}>
         <InterventionPathway />
         <AiGovernanceBanner />
+        {report && <ScreeningHonestyBanner data={report} compact />}
       </Box>
 
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3, flexWrap: 'wrap', gap: 2, '@media print': { display: 'none' } }}>
@@ -286,8 +288,8 @@ function DoctorReport() {
             ['BMI', p.bmi ?? (t('待录入', 'Pending entry'))],
             [t('联系电话', 'Phone'), p.phone || '—'],
             [t('监测设备', 'Device'), p.device || '—'],
-            [isHealthScore ? t('BHI 行为健康指数', 'BHI (behavioral health index)') : t('综合风险', 'Overall risk'),
-              isHealthScore ? `${report.overallScore}/100 · ${rl(report.overallRisk)}` : rl(report.overallRisk)],
+            [isHealthScore ? t('BHI 行为健康指数', 'BHI (behavioral health index)') : t('综合关注分层', 'Overall attention tier'),
+              isHealthScore ? `${report.overallScore}/100 · ${rl(report.overallBhiTier ?? report.overallRisk)}` : rl(report.overallBhiTier ?? report.overallRisk)],
           ].map(([k, v]) => (
             <Grid item xs={6} sm={4} md={3} key={k}>
               <Typography variant="caption" color="text.secondary">{k}</Typography>
@@ -305,7 +307,7 @@ function DoctorReport() {
         )}
       </Paper>
 
-      <Alert severity={report.overallRisk === 'low' ? 'success' : 'warning'} sx={{ mb: 3 }}>
+      <Alert severity={(report.overallBhiTier ?? report.overallRisk) === 'low' ? 'success' : 'warning'} sx={{ mb: 3 }}>
         <Typography variant="subtitle2" fontWeight={600}>{t('医师摘要', 'Physician summary')}</Typography>
         <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', mt: 0.5 }}>{pick(report, 'physicianSummary')}</Typography>
       </Alert>

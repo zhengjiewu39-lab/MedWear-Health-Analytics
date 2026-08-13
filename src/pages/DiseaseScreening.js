@@ -15,6 +15,7 @@ import ChartContainer from '../components/ChartContainer';
 import AiGovernanceBanner from '../components/AiGovernanceBanner';
 import InterventionPathway from '../components/InterventionPathway';
 import SystemStackBanner from '../components/SystemStackBanner';
+import ScreeningHonestyBanner from '../components/ScreeningHonestyBanner';
 import { screeningApi } from '../services/api';
 import useModeRefresh from '../hooks/useModeRefresh';
 import { EvidenceBadge, ReferenceDialog } from '../components/ResearchCitation';
@@ -65,6 +66,8 @@ function DiseaseScreening() {
   const activeItems = (activeCategory?.items || []).map((it) => ({
     ...it,
     name: pick(it, 'name'),
+    attentionScore: it.attentionScore ?? it.risk,
+    signalLevel: it.signalLevel ?? it.level,
     indicators: (isEn && it.indicators_en) || it.indicators,
     recommendation: pick(it, 'recommendation'),
   }));
@@ -76,6 +79,7 @@ function DiseaseScreening() {
       <InterventionPathway />
       <AiGovernanceBanner compact />
       <SystemStackBanner compact />
+      <ScreeningHonestyBanner data={data} compact />
 
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 3, flexWrap: 'wrap', gap: 2 }}>
         <Box>
@@ -104,7 +108,7 @@ function DiseaseScreening() {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Biotech sx={{ fontSize: 48 }} />
               <Box>
-                <Typography variant="h6" fontWeight={600}>{t('综合筛查结论', 'Overall Screening Conclusion')} · {bhiTierLabel(data.overallRisk, isEn) || t('评估中', 'Evaluating')}</Typography>
+                <Typography variant="h6" fontWeight={600}>{t('综合筛查结论', 'Overall Screening Conclusion')} · {bhiTierLabel(data.overallBhiTier ?? data.overallRisk, isEn) || t('评估中', 'Evaluating')}</Typography>
                 <Typography variant="body2" sx={{ mt: 0.5, opacity: 0.95 }}>{pick(data, 'summary')}</Typography>
               </Box>
             </Box>
@@ -115,7 +119,11 @@ function DiseaseScreening() {
               <Typography variant="body2">
                 {data.overallScoreType === 'health' || data.mode === 'real'
                   ? t('BHI 行为健康指数（0–100，越高越好）', 'BHI — behavioral health index (0–100, higher is better)')
-                  : t('综合风险指数（0-100，越低越好）', 'Overall Risk Index (0-100, lower is better)')}
+                  : t('综合关注指数（0-100）', 'Composite attention index (0-100)')}
+                {' · '}
+                <Box component="span" sx={{ fontFamily: 'monospace', fontSize: '0.85em' }}>
+                  overallBhiTier={data.overallBhiTier ?? data.overallRisk ?? '—'}
+                </Box>
               </Typography>
               <Chip label={t(`数据质量 ${data.dataCoverage?.quality || 0}%`, `Data Quality ${data.dataCoverage?.quality || 0}%`)} size="small" sx={{ mt: 1, bgcolor: 'rgba(255,255,255,0.2)', color: '#fff' }} />
             </Box>
@@ -162,26 +170,26 @@ function DiseaseScreening() {
                 <XAxis type="number" domain={[0, 50]} unit="%" />
                 <YAxis type="category" dataKey="name" width={110} tick={{ fontSize: 11 }} />
                 <Tooltip formatter={(v) => [`${v}%`, t('关注信号强度', 'Attention signal score')]} />
-                <Bar dataKey="risk" name={t('关注提示', 'Attention signal')} radius={[0, 4, 4, 0]}>
+                <Bar dataKey="attentionScore" name={t('关注提示', 'Attention signal')} radius={[0, 4, 4, 0]}>
                   {activeItems.map((item, idx) => (
-                    <Cell key={idx} fill={riskColor[item.level] || riskColor.low} />
+                    <Cell key={idx} fill={riskColor[item.signalLevel ?? item.level] || riskColor.low} />
                   ))}
                 </Bar>
               </BarChart>
             </ChartContainer>
             <Divider sx={{ my: 2 }} />
             {activeItems.map(item => (
-              <Box key={item.name} sx={{ mb: 2, p: 2, bgcolor: 'grey.50', borderRadius: 2, borderLeft: 4, borderColor: riskColor[item.level] }}>
+              <Box key={item.name} sx={{ mb: 2, p: 2, bgcolor: 'grey.50', borderRadius: 2, borderLeft: 4, borderColor: riskColor[item.signalLevel ?? item.level] }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1, flexWrap: 'wrap', gap: 1 }}>
                   <Typography fontWeight={600}>{item.name}</Typography>
                   <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
-                    <Chip label={`${item.calibratedRisk ?? item.risk}% · ${t('需进一步评估', 'Further eval')} · ${bhiTierShort(item.level, isEn)}`} size="small" color={riskChip[item.level]} />
+                    <Chip label={`${item.evidenceAdjustedAttentionScore ?? item.calibratedRisk ?? item.attentionScore ?? item.risk}% · ${t('需进一步评估', 'Further eval')} · ${bhiTierShort(item.signalLevel ?? item.level, isEn)}`} size="small" color={riskChip[item.signalLevel ?? item.level]} />
                     {item.evidenceLevel && <EvidenceBadge level={item.evidenceLevel} label={item.evidenceLabel} />}
                   </Box>
                 </Box>
-                {item.referenceDomainLabel && (
+                {item.referenceDomainLabel && item.evidenceLabel && (
                   <Typography variant="caption" color="primary" display="block" gutterBottom>
-                    {t(`参考领域 ${item.referenceDomainLabel}`, `Reference domain ${item.referenceDomainLabel}`)} · {t('启发式置信度', 'Heuristic confidence')} {item.heuristicConfidence != null ? `${(item.heuristicConfidence * 100).toFixed(1)}%` : item.confidence ? `${(item.confidence * 100).toFixed(1)}%` : '—'}
+                    {t(`参考领域 ${item.referenceDomainLabel}`, `Reference domain ${item.referenceDomainLabel}`)} · {t('证据分级', 'Evidence tier')} {item.evidenceLabel}
                   </Typography>
                 )}
                 <Typography variant="body2" color="text.secondary" gutterBottom>

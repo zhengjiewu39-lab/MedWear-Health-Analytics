@@ -73,6 +73,23 @@ function getSystemStack() {
         hrMaxBpm: PHYSIO_LIMITS.hrMax,
       },
     },
+    screeningFields: {
+      overallBhiTier: 'BHI watch tier — not disease risk',
+      attentionScore: 'Rule-derived attention signal — not disease probability',
+      evidenceAdjustedAttentionScore: 'Evidence-adjusted attention score',
+      signalLevel: 'low | moderate | high attention tier',
+      heuristicSupport: 'Evidence-display support — not statistical confidence',
+      deprecatedAliases: ['overallRisk', 'risk', 'calibratedRisk', 'heuristicConfidence'],
+    },
+    fusionWeights: {
+      wearable: 0.55,
+      clinical: 0.30,
+      behavioral: 0.15,
+      disclaimer_en:
+        'Configurable presentation weights selected for prototype demonstration — not learned coefficients and not externally validated.',
+      disclaimer_zh:
+        '原型演示用可配置展示权重 — 非学习系数，未经外部验证。',
+    },
   };
 }
 

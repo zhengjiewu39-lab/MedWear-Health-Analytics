@@ -87,16 +87,16 @@ function buildRiskFactors(patient, report) {
   const vitals = report.vitalsSnapshot || [];
 
   if (report.overallScore != null) {
-    const risk = report.overallRisk || 'moderate';
-    const riskZh = { low: '低', moderate: '中', high: '高', unknown: '待评估' }[risk] || '中';
+    const tier = report.overallBhiTier ?? report.overallRisk || 'moderate';
+    const tierZh = { low: '低', moderate: '中', high: '高', unknown: '待评估' }[tier] || '中';
     push({
       factor: isHealthScore
-        ? `综合健康评分 ${report.overallScore}/100（${riskZh === '低' ? '良好' : riskZh === '高' ? '需重点随访' : '中等，建议加强监测'}）`
-        : `综合风险指数 ${report.overallScore}/100（${riskZh}风险）`,
+        ? `BHI ${report.overallScore}/100（${tierZh === '低' ? '良好' : tierZh === '高' ? '需重点随访' : '中等，建议加强监测'}）`
+        : `综合关注指数 ${report.overallScore}/100（${tierZh}关注）`,
       factor_en: isHealthScore
-        ? `Overall BHI ${report.overallScore}/100 (${risk} tier)`
-        : `Composite risk index ${report.overallScore}/100 (${risk} risk)`,
-      level: risk === 'high' ? 'high' : risk === 'low' ? 'low' : 'moderate',
+        ? `Overall BHI ${report.overallScore}/100 (${tier} watch tier)`
+        : `Composite attention index ${report.overallScore}/100 (${tier} tier)`,
+      level: tier === 'high' ? 'high' : tier === 'low' ? 'low' : 'moderate',
       source: 'composite',
     });
   }
@@ -326,7 +326,7 @@ function buildRuleBasedSummary(patient, report) {
   const cat = bmiCategory(bmi);
   const lines = [
     `【患者】${patient.name} · ${patient.gender}${patient.age ? ` · ${patient.age}岁` : ''}${bmi ? ` · BMI ${bmi}（${cat.zh}）` : ''}`,
-    `【可穿戴】${scoreLabel} · ${report.overallRisk === 'low' ? '低风险' : report.overallRisk === 'high' ? '高风险' : '中风险'}`,
+    `【可穿戴】${scoreLabel} · BHI ${(report.overallBhiTier ?? report.overallRisk) === 'low' ? '低关注' : (report.overallBhiTier ?? report.overallRisk) === 'high' ? '高关注' : '中关注'}`,
   ];
   const watchVitals = (report.vitalsSnapshot || []).filter((v) => v.flag !== 'normal');
   if (watchVitals.length) {
@@ -348,7 +348,7 @@ function buildReportContextBlock(patient, report) {
   return [
     '【医生报告上下文】',
     `患者: ${patient.name} · ${patient.gender} · ${patient.age ?? '—'}岁 · BMI ${patient.bmi ?? '—'}`,
-    `健康/风险: ${report.overallScore}/100 · ${report.overallRisk}`,
+    `BHI/关注: ${report.overallScore}/100 · ${report.overallBhiTier ?? report.overallRisk}`,
     `生命体征: ${(report.vitalsSnapshot || []).map((v) => `${v.label}=${v.value}${v.unit || ''}`).join(', ')}`,
     `筛查关注: ${(report.screeningHighlights || []).map((h) => `${h.name} ${h.risk}%`).join('; ') || '无'}`,
     `异常: ${(report.anomalies || []).slice(0, 3).map((a) => a.type).join('; ') || '无'}`,

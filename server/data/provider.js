@@ -125,7 +125,8 @@ function createDemoProvider(req) {
           patient: d.profile.name,
           age: d.profile.age,
           scenario: d.profile.scenario,
-          overallRisk: d.diseaseScreening.overallRisk,
+          overallBhiTier: d.diseaseScreening.overallBhiTier ?? d.diseaseScreening.overallRisk,
+          overallRisk: d.diseaseScreening.overallRisk ?? d.diseaseScreening.overallBhiTier,
           overallScore: d.diseaseScreening.overallScore,
         },
       };
