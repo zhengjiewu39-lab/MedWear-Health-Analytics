@@ -9,7 +9,7 @@ const { isOnnxEnabled } = require('../config/onnxConfig');
 
 const ENGINE_TYPE = 'evidence-weighted-rule-engine';
 const LEGACY_FIELDS_NOTE =
-  'Deprecated aliases (overallRisk, risk, calibratedRisk, heuristicConfidence, aiModel, models, modelVotes, ensembleConfidence) are compatibility-only — not disease-risk predictions.';
+  'Deprecated aliases: overallRisk/overallRiskTier = BHI tier string; overallRiskScore = numeric (use overallScore); item risk/calibratedRisk = attention scores; heuristicConfidence = heuristicSupport.';
 
 /** Configurable presentation weights — not learned coefficients; not externally validated. */
 const FUSION_WEIGHTS = Object.freeze({
@@ -94,13 +94,81 @@ function attachScreeningSignalAliases(signal) {
   };
 }
 
+const LEGACY_TIER_VALUES = new Set(['low', 'moderate', 'medium', 'high', 'unknown']);
+
+function isLegacyTierString(value) {
+  return typeof value === 'string' && LEGACY_TIER_VALUES.has(value.toLowerCase());
+}
+
+function normalizeLegacyTier(value) {
+  if (value == null) return 'unknown';
+  const s = String(value).toLowerCase();
+  if (s === 'medium') return 'moderate';
+  return LEGACY_TIER_VALUES.has(s) ? s : 'unknown';
+}
+
+function tierFromOverallScore(score) {
+  if (score == null || Number.isNaN(Number(score))) return 'unknown';
+  const n = Number(score);
+  return n >= 80 ? 'low' : n >= 60 ? 'moderate' : 'high';
+}
+
+/** Resolve overallBhiTier + overallScore from primary or legacy screening fields. */
+function resolveOverallScreeningFields(screening = {}) {
+  const rawTier = screening.overallBhiTier;
+  const rawRisk = screening.overallRisk;
+  const rawScore = screening.overallScore;
+
+  if (rawTier != null && isLegacyTierString(rawTier)) {
+    return {
+      overallBhiTier: normalizeLegacyTier(rawTier),
+      overallScore: rawScore ?? 0,
+    };
+  }
+
+  if (typeof rawRisk === 'number' && Number.isFinite(rawRisk)) {
+    return {
+      overallBhiTier: tierFromOverallScore(rawRisk),
+      overallScore: rawRisk,
+    };
+  }
+
+  if (typeof rawRisk === 'string' && rawRisk !== '' && !isLegacyTierString(rawRisk)) {
+    const parsed = Number(rawRisk);
+    if (Number.isFinite(parsed)) {
+      return {
+        overallBhiTier: tierFromOverallScore(parsed),
+        overallScore: parsed,
+      };
+    }
+  }
+
+  if (isLegacyTierString(rawRisk)) {
+    return {
+      overallBhiTier: normalizeLegacyTier(rawRisk),
+      overallScore: rawScore ?? 0,
+    };
+  }
+
+  return {
+    overallBhiTier: 'unknown',
+    overallScore: rawScore ?? 0,
+  };
+}
+
 function attachAnalysisResultAliases(result) {
+  const tier = result.overallBhiTier;
+  const score = result.overallScore;
   return {
     ...result,
-    overallBhiTier: result.overallBhiTier,
+    overallBhiTier: tier,
     heuristicSupport: result.heuristicSupport,
     ruleSupportScore: result.heuristicSupport,
-    overallRisk: result.overallBhiTier,
+    /** @deprecated tier string — same as historical mock diseaseScreening.overallRisk */
+    overallRiskTier: tier,
+    overallRisk: tier,
+    /** @deprecated numeric alias — prefer overallScore (some callers misread overallRisk as a score) */
+    overallRiskScore: score,
     heuristicConfidence: result.heuristicSupport,
     ensembleConfidence: result.heuristicSupport,
   };
@@ -349,11 +417,11 @@ function normalizeScreeningItem(item) {
 
 function normalizeScreeningEnvelope(screening) {
   if (!screening) return screening;
-  const overallBhiTier = screening.overallBhiTier ?? screening.overallRisk ?? 'unknown';
+  const { overallBhiTier, overallScore } = resolveOverallScreeningFields(screening);
   return attachAnalysisResultAliases({
     ...screening,
     overallBhiTier,
-    overallScore: screening.overallScore ?? 0,
+    overallScore,
     categories: (screening.categories || []).map((cat) => ({
       ...cat,
       items: (cat.items || []).map((item) => normalizeScreeningItem(item)),
@@ -421,6 +489,7 @@ module.exports = {
   enrichScreeningData,
   enrichScreeningDataSync,
   normalizeScreeningEnvelope,
+  resolveOverallScreeningFields,
   normalizeScreeningItem,
   analyzeCondition,
   evidenceAdjustedAttentionScore,

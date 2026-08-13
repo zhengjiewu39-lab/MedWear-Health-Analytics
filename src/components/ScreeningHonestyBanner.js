@@ -37,8 +37,8 @@ export default function ScreeningHonestyBanner({ data, compact = false }) {
       </Box>
       <Typography variant="body2">
         {t(
-          '分项分数为规则引擎生成的关注信号强度，经证据分级微调；heuristicSupport 为展示支持度，非统计置信度。旧字段 overallRisk / risk / calibratedRisk 仅为兼容别名。',
-          'Item scores are rule-engine attention signal strengths with evidence-tier adjustment; heuristicSupport is a display weight — not statistical confidence. Legacy fields overallRisk / risk / calibratedRisk are compatibility aliases only.',
+          '分项分数为规则引擎生成的关注信号强度，经证据分级微调；heuristicSupport 为展示支持度，非统计置信度。旧字段 overallRisk/overallRiskTier 为分层字符串，overallRiskScore 为数值别名（请用 overallScore）。',
+          'Item scores are rule-engine attention signal strengths with evidence-tier adjustment; heuristicSupport is a display weight — not statistical confidence. Legacy overallRisk/overallRiskTier are tier strings; overallRiskScore is a numeric alias (prefer overallScore).',
         )}
       </Typography>
     </Alert>

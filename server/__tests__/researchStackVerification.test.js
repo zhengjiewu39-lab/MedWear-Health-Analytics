@@ -378,6 +378,31 @@ describe('Zod validation (extractFeatures.js) + batch ingest (parser → dao)', 
   });
 });
 
+describe('Overall screening field compatibility (engine.js)', () => {
+  test('resolveOverallScreeningFields keeps tier string overallRisk as overallBhiTier', () => {
+    const { resolveOverallScreeningFields } = require('../ai/engine');
+    const r = resolveOverallScreeningFields({ overallRisk: 'low', overallScore: 18 });
+    assert.equal(r.overallBhiTier, 'low');
+    assert.equal(r.overallScore, 18);
+  });
+
+  test('resolveOverallScreeningFields maps numeric overallRisk to overallScore', () => {
+    const { resolveOverallScreeningFields } = require('../ai/engine');
+    const r = resolveOverallScreeningFields({ overallRisk: 72 });
+    assert.equal(r.overallScore, 72);
+    assert.equal(r.overallBhiTier, 'moderate');
+  });
+
+  test('normalizeScreeningEnvelope emits overallRiskScore numeric alias', () => {
+    const { normalizeScreeningEnvelope } = require('../ai/engine');
+    const out = normalizeScreeningEnvelope({ overallBhiTier: 'high', overallScore: 42, categories: [] });
+    assert.equal(out.overallRisk, 'high');
+    assert.equal(out.overallRiskTier, 'high');
+    assert.equal(out.overallRiskScore, 42);
+    assert.equal(out.overallScore, 42);
+  });
+});
+
 describe('WESAD proxy adapter (publicDatasetAdapter.js)', () => {
   test('feature build does not read labels — no direct bhiProxy from stress', () => {
     const {
