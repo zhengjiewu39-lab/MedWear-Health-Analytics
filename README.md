@@ -8,6 +8,8 @@ A full-stack **digital health analytics platform** — Apple Health import, tran
 
 Connects consumer wearables to actionable health insights with **local-first privacy** and **explainable methods**.
 
+**One-click paper reproduction:** [`notebooks/paper_reproduction.ipynb`](notebooks/paper_reproduction.ipynb) — synthetic data (seed=42) → BHI → MAD → ONNX → XAI charts. See [`notebooks/README.md`](notebooks/README.md).
+
 ---
 
 ## Highlights

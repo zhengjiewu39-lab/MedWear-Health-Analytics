@@ -35,3 +35,7 @@ experiments/results/*.joblib
 # Benchmark outputs (regenerate via npm run evaluate)
 benchmarks/results/*.json
 !benchmarks/results/example-summary.json
+
+# Notebook execution artifacts (regenerate via npm run notebook:reproduction)
+notebooks/output/*
+!notebooks/output/.gitkeep
