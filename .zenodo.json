@@ -1,0 +1,31 @@
+{
+  "title": "MedWear Health Analytics v1.0.0",
+  "description": "MedWear Health Analytics — local-first wearable analytics platform with BHI (behavioral health index), robust MAD anomaly heuristics, MedWear-RuleEngine-v1 screening, optional ONNX inference, reproducible benchmarks (seed=42), Jupyter paper reproduction notebook, and CI-verified evaluation pipeline.",
+  "upload_type": "software",
+  "access_right": "open",
+  "license": {
+    "id": "MIT"
+  },
+  "creators": [
+    {
+      "name": "Wu, Zhengjie",
+      "affiliation": "MedWear Research",
+      "orcid": ""
+    }
+  ],
+  "keywords": [
+    "wearable health analytics",
+    "behavioral health index",
+    "anomaly detection",
+    "clinical decision support",
+    "reproducible research"
+  ],
+  "related_identifiers": [
+    {
+      "identifier": "https://github.com/zhengjiewu39-lab/MedWear-Health-Analytics",
+      "relation": "isSupplementTo",
+      "scheme": "url"
+    }
+  ],
+  "version": "1.0.0"
+}

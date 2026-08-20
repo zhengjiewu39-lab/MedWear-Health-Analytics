@@ -1,6 +1,7 @@
 # MedWear · Medical Wearable Health Analytics Platform
 
 [![CI Passing](https://github.com/zhengjiewu39-lab/MedWear-Health-Analytics/actions/workflows/ci.yml/badge.svg)](https://github.com/zhengjiewu39-lab/MedWear-Health-Analytics/actions/workflows/ci.yml)
+[![Release v1.0.0](https://img.shields.io/github/v/release/zhengjiewu39-lab/MedWear-Health-Analytics)](https://github.com/zhengjiewu39-lab/MedWear-Health-Analytics/releases/tag/v1.0.0)
 
 > **Documentation (main):** English and Chinese methods docs are **auto-generated from the same source** (`server/config/methodologyTransparency.js`). Core analytics = **BHI** + **robust MAD heuristic** + **`MedWear-RuleEngine-v1`** (not legacy 2σ / discrete health score). Sync: `npm run docs:sync` · verify: `npm run docs:verify`.
 
@@ -163,6 +164,12 @@ npm run evaluate:supplement    # scenarios + FP burden + fair/oracle ML compare 
 For demonstration, education, and research prototyping — **not a medical device**. Screening and AI outputs require professional clinical review.
 
 ---
+
+## Citation & archival DOI
+
+- **Cite this software:** [`CITATION.cff`](CITATION.cff) (GitHub “Cite this repository”)
+- **Code availability (paper):** [`docs/CODE_AVAILABILITY.md`](docs/CODE_AVAILABILITY.md)
+- **Zenodo:** enable [GitHub integration](https://zenodo.org/account/settings/github/) → publish release **v1.0.0** → add DOI to `CITATION.cff` and `docs/CODE_AVAILABILITY.md`
 
 ## License
 
