@@ -1,5 +1,7 @@
 # MedWear · Medical Wearable Health Analytics Platform
 
+[![CI Passing](https://github.com/zhengjiewu39-lab/MedWear-Health-Analytics/actions/workflows/ci.yml/badge.svg)](https://github.com/zhengjiewu39-lab/MedWear-Health-Analytics/actions/workflows/ci.yml)
+
 > **Documentation (main):** English and Chinese methods docs are **auto-generated from the same source** (`server/config/methodologyTransparency.js`). Core analytics = **BHI** + **robust MAD heuristic** + **`MedWear-RuleEngine-v1`** (not legacy 2σ / discrete health score). Sync: `npm run docs:sync` · verify: `npm run docs:verify`.
 
 A full-stack **digital health analytics platform** — Apple Health import, transparent statistical analysis, clinical screening workflow, and reproducible benchmarks.

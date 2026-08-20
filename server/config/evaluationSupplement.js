@@ -139,10 +139,10 @@ function renderSupplementMarkdown(isEn = true) {
 
   if (isEn) {
     lines.push('### Gold-tier ML comparison (clinicalGoldStandard-v1 labels)\n');
-    lines.push('> Sklearn trained to predict **reference risk tier** from raw features. Regenerate: `npm run experiment:compare-vs-gold`.\n');
+    lines.push('> Sklearn trained to predict **reference tier** from raw features. Regenerate: `npm run experiment:compare-vs-gold`.\n');
   } else {
     lines.push('### Gold 分层 ML 对比（clinicalGoldStandard-v1 标签）\n');
-    lines.push('> sklearn 预测**参考风险分层**（原始特征）。`npm run experiment:compare-vs-gold`。\n');
+    lines.push('> sklearn 预测**参考分层**（原始特征）。`npm run experiment:compare-vs-gold`。\n');
   }
 
   if (s.mlComparisonVsGold?.ruleEngine) {
