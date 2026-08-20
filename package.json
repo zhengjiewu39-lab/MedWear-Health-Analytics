@@ -70,6 +70,7 @@
     "generate:synth-health": "node scripts/generate_synthetic_healthdata.js --users 200 --days 14",
     "experiment:export": "npm run export:features",
     "experiment:train": "python experiments/medwear/train.py --data experiments/data/medwear/features_v1.csv --model rf --cv 5 --seed 42",
+    "benchmark:system": "python3 -m pip install -r scripts/benchmark_requirements.txt -q && python3 scripts/benchmark_system.py",
     "experiment:summary": "python experiments/medwear/evaluate.py --results experiments/results --out experiments/results/summary.csv"
   },
   "eslintConfig": {
