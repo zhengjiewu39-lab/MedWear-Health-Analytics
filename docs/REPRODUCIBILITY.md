@@ -75,6 +75,9 @@ docker build -t medwear-api .
 
 ## Version Pinning
 
-- Node.js **22** in CI; **18+** recommended locally
-- Python **3.11** for supplement / experiment scripts
-- Lockfile: `package-lock.json`
+- Node.js **22** in CI; **18+** recommended locally · lockfile: `package-lock.json`
+- Python **3.11** in CI; **3.9+** locally
+- Pinned Python stacks (reproducible installs):
+  - `experiments/medwear/requirements-min.txt` — CI supplement / fair ML compare
+  - `scripts/benchmark_requirements.txt` — `npm run benchmark:system`
+  - `notebooks/requirements.txt` — `npm run notebook:reproduction`

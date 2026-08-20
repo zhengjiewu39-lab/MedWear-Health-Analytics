@@ -19,13 +19,35 @@ uploads/
 health-import/.tmp-extract/
 health-import/*.zip
 health-import/*.xml
+health-import/*.csv
+health-import/apple_health_export/
+apple_health_export/
+apple_health_export.zip
+**/export.xml
+**/export_cda.xml
 data/health-store.json
 data/real-appointments.json
 data/ai-config.json
 data/health-vault.enc
 data/audit-log.json
+data/medwear-health.db
+data/medwear-health.db-*
+data/*.db
+data/*.db-wal
+data/*.db-shm
 .DS_Store
 *.log
+
+# Python / test caches (regenerate locally)
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+
+# Jupyter checkpoints
+.ipynb_checkpoints/
 
 experiments/data/**/synth_n*.json
 experiments/data/**/synth_user_*.json

@@ -6,9 +6,56 @@
 
 A full-stack **digital health analytics platform** — Apple Health import, transparent statistical analysis, clinical screening workflow, and reproducible benchmarks.
 
+**Positioning:** **Research-grade Digital Phenotyping & Simulation Benchmarking** — a transparent, local-first research prototype. **Not a clinical diagnostic medical device**; all outputs require professional review.
+
 Connects consumer wearables to actionable health insights with **local-first privacy** and **explainable methods**.
 
 **One-click paper reproduction:** [`notebooks/paper_reproduction.ipynb`](notebooks/paper_reproduction.ipynb) — synthetic data (seed=42) → BHI → MAD → ONNX → XAI charts. See [`notebooks/README.md`](notebooks/README.md).
+
+---
+
+## System architecture
+
+Data flows locally from ingestion through analytics to explainable outputs. Demo mode uses fixed-seed synthetic cohorts; real mode parses Apple Health exports on-device only.
+
+```mermaid
+flowchart LR
+  subgraph sources["Data sources"]
+    A1[Apple Health ZIP/XML]
+    A2[Synthetic cohort seed=42]
+  end
+  subgraph ingest["Local ingest"]
+    B[SAX streaming parser]
+    C[(SQLite / DuckDB store)]
+  end
+  subgraph analytics["Analytics engine"]
+    D[BHI scoring]
+    E[MAD robust Z-score]
+    F[ONNX inference optional]
+  end
+  subgraph output["Outputs"]
+    G[Screening UI]
+    H[XAI / benchmark charts]
+  end
+  A1 --> B --> C
+  A2 -.-> C
+  C --> D --> G
+  C --> E --> G
+  D --> F --> H
+  E --> H
+```
+
+**One-command Docker run:**
+
+```bash
+docker build -t medwear-api . && docker run --rm -p 3001:3001 \
+  -e ALLOW_DEMO_AUTH=true \
+  -v "$(pwd)/data:/app/data" \
+  medwear-api
+# Open http://localhost:3001 · or: docker compose up --build
+```
+
+**System benchmarks (paper figures):** `npm run benchmark:system` → ONNX vs sklearn latency, SQLite vs DuckDB throughput, MAD F1 vs SNR curves.
 
 ---
 
@@ -160,7 +207,7 @@ npm run evaluate:supplement    # scenarios + FP burden + fair/oracle ML compare 
 
 ## Disclaimer
 
-For demonstration, education, and research prototyping — **not a medical device**. Screening and AI outputs require professional clinical review.
+For demonstration, education, and **research-grade digital phenotyping / simulation benchmarking** — **not a medical device** and not intended for clinical diagnosis. Screening and AI outputs require professional clinical review. Automated tests and benchmarks use **synthetic data only** (`seed=42`); never commit real Apple Health exports or PHI to this repository.
 
 ---
 

@@ -4,4 +4,7 @@ audit-log.json
 health.db
 health.db-wal
 health.db-shm
+medwear-health.db
+medwear-health.db-wal
+medwear-health.db-shm
 health-store.json
