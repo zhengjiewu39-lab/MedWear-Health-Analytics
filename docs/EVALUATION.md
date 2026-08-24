@@ -5,25 +5,25 @@
 
 ## Benchmark Dataset
 
-**MedWear-Wearable-Analytics-Clinical-v2** — 5000 synthetic multi-day wearable cases (CC-BY-4.0). Suitable for **engine-vs-gold agreement estimation** with 95% Wilson CIs.
+**MedWear-Wearable-Analytics-Benchmark-v3** — 5000 synthetic multi-day wearable cases (CC-BY-4.0). Suitable for **engine-vs-reference agreement estimation** with 95% Wilson CIs.
 
 ### Dual-engine architecture (prevents self-test inflation)
 
 | Role | Module | Purpose |
 |------|--------|---------|
 | Product pipeline | `MedWear-AnalyticsCore-v1` | Live alerts, anomaly, BHI watch-tier / attention-signal classification in the app |
-| Benchmark gold | `clinicalGoldStandard-v1` | Independent labels (stricter SpO₂, different score formula) |
-| Evaluation | `engine-vs-gold-agreement` | Measures disagreement — **not** engine self-labeling |
+| Independent synthetic reference | `independentSyntheticReference-v1` | Rule-based synthetic reference labels (stricter SpO₂, different score formula) |
+| Evaluation | `engine-vs-reference-agreement` | Measures disagreement — **not** engine self-labeling |
 
 Physiology: **28% clinical-random adults** + **72% phenotype-random synthesis** (`seed=42`), including exercise/SpO₂-artifact/rest-day false-positive scenarios.
 
-Product alerts use **peak/single-reading sensitivity** (wearable-style); gold labels apply **contextual clinical suppression** (exercise tachycardia, motion SpO₂ artifact, planned rest day).
+Product alerts use **peak/single-reading sensitivity** (wearable-style); synthetic reference labels apply **contextual rule-based suppression** (exercise tachycardia, motion SpO₂ artifact, planned rest day).
 
-Each case includes 7 days of steps, HR, SpO2, HRV, sleep with **reference gold labels** (independent adjudication — evaluation measures **inter-engine consistency**):
+Each case includes 7 days of steps, HR, SpO2, HRV, sleep with **synthetic reference labels** (independent rule-based reference labeling — evaluation measures **inter-engine consistency**):
 
 - Expected alert types
 - Anomaly presence (binary)
-- Risk tier (low / moderate / high)
+- BHI watch tier (low / moderate / high)
 - Minimum acceptable BHI (`healthScore` field — behavioral health index)
 
 File: `benchmarks/wearable-analytics-dataset.json`
@@ -49,28 +49,28 @@ Output: `benchmarks/results/latest.json`
 |--------|------------|
 | Alert F1 | Micro-F1 over alert type sets (precision/recall also reported) |
 | Anomaly Accuracy | Binary match on anomalyDetected |
-| Risk Accuracy | 3-class BHI watch-tier match on bhiWatchTier |
-| Score agreement | BHI within ±8 pts of gold reference (`healthScore` field = BHI) |
+| BHI tier agreement | 3-class BHI watch-tier match on bhiWatchTier |
+| Score agreement | BHI within ±8 pts of synthetic reference (`healthScore` field = BHI) |
 | 95% CI | Wilson score interval for accuracy metrics (n≥100) |
 
-## Reference Results (v2.5, n=5000, seed=42, BHI + MAD engine)
+## Reference Results (v3.0, n=5000, seed=42, BHI + MAD engine)
 
-Run `npm run evaluate` for current numbers. Example (product engine vs **clinicalGoldStandard-v1** reference labels — engine-vs-gold agreement):
+Run `npm run evaluate` for current numbers. Example (product engine vs **independentSyntheticReference-v1** synthetic reference labels — engine-vs-reference agreement):
 
 | Metric | Value | 95% CI |
 |--------|-------|--------|
-| Alert F1 | 0.844 | — |
-| Alert precision | 0.758 | — |
-| Alert recall | 0.953 | — |
-| Anomaly accuracy | 0.700 | 0.688–0.713 |
-| Risk accuracy (BHI watch tiers) | 0.787 | 0.775–0.798 |
-| BHI agreement (±8 pts) | 0.760 | 0.748–0.772 |
+| Alert F1 | 0.854 | — |
+| Alert precision | 0.772 | — |
+| Alert recall | 0.956 | — |
+| Anomaly accuracy | 0.694 | 0.681–0.707 |
+| BHI tier agreement | 0.760 | 0.748–0.772 |
+| BHI agreement (±8 pts) | 0.701 | 0.688–0.713 |
 
-Disagreements: **3041 / 5000** cases differ on at least one task (alert set, anomaly, risk, or BHI).
+Disagreements: **3151 / 5000** cases differ on at least one task (alert set, anomaly, BHI watch tier, or BHI).
 
-Alert precision &lt; 1 reflects realistic wearable false positives (exercise HR peaks, single SpO₂ dips, recovery-day low steps). Gold labels use contextual adjudication — not the product engine.
+Alert precision &lt; 1 reflects realistic wearable false positives (exercise HR peaks, single SpO₂ dips, recovery-day low steps). Synthetic reference labels use rule-based contextual suppression — not the product engine.
 
-Gold labels use stricter SpO₂/activity cutoffs and a separate reference BHI formula — not the product engine. Metrics ≥98% on all tasks indicate circular labels and invalid **agreement estimation**.
+Synthetic reference labels use stricter SpO₂/activity cutoffs and a separate reference BHI formula — not the product engine. Metrics ≥98% on all tasks indicate circular labels and invalid **agreement estimation**.
 
 ## API Evaluation
 
@@ -81,7 +81,7 @@ curl http://localhost:3001/api/research/results
 
 ## Future Work
 
-- Expand edge cases (missing sensors, sparse data) within v2 generator
+- Expand edge cases (missing sensors, sparse data) within v3 generator
 - Compare against naive baselines (population fixed thresholds)
 - Public-dataset-inspired proxy sanity checks (WESAD-inspired stress proxy, PPG-DaLiA planned) — not external validation
 - Clinician review of screening category mappings
@@ -193,16 +193,16 @@ curl http://localhost:3001/api/research/validate
 
 > **Primary table:** 15-dim export **without** BHI/anomaly flags. Rule engine preferred for **interpretability & auditability**, not oracle sklearn accuracy. Regenerate: `npm run experiment:compare-fair`.
 
-| Model | BHI tier accuracy / Macro F1 | Notes |
-|-------|------------------------------|-------|
-| Rule engine (vs clinical gold) | risk 0.76, alert F1 0.8542 | product metric |
+| Model | BHI tier agreement / Macro F1 | Notes |
+|-------|---------------------------------|-------|
+| Rule engine (vs synthetic reference) | BHI tier 0.76, alert F1 0.8542 | product metric |
 | majority-class | acc 0.5122, F1 0.2258 | node baseline |
 | hr-steps-heuristic | acc 0.5032, F1 0.4511 | node baseline |
 | lr (sklearn, fair) | acc 0.9390000000000001, F1 0.938260223082613 | 5-fold CV, raw features |
 | dt (sklearn, fair) | acc 0.9410000000000001, F1 0.9392945829877892 | 5-fold CV, raw features |
 | rf (sklearn, fair) | acc 0.9586, F1 0.9562394174159635 | 5-fold CV, raw features |
 
-> **Fair ML note:** Sklearn targets are **product-engine BHI watch tiers** (not gold labels). 5-fold CV uses random stratified splits on the same synthetic export. High accuracy reflects **feature distinguishability ceiling** on correlated synthetic data — **not** independent clinical validation. Rule engine is preferred for interpretability, not because sklearn "loses" on oracle features.
+> **Fair ML note:** Sklearn targets are **product-engine BHI watch tiers** (not synthetic reference labels). 5-fold CV uses random stratified splits on the same synthetic export. High accuracy reflects **feature distinguishability ceiling** on correlated synthetic data — **not** independent clinical validation. Rule engine is preferred for interpretability, not because sklearn "loses" on oracle features.
 
 ### Appendix: oracle comparison (engine-derived features — feature leakage)
 
@@ -214,17 +214,17 @@ curl http://localhost:3001/api/research/validate
 | dt (sklearn, oracle) | acc 0.9762000000000001, F1 0.9729773375259132 | appendix only |
 | rf (sklearn, oracle) | acc 0.9852000000000001, F1 0.9827387082115269 | appendix only |
 
-### Gold-tier ML comparison (clinicalGoldStandard-v1 labels)
+### Reference-tier ML comparison (independentSyntheticReference-v1 labels)
 
-> Sklearn trained to predict **reference tier** from raw features. Regenerate: `npm run experiment:compare-vs-gold`.
+> Sklearn trained to predict **synthetic reference BHI watch tier** from raw features. Regenerate: `npm run experiment:compare-vs-reference`.
 
-| Model | Gold-tier accuracy / Macro F1 | Notes |
-|-------|-------------------------------|-------|
-| Rule engine (engine-vs-gold) | 0.76, alert F1 0.8542 | product vs gold reference |
+| Model | Reference-tier agreement / Macro F1 | Notes |
+|-------|-------------------------------------|-------|
+| Rule engine (engine-vs-reference) | 0.76, alert F1 0.8542 | product vs synthetic reference |
 | majority-class | acc 0.6328, F1 0.2584 | node baseline |
-| lr (sklearn, vs gold) | acc 0.9469999999999998, F1 0.9385803982951801 | 5-fold CV, gold label target |
-| dt (sklearn, vs gold) | acc 0.9693999999999999, F1 0.9670046819306586 | 5-fold CV, gold label target |
-| rf (sklearn, vs gold) | acc 0.9848000000000001, F1 0.9820846830849433 | 5-fold CV, gold label target |
+| lr (sklearn, vs reference) | acc 0.9469999999999998, F1 0.9385803982951801 | 5-fold CV, reference label target |
+| dt (sklearn, vs reference) | acc 0.9693999999999999, F1 0.9670046819306586 | 5-fold CV, reference label target |
+| rf (sklearn, vs reference) | acc 0.9848000000000001, F1 0.9820846830849433 | 5-fold CV, reference label target |
 
 ## Parameter sensitivity (outcome simulation)
 
@@ -243,7 +243,7 @@ curl http://localhost:3001/api/research/validate
 
 - WESAD-inspired proxy (**sanity check only — not external validation**): n=120 · subjects=15 · BHI-tier acc=0.5583 (holdout n=24 acc=0.5833) · per-subject acc range=0.375–0.875 · featureBuildUsesLabels=false
 - WESAD proxy AUC (supplement only — may reflect proxy separability, not generalization): full=0.9936 · holdout=0.9792 · 95% CI 0.9214–1
-- Internal export: n=5000 · BHI-tier acc=0.7932
+- Internal export: n=5000 · BHI-tier acc=0.767
 - Planned external: PPG-DaLiA (activity HR proxy)
 
 <!-- EVAL-SUPPLEMENT-END -->

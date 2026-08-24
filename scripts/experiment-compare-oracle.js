@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Oracle ML comparison — includes engine-derived BHI/anomaly flags (feature leakage).
- * Appendix only — do NOT compare directly to rule-engine-vs-gold metrics.
+ * Appendix only — do NOT compare directly to rule-engine-vs-reference metrics.
  */
 const fs = require('fs');
 const path = require('path');

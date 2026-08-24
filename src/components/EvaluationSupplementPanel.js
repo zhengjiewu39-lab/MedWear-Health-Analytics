@@ -91,7 +91,7 @@ export default function EvaluationSupplementPanel({ data }) {
             <TableBody>
               <TableRow>
                 <TableCell>MedWear-RuleEngine-v1</TableCell>
-                <TableCell>engine-vs-gold {ml.ruleEngine.riskAccuracy} · alert F1 {ml.ruleEngine.alertF1}</TableCell>
+                <TableCell>engine-vs-reference {ml.ruleEngine.bhiTierAgreement ?? ml.ruleEngine.riskAccuracy} · alert F1 {ml.ruleEngine.alertF1}</TableCell>
               </TableRow>
               {(ml.nodeBaselines || []).map((b) => (
                 <TableRow key={b.name}>

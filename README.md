@@ -154,10 +154,10 @@ Supported: HeartRate, OxygenSaturation, StepCount, SleepAnalysis, HRV, ActiveEne
 
 ## Evaluation & Reproducibility
 
-**Anti–self-test policy:** wearable benchmark labels come from `independentReference-v1` (legacy alias: `clinicalGoldStandard-v1`). Metrics measure **engine vs independent reference agreement** — not circular 100% self-scores.
+**Anti–self-test policy:** wearable benchmark labels come from `independentSyntheticReference-v1` (legacy alias: `clinicalGoldStandard-v1`). Metrics measure **engine vs independent synthetic reference agreement** — not circular 100% self-scores.
 
 ```bash
-npm run generate:benchmark   # random physiology + independent gold labels (n=5000)
+npm run generate:benchmark   # random physiology + independent synthetic reference labels (n=5000)
 npm run test:server
 npm run evaluate             # → benchmarks/results/latest.json (gitignored; see benchmarks/results/example-summary.json)
 npm run evaluate:supplement    # scenarios + FP burden + fair/oracle ML compare + EVALUATION sync

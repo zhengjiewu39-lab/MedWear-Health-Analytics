@@ -113,7 +113,7 @@
 | 开启开关 | `MEDWEAR_ENABLE_ONNX=false (default — opt-in only)` |
 | 模型文件 | `server/ai/models/medwear_rf.onnx + medwear_rf.meta.json` |
 | 训练脚本 | `experiments/medwear/train.py (sklearn RandomForest → skl2onnx export)` |
-| 训练数据 | MedWear-Wearable-Analytics-Clinical-v2 合成导出（n=5000, seed=42）→ scripts/export_features.js 生成 experiments/data/medwear/features_v1.csv |
+| 训练数据 | MedWear-Wearable-Analytics-Benchmark-v3 合成导出（n=5000, seed=42）→ scripts/export_features.js 生成 experiments/data/medwear/features_v1.csv |
 | 标签目标 | BHI 关注分层（low/moderate/high）— 仅实验性对比展示；不参与疾病筛查分数 |
 | 运行时 | onnxruntime-node via server/ai/onnxInference.js |
 | 用于 | runFullAnalysis() when MEDWEAR_ENABLE_ONNX=true — experimentalBhiTierComparison field only |

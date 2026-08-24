@@ -103,8 +103,9 @@ function main() {
     name: 'MedWear-RuleEngine-v1 + AnalyticsCore',
     type: 'rule-engine',
     riskAccuracy: evalResults.metrics.riskAccuracy,
+    bhiTierAgreement: evalResults.metrics.bhiTierAgreement,
     alertF1: evalResults.metrics.alerts?.f1,
-    note: 'Engine vs clinicalGoldStandard-v1 — primary product metric',
+    note: 'Engine vs independentSyntheticReference-v1 — primary product metric (engine-vs-reference agreement)',
   };
 
   const rows = parseCsv(fs.readFileSync(FEATURES, 'utf8'));

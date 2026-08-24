@@ -405,19 +405,20 @@ function main() {
   const clinicalCharacteristics = computeCohortClinicalStats(cases);
 
   const dataset = {
-    dataset: 'MedWear-Wearable-Analytics-Clinical-v2',
-    version: '2.5.0',
+    dataset: 'MedWear-Wearable-Analytics-Benchmark-v3',
+    version: '3.0.0',
     license: 'CC-BY-4.0',
-    description: 'Synthetic multi-day wearable cases with per-case age/sex demographics. Labels: independentReference-v1 adjudication (NOT the product analytics engine).',
-    labelSource: 'independent-reference-v1',
+    description: 'Synthetic multi-day wearable cases with per-case age/sex demographics. Labels: independentSyntheticReference-v1 rule-based reference labeling (NOT the product analytics engine).',
+    labelSource: 'independent-synthetic-reference-v1',
     legacyLabelSource: 'clinical-gold-standard-v1',
-    superseded: 'MedWear-Wearable-Analytics-Mini-v1',
+    legacyDataset: 'MedWear-Wearable-Analytics-Clinical-v2',
+    superseded: 'MedWear-Wearable-Analytics-Clinical-v2',
     generatedAt: new Date().toISOString(),
     seed: opts.seed,
     rng: 'mulberry32',
     n: cases.length,
     daysPerCase: opts.days,
-    expansionMethod: 'clinical-random-physiology-fp-adjudication',
+    expansionMethod: 'clinical-random-physiology-fp-reference-labeling',
     physiologyMix: { clinicalRandom: 0.28, phenotypeRandom: 0.72 },
     phenotypeDistribution: distribution,
     clinicalCharacteristics,
@@ -429,9 +430,9 @@ function main() {
   fs.writeFileSync(opts.output, JSON.stringify(dataset, null, 2));
 
   console.log(`Generated ${cases.length} benchmark cases (seed=${opts.seed})`);
-  console.log(`  Method: random physiology + independent clinical adjudication labels`);
+  console.log(`  Method: random physiology + independent synthetic reference labels`);
   console.log(`  Phenotypes: ${distribution.map((d) => `${d.phenotype}=${d.n}`).join(', ')}`);
-  console.log(`  Engine vs clinical gold (preview): alert=${(preview.alertExactMatchRate * 100).toFixed(1)}% anomaly=${(preview.anomalyAccuracy * 100).toFixed(1)}% risk=${(preview.riskAccuracy * 100).toFixed(1)}% score≈${(preview.scoreAgreementRate * 100).toFixed(1)}%`);
+  console.log(`  Engine vs reference (preview): alert=${(preview.alertExactMatchRate * 100).toFixed(1)}% anomaly=${(preview.anomalyAccuracy * 100).toFixed(1)}% BHI tier=${(preview.riskAccuracy * 100).toFixed(1)}% score≈${(preview.scoreAgreementRate * 100).toFixed(1)}%`);
   console.log(`  → ${opts.output}`);
 }
 

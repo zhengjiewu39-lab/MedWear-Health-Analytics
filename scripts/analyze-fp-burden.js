@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Estimate downstream follow-up burden from alert false positives (scenario analysis).
- * Reads benchmarks/results/latest.json from engine-vs-gold evaluation.
+ * Reads benchmarks/results/latest.json from engine-vs-reference evaluation.
  */
 const fs = require('fs');
 const path = require('path');

@@ -1,27 +1,28 @@
 #!/usr/bin/env node
 /**
- * ML comparison with clinicalGoldStandard-v1 risk tier as label target.
+ * ML comparison with independentSyntheticReference-v1 BHI watch tier as label target.
  * Same raw wearable features as fair compare — labels from benchmark expected.riskLevel.
  */
 const fs = require('fs');
 const path = require('path');
 const { spawnSync } = require('child_process');
 const { run: runEvaluate } = require('./evaluate-analytics');
-const { RAW_FEATURE_NAMES, extractRawFeatures, extractGoldRiskTierLabel } = require('../server/services/extractFeatures');
+const { RAW_FEATURE_NAMES, extractRawFeatures, extractReferenceBhiTierLabel } = require('../server/services/extractFeatures');
 const { loadCases } = require('./export_features');
 
-const OUT = path.join(__dirname, '../benchmarks/results/ml-comparison-vs-gold-latest.json');
-const FEATURES = path.join(__dirname, '../experiments/data/medwear/features_vs_gold_v1.csv');
+const OUT = path.join(__dirname, '../benchmarks/results/ml-comparison-vs-reference-latest.json');
+const OUT_LEGACY = path.join(__dirname, '../benchmarks/results/ml-comparison-vs-gold-latest.json');
+const FEATURES = path.join(__dirname, '../experiments/data/medwear/features_vs_reference_v1.csv');
 const DATASET = path.join(__dirname, '../benchmarks/wearable-analytics-dataset.json');
 const TRAIN = path.join(__dirname, '../experiments/medwear/train.py');
 
-function exportGoldFeatures() {
+function exportReferenceFeatures() {
   const cases = loadCases(DATASET);
   const cols = ['id', 'label', 'task', ...RAW_FEATURE_NAMES];
   const lines = [cols.join(',')];
   cases.forEach((c) => {
     const features = extractRawFeatures(c);
-    const { label, task } = extractGoldRiskTierLabel(c);
+    const { label, task } = extractReferenceBhiTierLabel(c);
     const row = [c.id, label, task, ...RAW_FEATURE_NAMES.map((k) => features[k] ?? 0)];
     lines.push(row.join(','));
   });
@@ -84,7 +85,7 @@ function runPythonModel(model) {
 }
 
 function main() {
-  const n = exportGoldFeatures();
+  const n = exportReferenceFeatures();
   spawnSync('python3', ['-m', 'pip', 'install', '-q', '-r', path.join(__dirname, '../experiments/medwear/requirements-min.txt')], {
     stdio: 'inherit',
     cwd: path.join(__dirname, '..'),
@@ -94,9 +95,10 @@ function main() {
   const ruleEngine = {
     name: 'MedWear-AnalyticsCore-v1',
     type: 'rule-engine',
-    goldTierAgreement: evalResults.metrics.riskAccuracy,
+    referenceTierAgreement: evalResults.metrics.bhiTierAgreement,
+    goldTierAgreement: evalResults.metrics.bhiTierAgreement,
     alertF1: evalResults.metrics.alerts?.f1,
-    note: 'Product BHI watch tier vs clinicalGoldStandard-v1 reference risk tier (engine-vs-gold agreement)',
+    note: 'Product BHI watch tier vs independentSyntheticReference-v1 synthetic reference (engine-vs-reference agreement)',
   };
 
   const rows = parseCsv(fs.readFileSync(FEATURES, 'utf8'));
@@ -116,22 +118,23 @@ function main() {
 
   const payload = {
     generatedAt: new Date().toISOString(),
-    comparisonKind: 'vs-clinical-gold-risk-tier',
-    labelSource: 'clinicalGoldStandard-v1 → expected.riskLevel',
+    comparisonKind: 'vs-synthetic-reference-bhi-tier',
+    labelSource: 'independentSyntheticReference-v1 → expected.riskLevel',
     featureCount: RAW_FEATURE_NAMES.length,
     nSamples: n,
-    task: 'Reference risk tier (low/moderate/high) from independent gold adjudication',
+    task: 'Synthetic reference BHI watch tier (low/moderate/high) from rule-based reference labeling',
     ruleEngine,
     nodeBaselines: nodeBaselineResults,
     mlModels,
     disclosure:
-      'Sklearn 5-fold CV predicts gold reference tiers from raw wearable features. Measures inter-engine / feature distinguishability ceiling — NOT independent clinical validation.',
-    regenerate: 'npm run experiment:compare-vs-gold',
+      'Sklearn 5-fold CV predicts synthetic reference BHI watch tiers from raw wearable features. Measures inter-engine / feature distinguishability ceiling — NOT independent clinical validation.',
+    regenerate: 'npm run experiment:compare-vs-reference',
   };
 
   fs.mkdirSync(path.dirname(OUT), { recursive: true });
   fs.writeFileSync(OUT, JSON.stringify(payload, null, 2));
-  console.log(`Gold-tier ML comparison → ${OUT} (n=${n}, gold label target)`);
+  fs.writeFileSync(OUT_LEGACY, JSON.stringify(payload, null, 2));
+  console.log(`Reference-tier ML comparison → ${OUT} (n=${n}, synthetic reference label target)`);
 }
 
 main();

@@ -115,7 +115,7 @@ function loadWearableResults() {
       metrics: raw.metrics,
       mismatchCount: (raw.mismatches || []).length,
       circularLabelWarning: raw.circularLabelWarning || null,
-      integrity: 'independent-gold',
+      integrity: 'independent-reference',
     };
   }
   return {
@@ -184,10 +184,11 @@ router.get('/methods', (_, res) => {
       expansionMethod: wearable.expansionMethod,
       labelSource: wearable.labelSource,
       archetypes: wearable.phenotypeDistribution?.length || 8,
-      metrics: ['alert F1', 'alert precision', 'alert recall', 'anomaly accuracy', 'risk accuracy', 'score agreement (±8)', 'Wilson 95% CI'],
+      metrics: ['alert F1', 'alert precision', 'alert recall', 'anomaly accuracy', 'BHI tier agreement', 'score agreement (±8)', 'Wilson 95% CI'],
       latestAlertMetrics: wearable.latestEvaluation?.alertMetrics || wearable.latestEvaluation?.metrics?.alerts || null,
       evaluationModel: wearablePolicy.evaluationModel,
-      goldStandard: wearablePolicy.goldStandard,
+      referenceStandard: wearablePolicy.referenceStandard,
+      goldStandard: wearablePolicy.referenceStandard,
       productEngine: wearablePolicy.productEngine,
       reference: wearable.reproducible?.reference,
     } : null,

@@ -40,7 +40,7 @@ export default function EvaluationIntegrityBanner({
       )}
       <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', mb: m ? 1 : 0 }}>
         <Chip size="small" label={`${t('产品引擎', 'Product')}: ${w?.productEngine || 'AnalyticsCore-v1'}`} />
-        <Chip size="small" color="secondary" label={`${t('参考标注', 'Reference')}: ${w?.goldStandard || 'independentReference-v1'}`} />
+        <Chip size="small" color="secondary" label={`${t('参考标注', 'Reference')}: ${w?.referenceStandard || w?.goldStandard || 'independentSyntheticReference-v1'}`} />
         {w?.rng && <Chip size="small" variant="outlined" label={`RNG ${w.rng} seed=${w.seed}`} />}
         {w?.clinicalPhysiologyModule && (
           <Chip size="small" color="success" variant="outlined" label={w.clinicalPhysiologyModule} />

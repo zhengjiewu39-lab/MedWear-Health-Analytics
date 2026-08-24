@@ -1,6 +1,6 @@
 # 公开数据集启发代理健全性检查
 
-MedWear 主基准为**内联合成**数据（`MedWear-Wearable-Analytics-Clinical-v2`，n=5000）+ 独立金标准。为透明起见，项目还提供**可移植 17 维特征导出**（`npm run experiment:export`），与 `experiments/medwear/train.py` 对齐。
+MedWear 主基准为**内联合成**数据（`MedWear-Wearable-Analytics-Benchmark-v3`，n=5000）+ 独立合成参考标注。为透明起见，项目还提供**可移植 17 维特征导出**（`npm run experiment:export`），与 `experiments/medwear/train.py` 对齐。
 
 > **术语：**  bundled WESAD 相关运行属于 **public-dataset-inspired proxy sanity check** — **不是**外部验证，**不是**在原始 WESAD 受试者数据上的验证。
 

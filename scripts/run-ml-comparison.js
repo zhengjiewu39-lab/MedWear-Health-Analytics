@@ -104,7 +104,7 @@ function main() {
     alertPrecision: evalResults.metrics.alerts?.precision,
     alertRecall: evalResults.metrics.alerts?.recall,
     bhiAgreement: evalResults.metrics.healthScoreAgreementRate,
-    note: 'Engine vs clinicalGoldStandard-v1 on n=5000 synthetic benchmark',
+    note: 'Engine vs independentSyntheticReference-v1 on n=5000 synthetic benchmark (engine-vs-reference agreement)',
   };
 
   const mlModels = ['lr', 'dt', 'rf'];
@@ -135,7 +135,7 @@ function main() {
     disclosure:
       'ML models trained on same synthetic export — features include engine-derived health_score_norm/anomaly_flag, so high sklearn scores do NOT imply independent validation. Compares interpretability vs simple ML on portable schema.',
     featureLeakageWarning:
-      'Exported features include BHI/anomaly flags from the product engine — sklearn CV on this export can appear inflated vs engine-vs-gold evaluation.',
+      'Exported features include BHI/anomaly flags from the product engine — sklearn CV on this export can appear inflated vs engine-vs-reference evaluation.',
   };
 
   fs.mkdirSync(path.dirname(OUT), { recursive: true });

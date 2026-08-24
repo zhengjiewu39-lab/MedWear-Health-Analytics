@@ -1,34 +1,37 @@
 /**
  * MedWear evaluation integrity policy — single source of truth for API + UI.
- * Prevents circular self-evaluation (engine-labeled gold standards → fake 100%).
+ * Prevents circular self-evaluation (engine-labeled reference → fake 100%).
  */
 
 const { SCORE_FIELD } = require('../services/behavioralHealthIndex');
 
 const PRODUCT_ENGINE = 'MedWear-AnalyticsCore-v1';
-const INDEPENDENT_REFERENCE = 'independentReference-v1';
-/** @deprecated alias — use INDEPENDENT_REFERENCE in new docs/UI */
-const GOLD_STANDARD = INDEPENDENT_REFERENCE;
+const INDEPENDENT_SYNTHETIC_REFERENCE = 'independentSyntheticReference-v1';
+/** @deprecated aliases — use INDEPENDENT_SYNTHETIC_REFERENCE in new docs/UI */
+const INDEPENDENT_REFERENCE = INDEPENDENT_SYNTHETIC_REFERENCE;
+const GOLD_STANDARD = INDEPENDENT_SYNTHETIC_REFERENCE;
 const LEGACY_GOLD_STANDARD = 'clinicalGoldStandard-v1';
 const CIRCULAR_THRESHOLD = 0.98;
 
 const wearable = {
-  dataset: 'MedWear-Wearable-Analytics-Clinical-v2',
-  version: '2.5.0',
+  dataset: 'MedWear-Wearable-Analytics-Benchmark-v3',
+  legacyDataset: 'MedWear-Wearable-Analytics-Clinical-v2',
+  version: '3.0.0',
   n: 5000,
   seed: 42,
   rng: 'mulberry32',
-  labelSource: 'independent-reference-v1',
-  expansionMethod: 'clinical-random-physiology-fp-adjudication',
+  labelSource: 'independent-synthetic-reference-v1',
+  expansionMethod: 'clinical-random-physiology-fp-reference-labeling',
   physiologyMix: { clinicalRandom: 0.28, phenotypeRandom: 0.72 },
   clinicalPhysiologyModule: 'clinicalPhysiology-v1',
   alertFalsePositiveScenarios: ['exercise_fp', 'spo2_artifact_fp', 'recovery_rest_fp'],
   productAlertModel: 'peak-and-single-reading (wearable-style)',
-  goldAdjudication: 'contextual-reference-suppression',
+  referenceLabeling: 'independent rule-based reference labeling with contextual suppression',
   productEngine: PRODUCT_ENGINE,
-  goldStandard: INDEPENDENT_REFERENCE,
-  legacyGoldStandard: LEGACY_GOLD_STANDARD,
-  evaluationModel: 'engine-vs-independent-reference-agreement',
+  referenceStandard: INDEPENDENT_SYNTHETIC_REFERENCE,
+  /** @deprecated API alias — use referenceStandard */
+  goldStandard: INDEPENDENT_SYNTHETIC_REFERENCE,
+  evaluationModel: 'engine-vs-reference-agreement',
   scoreAgreementTolerance: 8,
   circularThreshold: CIRCULAR_THRESHOLD,
   commands: {
@@ -36,12 +39,12 @@ const wearable = {
     evaluate: 'npm run evaluate',
   },
   description_zh:
-    '临床随机生理 + 误报场景（运动心率峰值/SpO₂ 伪影/恢复日）；产品用峰值/单点触发，金标准经临床上下文抑制。评测=引擎 vs 金标准，非自评。',
+    '合成生理 + 误报场景；产品用峰值/单点触发，独立合成参考标注经规则上下文抑制。评测=引擎 vs 参考一致率，非自评。',
   description_en:
-    'Clinical random physiology with FP scenarios (exercise HR peaks, SpO2 artifact, rest day). Product uses peak/single-reading triggers; independent reference applies contextual suppression. Engine vs independent reference — not self-test.',
-  invalidIf_zh: '若告警/异常/风险/评分四项均≥98%，说明金标准与引擎同源，临床性能估计无效。',
+    'Synthetic physiology with FP scenarios. Product uses peak/single-reading triggers; independent synthetic reference uses rule-based contextual suppression. Engine vs reference agreement — not self-test.',
+  invalidIf_zh: '若告警/异常/BHI 分层/评分四项均≥98%，说明参考标签与引擎同源，一致率估计无效。',
   invalidIf_en:
-    'If alert/anomaly/risk/score metrics are all ≥98%, gold labels are likely engine-derived — invalid for clinical estimation.',
+    'If alert/anomaly/BHI-tier/score metrics are all ≥98%, reference labels are likely engine-derived — invalid agreement estimation.',
 };
 
 const screening = {
@@ -65,7 +68,7 @@ function isCircularMetrics(metrics) {
   const vals = [
     metrics.alertExactMatchRate ?? metrics.alerts?.f1,
     metrics.anomalyAccuracy,
-    metrics.riskAccuracy,
+    metrics.bhiTierAgreement ?? metrics.riskAccuracy,
     metrics.healthScoreAgreementRate ?? metrics.healthScoreInRangeRate,
   ].filter((x) => x != null);
   return vals.length >= 4 && vals.every((x) => x >= CIRCULAR_THRESHOLD);
@@ -78,8 +81,8 @@ function summarizeWearableResults(raw) {
     evaluatedAt: raw.evaluatedAt,
     n: raw.n,
     engine: raw.engine,
-    goldStandard: INDEPENDENT_REFERENCE,
-    legacyGoldStandard: LEGACY_GOLD_STANDARD,
+    referenceStandard: INDEPENDENT_SYNTHETIC_REFERENCE,
+    legacyReferenceStandard: LEGACY_GOLD_STANDARD,
     metrics: raw.metrics,
     alertMetrics: {
       f1: alerts.f1,
@@ -91,12 +94,13 @@ function summarizeWearableResults(raw) {
     circularLabelWarning: raw.circularLabelWarning || (isCircularMetrics(raw.metrics)
       ? wearable.invalidIf_en
       : null),
-    integrity: isCircularMetrics(raw.metrics) ? 'invalid-circular' : 'independent-gold',
+    integrity: isCircularMetrics(raw.metrics) ? 'invalid-circular' : 'independent-reference',
   };
 }
 
 module.exports = {
   PRODUCT_ENGINE,
+  INDEPENDENT_SYNTHETIC_REFERENCE,
   INDEPENDENT_REFERENCE,
   GOLD_STANDARD,
   LEGACY_GOLD_STANDARD,

@@ -113,7 +113,7 @@ Removed claims: CardioNet-style declared accuracy; ensemble confidence clamped t
 | Enable flag | `MEDWEAR_ENABLE_ONNX=false (default — opt-in only)` |
 | Artifact | `server/ai/models/medwear_rf.onnx + medwear_rf.meta.json` |
 | Training | `experiments/medwear/train.py (sklearn RandomForest → skl2onnx export)` |
-| Training data | MedWear-Wearable-Analytics-Clinical-v2 synthetic export (n=5000, seed=42) → experiments/data/medwear/features_v1.csv via scripts/export_features.js |
+| Training data | MedWear-Wearable-Analytics-Benchmark-v3 synthetic export (n=5000, seed=42) → experiments/data/medwear/features_v1.csv via scripts/export_features.js |
 | Label target | BHI watch tier (low/moderate/high) — experimental comparison display only; never feeds disease screening scores |
 | Runtime | onnxruntime-node via server/ai/onnxInference.js |
 | Used in | runFullAnalysis() when MEDWEAR_ENABLE_ONNX=true — experimentalBhiTierComparison field only |

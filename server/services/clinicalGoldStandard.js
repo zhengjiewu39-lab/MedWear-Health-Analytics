@@ -1,11 +1,13 @@
 /**
- * Independent reference adjudication for benchmark labels (independentReference-v1).
- * Uses guideline-style criteria that differ from MedWear-AnalyticsCore-v1.
- * NOT used by the product pipeline — only for benchmark label generation.
+ * Independent synthetic reference labeling for benchmark labels (independentSyntheticReference-v1).
+ * Rule-based reference criteria that differ from MedWear-AnalyticsCore-v1.
+ * NOT used by the product pipeline — only for benchmark label generation (not clinician adjudication).
  */
 
-const INDEPENDENT_REFERENCE = 'independentReference-v1';
-/** @deprecated Use INDEPENDENT_REFERENCE */
+const INDEPENDENT_SYNTHETIC_REFERENCE = 'independentSyntheticReference-v1';
+/** @deprecated Use INDEPENDENT_SYNTHETIC_REFERENCE */
+const INDEPENDENT_REFERENCE = INDEPENDENT_SYNTHETIC_REFERENCE;
+/** @deprecated Use INDEPENDENT_SYNTHETIC_REFERENCE */
 const LEGACY_GOLD_STANDARD = 'clinicalGoldStandard-v1';
 
 const EXPERT_THRESHOLDS = {
@@ -128,7 +130,8 @@ function expertAnomaly(daysMap, targetDay) {
 }
 
 /**
- * Gold-standard labels for a multi-day wearable case (independent adjudication).
+ * Independent synthetic reference labels for a multi-day wearable case
+ * (rule-based reference labeling — not clinician adjudication).
  */
 function adjudicateCase(caseData) {
   const days = caseData.days || {};
@@ -150,14 +153,15 @@ function adjudicateCase(caseData) {
     healthScoreMin,
     healthScoreMax,
     referenceScore: refScore,
-    adjudication: INDEPENDENT_REFERENCE,
-    referenceStandard: INDEPENDENT_REFERENCE,
+    adjudication: INDEPENDENT_SYNTHETIC_REFERENCE,
+    referenceStandard: INDEPENDENT_SYNTHETIC_REFERENCE,
     legacyAlias: LEGACY_GOLD_STANDARD,
   };
 }
 
 module.exports = {
   EXPERT_THRESHOLDS,
+  INDEPENDENT_SYNTHETIC_REFERENCE,
   INDEPENDENT_REFERENCE,
   LEGACY_GOLD_STANDARD,
   referenceHealthScore,

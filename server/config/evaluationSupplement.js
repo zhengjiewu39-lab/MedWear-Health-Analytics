@@ -10,6 +10,7 @@ const FILES = {
   fpBurden: 'benchmarks/results/fp-burden-latest.json',
   mlComparison: 'benchmarks/results/ml-comparison-fair-latest.json',
   mlComparisonOracle: 'benchmarks/results/ml-comparison-oracle-latest.json',
+  mlComparisonVsReference: 'benchmarks/results/ml-comparison-vs-reference-latest.json',
   mlComparisonVsGold: 'benchmarks/results/ml-comparison-vs-gold-latest.json',
   sensitivityOutcomes: 'benchmarks/results/sensitivity-outcomes-latest.json',
   externalDescriptive: 'benchmarks/results/external-descriptive-latest.json',
@@ -32,7 +33,7 @@ function getEvaluationSupplement() {
     fpBurden: readJson(FILES.fpBurden),
     mlComparison: readJson(FILES.mlComparison),
     mlComparisonOracle: readJson(FILES.mlComparisonOracle),
-    mlComparisonVsGold: readJson(FILES.mlComparisonVsGold),
+    mlComparisonVsReference: readJson(FILES.mlComparisonVsReference) || readJson(FILES.mlComparisonVsGold),
     sensitivityOutcomes: readJson(FILES.sensitivityOutcomes),
     externalDescriptive: readJson(FILES.externalDescriptive),
     regenerate: {
@@ -40,7 +41,7 @@ function getEvaluationSupplement() {
       fpBurden: 'npm run analyze:fp-burden',
       mlComparison: 'npm run experiment:compare-fair',
       mlComparisonOracle: 'npm run experiment:compare-oracle',
-      mlComparisonVsGold: 'npm run experiment:compare-vs-gold',
+      mlComparisonVsReference: 'npm run experiment:compare-vs-reference',
       sensitivityOutcomes: 'npm run sensitivity:outcomes',
       externalDescriptive: 'npm run evaluate:public',
       all: 'npm run evaluate:supplement',
@@ -102,9 +103,9 @@ function renderSupplementMarkdown(isEn = true) {
 
   if (s.mlComparison?.ruleEngine) {
     const re = s.mlComparison.ruleEngine;
-    lines.push(`| Model | BHI tier accuracy / Macro F1 | Notes |`);
-    lines.push(`|-------|------------------------------|-------|`);
-    lines.push(`| Rule engine (vs clinical gold) | risk ${re.riskAccuracy}, alert F1 ${re.alertF1 ?? '—'} | product metric |`);
+    lines.push(`| Model | BHI tier agreement / Macro F1 | Notes |`);
+    lines.push(`|-------|---------------------------------|-------|`);
+    lines.push(`| Rule engine (vs synthetic reference) | BHI tier ${re.bhiTierAgreement ?? re.riskAccuracy}, alert F1 ${re.alertF1 ?? '—'} | product metric |`);
     (s.mlComparison.nodeBaselines || []).forEach((m) => {
       lines.push(`| ${m.name} | acc ${m.accuracy}, F1 ${m.macroF1} | node baseline |`);
     });
@@ -113,8 +114,8 @@ function renderSupplementMarkdown(isEn = true) {
     });
     lines.push('');
     lines.push(isEn
-      ? '> **Fair ML note:** Sklearn targets are **product-engine BHI watch tiers** (not gold labels). 5-fold CV uses random stratified splits on the same synthetic export. High accuracy reflects **feature distinguishability ceiling** on correlated synthetic data — **not** independent clinical validation. Rule engine is preferred for interpretability, not because sklearn "loses" on oracle features.'
-      : '> **公平 ML 说明：** sklearn 目标为**产品引擎 BHI 关注分层**（非 gold 标签）。5-fold CV 为同导出集上的随机分层分割。高准确率反映合成数据上的**特征可区分性上限** — **非**独立临床验证。规则引擎因可解释性优先，而非 oracle 特征上 sklearn 更差。');
+      ? '> **Fair ML note:** Sklearn targets are **product-engine BHI watch tiers** (not synthetic reference labels). 5-fold CV uses random stratified splits on the same synthetic export. High accuracy reflects **feature distinguishability ceiling** on correlated synthetic data — **not** independent clinical validation. Rule engine is preferred for interpretability, not because sklearn "loses" on oracle features.'
+      : '> **公平 ML 说明：** sklearn 目标为**产品引擎 BHI 关注分层**（非合成参考标签）。5-fold CV 为同导出集上的随机分层分割。高准确率反映合成数据上的**特征可区分性上限** — **非**独立临床验证。规则引擎因可解释性优先，而非 oracle 特征上 sklearn 更差。');
     lines.push('');
   } else {
     lines.push(isEn ? '_Run `npm run experiment:compare-fair` to populate._\n' : '_运行 `npm run experiment:compare-fair` 生成表格。_\n');
@@ -138,23 +139,25 @@ function renderSupplementMarkdown(isEn = true) {
   }
 
   if (isEn) {
-    lines.push('### Gold-tier ML comparison (clinicalGoldStandard-v1 labels)\n');
-    lines.push('> Sklearn trained to predict **reference tier** from raw features. Regenerate: `npm run experiment:compare-vs-gold`.\n');
+    lines.push('### Reference-tier ML comparison (independentSyntheticReference-v1 labels)\n');
+    lines.push('> Sklearn trained to predict **synthetic reference BHI watch tier** from raw features. Regenerate: `npm run experiment:compare-vs-reference`.\n');
   } else {
-    lines.push('### Gold 分层 ML 对比（clinicalGoldStandard-v1 标签）\n');
-    lines.push('> sklearn 预测**参考分层**（原始特征）。`npm run experiment:compare-vs-gold`。\n');
+    lines.push('### 参考分层 ML 对比（independentSyntheticReference-v1 标签）\n');
+    lines.push('> sklearn 预测**合成参考 BHI 关注分层**（原始特征）。`npm run experiment:compare-vs-reference`。\n');
   }
 
-  if (s.mlComparisonVsGold?.ruleEngine) {
-    const g = s.mlComparisonVsGold;
-    lines.push(`| Model | Gold-tier accuracy / Macro F1 | Notes |`);
-    lines.push(`|-------|-------------------------------|-------|`);
-    lines.push(`| Rule engine (engine-vs-gold) | ${g.ruleEngine.goldTierAgreement}, alert F1 ${g.ruleEngine.alertF1 ?? '—'} | product vs gold reference |`);
+  const refMl = s.mlComparisonVsReference;
+  if (refMl?.ruleEngine) {
+    const g = refMl;
+    const tierAgree = g.ruleEngine.referenceTierAgreement ?? g.ruleEngine.goldTierAgreement;
+    lines.push(`| Model | Reference-tier agreement / Macro F1 | Notes |`);
+    lines.push(`|-------|-------------------------------------|-------|`);
+    lines.push(`| Rule engine (engine-vs-reference) | ${tierAgree}, alert F1 ${g.ruleEngine.alertF1 ?? '—'} | product vs synthetic reference |`);
     (g.nodeBaselines || []).forEach((m) => {
       lines.push(`| ${m.name} | acc ${m.accuracy}, F1 ${m.macroF1} | node baseline |`);
     });
     (g.mlModels || []).forEach((m) => {
-      lines.push(`| ${m.name} (sklearn, vs gold) | acc ${m.accuracy}, F1 ${m.macroF1} | 5-fold CV, gold label target |`);
+      lines.push(`| ${m.name} (sklearn, vs reference) | acc ${m.accuracy}, F1 ${m.macroF1} | 5-fold CV, reference label target |`);
     });
     lines.push('');
   }

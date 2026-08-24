@@ -1,6 +1,6 @@
 # Public-Dataset-Inspired Proxy Sanity Checks
 
-MedWear’s primary benchmark is **internal synthetic** (`MedWear-Wearable-Analytics-Clinical-v2`, n=5000) with independent gold labels. For transparency, we also ship a **portable 17-dimensional feature export** (`npm run experiment:export`) aligned with `experiments/medwear/train.py`.
+MedWear’s primary benchmark is **internal synthetic** (`MedWear-Wearable-Analytics-Benchmark-v3`, n=5000) with independent synthetic reference labels. For transparency, we also ship a **portable 17-dimensional feature export** (`npm run experiment:export`) aligned with `experiments/medwear/train.py`.
 
 > **Terminology:** Bundled WESAD-related runs are **public-dataset-inspired proxy sanity checks** — **not** external validation, **not** WESAD validation on raw subject data.
 
@@ -36,7 +36,7 @@ Adapters map to `server/services/extractFeatures.js` column names for rule-engin
 ## Reporting guidance
 
 1. State population and label definition (not identical to MedWear gold standard).
-2. Report **descriptive** performance only unless independent adjudication exists.
+2. Report **descriptive** performance only unless independent rule-based reference labeling with external adjudication exists.
 3. Do not merge internal synthetic metrics with proxy numbers without clear separation.
 4. Never cite WESAD-inspired proxy AUC as clinical or external validation.
 

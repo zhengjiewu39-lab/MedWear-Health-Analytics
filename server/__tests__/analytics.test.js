@@ -98,8 +98,8 @@ describe('benchmark dataset integrity', () => {
     assert.ok(ds.cases.length >= 100, `expected n≥100 for clinical estimation, got ${ds.cases.length}`);
     assert.ok(ds.n >= 100 || ds.cases.length >= 100);
     assert.ok(
-      ['independent-reference-v1', 'clinical-gold-standard-v1'].includes(ds.labelSource),
-      'expected independent reference label source',
+      ['independent-synthetic-reference-v1', 'independent-reference-v1', 'clinical-gold-standard-v1'].includes(ds.labelSource),
+      'expected independent synthetic reference label source',
     );
     assert.ok(ds.clinicalCharacteristics?.targetDayVitals, 'expected clinical cohort summary');
     assert.ok(ds.physiologyMix?.clinicalRandom != null, 'expected random physiology mix');
@@ -112,7 +112,7 @@ describe('benchmark dataset integrity', () => {
   test('evaluation metrics are not circular self-test (all ≥98%)', () => {
     const { run } = require('../../scripts/evaluate-analytics');
     const results = run();
-    assert.equal(results.integrity, 'independent-gold');
+    assert.equal(results.integrity, 'independent-reference');
     assert.ok(!results.circularLabelWarning);
     assert.ok(results.metrics.anomalyAccuracy < 0.98);
     assert.ok(results.metrics.alerts.precision < 1, 'expected realistic alert false positives');

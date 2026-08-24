@@ -119,15 +119,20 @@ function extractProductBHIWatchTierLabel(caseData, thresholds = DEFAULT_THRESHOL
   return { label: pred.bhiWatchTier || pred.riskLevel, task: 'bhi-watch-tier' };
 }
 
-/** clinicalGoldStandard-v1 reference risk tier from benchmark expected labels. */
-function extractGoldRiskTierLabel(caseData) {
+/** independentSyntheticReference-v1 synthetic reference BHI watch tier from benchmark expected labels. */
+function extractReferenceBhiTierLabel(caseData) {
   const exp = caseData.expected || {};
   if (!exp.riskLevel) throw new Error(`Missing expected.riskLevel for case ${caseData.id}`);
   return {
     label: exp.riskLevel,
-    task: 'gold-risk-tier',
-    adjudication: exp.adjudication || 'clinicalGoldStandard-v1',
+    task: 'reference-bhi-watch-tier',
+    adjudication: exp.adjudication || 'independentSyntheticReference-v1',
   };
+}
+
+/** @deprecated Use extractReferenceBhiTierLabel */
+function extractGoldRiskTierLabel(caseData) {
+  return extractReferenceBhiTierLabel(caseData);
 }
 
 module.exports = {
@@ -138,5 +143,6 @@ module.exports = {
   extractRawFeatures,
   extractLabels,
   extractProductBHIWatchTierLabel,
+  extractReferenceBhiTierLabel,
   extractGoldRiskTierLabel,
 };

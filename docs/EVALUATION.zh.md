@@ -5,25 +5,25 @@
 
 ## 基准数据集
 
-**MedWear-Wearable-Analytics-Clinical-v2** — 5000 例合成多日可穿戴案例（CC-BY-4.0），可用于 Wilson 95% CI 临床性能估计。
+**MedWear-Wearable-Analytics-Benchmark-v3** — 5000 例合成多日可穿戴案例（CC-BY-4.0），可用于 Wilson 95% CI **引擎 vs 参考一致率**估计。
 
 ### 双引擎架构（防止自评虚高）
 
 | 角色 | 模块 | 用途 |
 |------|------|------|
 | 产品流水线 | `MedWear-AnalyticsCore-v1` | 应用内实时告警/异常/BHI 行为健康分层与关注信号分类 |
-| 基准金标准 | `clinicalGoldStandard-v1` | 独立标注（更严 SpO₂、不同评分公式） |
-| 评测 | `engine-vs-gold-agreement` | 衡量分歧率，**非**引擎自标注 |
+| 独立合成参考标注 | `independentSyntheticReference-v1` | 规则化合成参考标签（更严 SpO₂、不同评分公式） |
+| 评测 | `engine-vs-reference-agreement` | 衡量分歧率，**非**引擎自标注 |
 
 生理信号：**28% 临床随机成人** + **72% 表型随机**（含运动心率/SpO₂ 伪影/恢复日等误报场景，`seed=42`）。
 
-产品告警采用**峰值/单点读数触发**（贴近可穿戴设备）；金标准采用**临床上下文抑制**（运动性心动过速、单次 SpO₂ 伪影、计划休息日）。
+产品告警采用**峰值/单点读数触发**（贴近可穿戴设备）；合成参考标签采用**规则化上下文抑制**（运动性心动过速、单次 SpO₂ 伪影、计划休息日）。
 
-每例含 7 天步数、心率、SpO₂、HRV、睡眠；**临床金标准** 由 `clinicalGoldStandard-v1` 裁决（与产品引擎分离）：
+每例含 7 天步数、心率、SpO₂、HRV、睡眠；**合成参考标签** 由 `independentSyntheticReference-v1` 规则标注（与产品引擎分离，**非**临床医生裁决）：
 
 - 预期告警类型
 - 是否存在异常（二分类）
-- 风险等级（低 / 中 / 高）
+- BHI 关注分层（低 / 中 / 高）
 - 健康评分下限（BHI，`healthScore` 字段）
 
 文件：`benchmarks/wearable-analytics-dataset.json`  
@@ -50,26 +50,26 @@ npm run evaluate
 |------|------|
 | 告警 F1 | 告警类型集合 micro-F1（同时报告精确率/召回率） |
 | 异常准确率 | `anomalyDetected` 二分类一致率 |
-| 风险准确率 | BHI 行为健康分层（`bhiWatchTier`）三分类一致率 |
-| 评分一致 | BHI 与金标准参考值相差 ≤8 分（`healthScore` 字段 = BHI） |
+| BHI 分层一致率 | BHI 行为健康分层（`bhiWatchTier`）三分类一致率 |
+| 评分一致 | BHI 与合成参考值相差 ≤8 分（`healthScore` 字段 = BHI） |
 | 95% CI | Wilson 区间（n≥100 时可用于临床报告） |
 
-## 参考结果（v2.5，n=5000，seed=42，BHI + MAD 引擎）
+## 参考结果（v3.0，n=5000，seed=42，BHI + MAD 引擎）
 
-运行 `npm run evaluate` 获取当前数值。示例（产品引擎 vs **clinicalGoldStandard-v1**）：
+运行 `npm run evaluate` 获取当前数值。示例（产品引擎 vs **independentSyntheticReference-v1** 合成参考标签 — engine-vs-reference agreement）：
 
 | 指标 | 数值 | 95% CI |
 |------|------|--------|
-| 告警 F1 | 0.844 | — |
-| 告警精确率 | 0.758 | — |
-| 告警召回率 | 0.953 | — |
-| 异常准确率 | 0.700 | 0.688–0.713 |
-| 风险准确率（BHI 分层） | 0.787 | 0.775–0.798 |
-| BHI 一致（±8 分） | 0.760 | 0.748–0.772 |
+| 告警 F1 | 0.854 | — |
+| 告警精确率 | 0.772 | — |
+| 告警召回率 | 0.956 | — |
+| 异常准确率 | 0.694 | 0.681–0.707 |
+| BHI 分层一致率 | 0.760 | 0.748–0.772 |
+| BHI 一致（±8 分） | 0.701 | 0.688–0.713 |
 
-分歧：**3041 / 5000** 例在至少一项任务上与金标准不一致。
+分歧：**3151 / 5000** 例在至少一项任务上与合成参考标签不一致。
 
-告警精确率 &lt; 1 表示存在 realistic 误报（运动峰值心率、单次 SpO₂ 下跌、恢复日步数偏低），金标准经临床上下文裁决，非产品自评。
+告警精确率 &lt; 1 表示存在 realistic 误报（运动峰值心率、单次 SpO₂ 下跌、恢复日步数偏低）；合成参考标签经规则化上下文抑制，非产品自评。
 
 ## API 评测
 
@@ -80,7 +80,7 @@ curl http://localhost:3001/api/research/results
 
 ## 后续工作
 
-- 在 v2 生成器内扩展边界案例（缺失传感器、稀疏数据等）
+- 在 v3 生成器内扩展边界案例（缺失传感器、稀疏数据等）
 - 与朴素基线对比（人群固定阈值）
 - 公开数据集启发代理健全性检查（WESAD 启发 stress 代理、PPG-DaLiA 计划中）— 非外部验证
 - 临床专家对筛查类别映射的审阅
@@ -188,16 +188,16 @@ curl http://localhost:3001/api/research/validate
 
 > **主表：** 15 维导出，**不含** BHI/异常标记。规则引擎因**可解释与可审计**优先，而非 oracle sklearn 准确率。`npm run experiment:compare-fair`。
 
-| Model | BHI tier accuracy / Macro F1 | Notes |
-|-------|------------------------------|-------|
-| Rule engine (vs clinical gold) | risk 0.76, alert F1 0.8542 | product metric |
+| Model | BHI tier agreement / Macro F1 | Notes |
+|-------|---------------------------------|-------|
+| Rule engine (vs synthetic reference) | BHI tier 0.76, alert F1 0.8542 | product metric |
 | majority-class | acc 0.5122, F1 0.2258 | node baseline |
 | hr-steps-heuristic | acc 0.5032, F1 0.4511 | node baseline |
 | lr (sklearn, fair) | acc 0.9390000000000001, F1 0.938260223082613 | 5-fold CV, raw features |
 | dt (sklearn, fair) | acc 0.9410000000000001, F1 0.9392945829877892 | 5-fold CV, raw features |
 | rf (sklearn, fair) | acc 0.9586, F1 0.9562394174159635 | 5-fold CV, raw features |
 
-> **公平 ML 说明：** sklearn 目标为**产品引擎 BHI 关注分层**（非 gold 标签）。5-fold CV 为同导出集上的随机分层分割。高准确率反映合成数据上的**特征可区分性上限** — **非**独立临床验证。规则引擎因可解释性优先，而非 oracle 特征上 sklearn 更差。
+> **公平 ML 说明：** sklearn 目标为**产品引擎 BHI 关注分层**（非合成参考标签）。5-fold CV 为同导出集上的随机分层分割。高准确率反映合成数据上的**特征可区分性上限** — **非**独立临床验证。规则引擎因可解释性优先，而非 oracle 特征上 sklearn 更差。
 
 ### 附录：oracle 比较（含引擎衍生特征 — 特征泄露）
 
@@ -209,17 +209,17 @@ curl http://localhost:3001/api/research/validate
 | dt (sklearn, oracle) | acc 0.9762000000000001, F1 0.9729773375259132 | appendix only |
 | rf (sklearn, oracle) | acc 0.9852000000000001, F1 0.9827387082115269 | appendix only |
 
-### Gold 分层 ML 对比（clinicalGoldStandard-v1 标签）
+### 参考分层 ML 对比（independentSyntheticReference-v1 标签）
 
-> sklearn 预测**参考分层**（原始特征）。`npm run experiment:compare-vs-gold`。
+> sklearn 预测**合成参考 BHI 关注分层**（原始特征）。`npm run experiment:compare-vs-reference`。
 
-| Model | Gold-tier accuracy / Macro F1 | Notes |
-|-------|-------------------------------|-------|
-| Rule engine (engine-vs-gold) | 0.76, alert F1 0.8542 | product vs gold reference |
+| Model | Reference-tier agreement / Macro F1 | Notes |
+|-------|-------------------------------------|-------|
+| Rule engine (engine-vs-reference) | 0.76, alert F1 0.8542 | product vs synthetic reference |
 | majority-class | acc 0.6328, F1 0.2584 | node baseline |
-| lr (sklearn, vs gold) | acc 0.9469999999999998, F1 0.9385803982951801 | 5-fold CV, gold label target |
-| dt (sklearn, vs gold) | acc 0.9693999999999999, F1 0.9670046819306586 | 5-fold CV, gold label target |
-| rf (sklearn, vs gold) | acc 0.9848000000000001, F1 0.9820846830849433 | 5-fold CV, gold label target |
+| lr (sklearn, vs reference) | acc 0.9469999999999998, F1 0.9385803982951801 | 5-fold CV, reference label target |
+| dt (sklearn, vs reference) | acc 0.9693999999999999, F1 0.9670046819306586 | 5-fold CV, reference label target |
+| rf (sklearn, vs reference) | acc 0.9848000000000001, F1 0.9820846830849433 | 5-fold CV, reference label target |
 
 ## 参数敏感性（结局模拟）
 
@@ -238,7 +238,7 @@ curl http://localhost:3001/api/research/validate
 
 - WESAD-inspired proxy (**sanity check only — not external validation**): n=120 · subjects=15 · BHI-tier acc=0.5583 (holdout n=24 acc=0.5833) · per-subject acc range=0.375–0.875 · featureBuildUsesLabels=false
 - WESAD proxy AUC (supplement only — may reflect proxy separability, not generalization): full=0.9936 · holdout=0.9792 · 95% CI 0.9214–1
-- Internal export: n=5000 · BHI-tier acc=0.7932
+- Internal export: n=5000 · BHI-tier acc=0.767
 - Planned external: PPG-DaLiA (activity HR proxy)
 
 <!-- EVAL-SUPPLEMENT-END -->

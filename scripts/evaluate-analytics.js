@@ -31,7 +31,7 @@ function prf1(tp, fp, fn) {
   return { precision: +precision.toFixed(4), recall: +recall.toFixed(4), f1: +f1.toFixed(4) };
 }
 
-/** Wilson score 95% CI for binomial proportion (engine-vs-gold agreement reporting). */
+/** Wilson score 95% CI for binomial proportion (engine-vs-reference agreement reporting). */
 function wilsonCI(successes, n, z = 1.96) {
   if (!n) return { lower: 0, upper: 0, point: 0 };
   const p = successes / n;
@@ -131,9 +131,10 @@ function run() {
     results.circularLabelWarning = wearablePolicy.invalidIf_en;
     results.integrity = 'invalid-circular';
   } else {
-    results.integrity = 'independent-gold';
+    results.integrity = 'independent-reference';
   }
-  results.goldStandard = wearablePolicy.goldStandard;
+  results.referenceStandard = wearablePolicy.referenceStandard;
+  results.goldStandard = wearablePolicy.referenceStandard;
   results.evaluationModel = wearablePolicy.evaluationModel;
 
   return results;
