@@ -345,7 +345,7 @@ function ResearchCenter() {
                     </Typography>
                     {wearableDataset?.physiologyMix && (
                       <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                        {t('生理混合', 'Physiology mix')}: {t('临床随机', 'clinical-random')} {(wearableDataset.physiologyMix.clinicalRandom * 100).toFixed(0)}%
+                        {t('生理混合', 'Physiology mix')}: {t('参数随机', 'parameter-random')} {(wearableDataset.physiologyMix.clinicalRandom * 100).toFixed(0)}%
                         {' · '}{t('表型随机', 'phenotype-random')} {(wearableDataset.physiologyMix.phenotypeRandom * 100).toFixed(0)}%
                         {wearableDataset.clinicalCharacteristics?.withinReferencePct != null && (
                           <> · {t('参考区间内', 'Within ref band')} {(wearableDataset.clinicalCharacteristics.withinReferencePct * 100).toFixed(1)}%</>

@@ -34,6 +34,9 @@ const FORBIDDEN = [
   /clinical gold standard/i,
   /Benchmark gold/i,
   /vs gold reference/i,
+  /\brisk stratification\b/i,
+  /clinical-random adults/i,
+  /Medical Wearable Health Analytics Platform/i,
 ];
 
 let failed = false;

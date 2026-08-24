@@ -581,8 +581,8 @@ function OutcomesComparison() {
               )}
             </ChartContainer>
             <Typography variant="caption" color="text.secondary">
-              {t('从连续监测 → 异常标记 → 风险分层 → 体检 → 确诊 → 治疗的转化率。',
-                'Conversion from continuous monitoring → anomaly flag → risk stratification → exam → diagnosis → treatment.')}
+              {t('从连续监测 → 异常标记 → 关注信号分层 → 体检 → 确诊 → 治疗的转化率。',
+                'Conversion from continuous monitoring → anomaly flag → attention-signal stratification → exam → diagnosis → treatment.')}
             </Typography>
           </Paper>
         </Grid>

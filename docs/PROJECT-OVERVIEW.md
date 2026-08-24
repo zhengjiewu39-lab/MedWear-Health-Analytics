@@ -34,7 +34,7 @@ See [METHODS.md](./METHODS.md):
 - **Behavioral Health Index (BHI)** — continuous sigmoid/Gaussian components (steps, sleep, RHR, SpO₂, HRV). API field `healthScore` = BHI (backward-compatible name).
 - **Threshold alerts** — peak/single-reading wearable-style sensitivity
 - **Robust MAD anomaly heuristic** — personal baseline with activity context filter (not mean + 2σ)
-- **3-tier risk stratification** from BHI (≥80 / 60–79 / <60)
+- **3-tier BHI watch tiers** (attention-signal stratification; ≥80 / 60–79 / <60)
 - **Rule engine screening** — evidence-weighted placeholders, not a trained ML ensemble
 
 ## Optional ONNX Inference Backend

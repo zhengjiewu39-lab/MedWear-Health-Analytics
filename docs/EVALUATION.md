@@ -15,7 +15,7 @@
 | Independent synthetic reference | `independentSyntheticReference-v1` | Rule-based synthetic reference labels (stricter SpO₂, different score formula) |
 | Evaluation | `engine-versus-reference-agreement` | Measures disagreement — **not** engine self-labeling |
 
-Physiology: **28% clinical-random adults** + **72% phenotype-random synthesis** (`seed=42`), including exercise/SpO₂-artifact/rest-day false-positive scenarios.
+Physiology: **28% parameter-random adult scenarios** + **72% phenotype-random scenarios** (`seed=42`), including exercise/SpO₂-artifact/rest-day false-positive scenarios.
 
 Product alerts use **peak/single-reading sensitivity** (wearable-style); synthetic reference labels apply **contextual rule-based suppression** (exercise tachycardia, motion SpO₂ artifact, planned rest day).
 
@@ -123,7 +123,7 @@ hypertension, type 2 diabetes), with intervention-vs-control deltas.
 
 ### Intervention funnel
 
-Continuous monitoring → anomaly flag → risk stratification → exam booked →
+Continuous monitoring → anomaly flag → attention-signal stratification → exam booked →
 exam completed → diagnosed & staged → treatment started (intervention arm).
 
 > All outcomes are simulated from published parameters, not observed prospective

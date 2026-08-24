@@ -239,8 +239,8 @@ function validateDiagnosticMetrics(confusion, aucResult, references) {
       },
     },
     interpretation: {
-      zh: '基于干预组可穿戴风险分层 vs 模拟金标准（恶性类别）的操作特征；与 NLST/CRC/乳腺筛查文献区间对照。',
-      en: 'Operating characteristics of wearable risk stratification vs simulated malignancy gold standard, benchmarked against NLST/CRC/breast screening literature.',
+      zh: '基于干预组可穿戴关注信号分层 vs 模拟结局标签（恶性类别）的操作特征；与 NLST/CRC/乳腺筛查文献区间对照。',
+      en: 'Operating characteristics of wearable attention-signal stratification vs simulated outcome labels (malignancy categories), benchmarked against NLST/CRC/breast screening literature.',
     },
   };
 }

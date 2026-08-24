@@ -1,4 +1,4 @@
-# MedWear · Medical Wearable Health Analytics Platform
+# MedWear · Local-First Wearable Digital Phenotyping and Health Analytics Framework
 
 [![CI Passing](https://github.com/zhengjiewu39-lab/MedWear-Health-Analytics/actions/workflows/ci.yml/badge.svg)](https://github.com/zhengjiewu39-lab/MedWear-Health-Analytics/actions/workflows/ci.yml)
 
