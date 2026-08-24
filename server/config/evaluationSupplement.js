@@ -152,7 +152,7 @@ function renderSupplementMarkdown(isEn = true) {
     const tierAgree = g.ruleEngine.referenceTierAgreement ?? g.ruleEngine.goldTierAgreement;
     lines.push(`| Model | Reference-tier agreement / Macro F1 | Notes |`);
     lines.push(`|-------|-------------------------------------|-------|`);
-    lines.push(`| Rule engine (engine-vs-reference) | ${tierAgree}, alert F1 ${g.ruleEngine.alertF1 ?? '—'} | product vs synthetic reference |`);
+    lines.push(`| Rule engine (engine-versus-reference) | ${tierAgree}, alert F1 ${g.ruleEngine.alertF1 ?? '—'} | product vs independent synthetic reference |`);
     (g.nodeBaselines || []).forEach((m) => {
       lines.push(`| ${m.name} | acc ${m.accuracy}, F1 ${m.macroF1} | node baseline |`);
     });

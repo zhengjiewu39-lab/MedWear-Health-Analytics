@@ -5,7 +5,7 @@
 
 ## 基准数据集
 
-**MedWear-Wearable-Analytics-Benchmark-v3** — 5000 例合成多日可穿戴案例（CC-BY-4.0），可用于 Wilson 95% CI **引擎 vs 参考一致率**估计。
+**MedWear-Wearable-Analytics-Benchmark-v3** — 5000 例合成多日可穿戴案例（CC-BY-4.0），可用于 Wilson 95% CI **engine-versus-reference agreement** 估计。
 
 ### 双引擎架构（防止自评虚高）
 
@@ -13,7 +13,7 @@
 |------|------|------|
 | 产品流水线 | `MedWear-AnalyticsCore-v1` | 应用内实时告警/异常/BHI 行为健康分层与关注信号分类 |
 | 独立合成参考标注 | `independentSyntheticReference-v1` | 规则化合成参考标签（更严 SpO₂、不同评分公式） |
-| 评测 | `engine-vs-reference-agreement` | 衡量分歧率，**非**引擎自标注 |
+| 评测 | `engine-versus-reference-agreement` | 衡量分歧率，**非**引擎自标注 |
 
 生理信号：**28% 临床随机成人** + **72% 表型随机**（含运动心率/SpO₂ 伪影/恢复日等误报场景，`seed=42`）。
 
@@ -56,7 +56,7 @@ npm run evaluate
 
 ## 参考结果（v3.0，n=5000，seed=42，BHI + MAD 引擎）
 
-运行 `npm run evaluate` 获取当前数值。示例（产品引擎 vs **independentSyntheticReference-v1** 合成参考标签 — engine-vs-reference agreement）：
+运行 `npm run evaluate` 获取当前数值。示例（产品引擎 vs **independentSyntheticReference-v1** 独立合成参考标签 — engine-versus-reference agreement）：
 
 | 指标 | 数值 | 95% CI |
 |------|------|--------|
@@ -215,7 +215,7 @@ curl http://localhost:3001/api/research/validate
 
 | Model | Reference-tier agreement / Macro F1 | Notes |
 |-------|-------------------------------------|-------|
-| Rule engine (engine-vs-reference) | 0.76, alert F1 0.8542 | product vs synthetic reference |
+| Rule engine (engine-versus-reference) | 0.76, alert F1 0.8542 | product vs independent synthetic reference |
 | majority-class | acc 0.6328, F1 0.2584 | node baseline |
 | lr (sklearn, vs reference) | acc 0.9469999999999998, F1 0.9385803982951801 | 5-fold CV, reference label target |
 | dt (sklearn, vs reference) | acc 0.9693999999999999, F1 0.9670046819306586 | 5-fold CV, reference label target |

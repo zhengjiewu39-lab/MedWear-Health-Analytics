@@ -5,7 +5,7 @@
 
 ## Benchmark Dataset
 
-**MedWear-Wearable-Analytics-Benchmark-v3** — 5000 synthetic multi-day wearable cases (CC-BY-4.0). Suitable for **engine-vs-reference agreement estimation** with 95% Wilson CIs.
+**MedWear-Wearable-Analytics-Benchmark-v3** — 5000 synthetic multi-day wearable cases (CC-BY-4.0). Suitable for **engine-versus-reference agreement estimation** with 95% Wilson CIs.
 
 ### Dual-engine architecture (prevents self-test inflation)
 
@@ -13,7 +13,7 @@
 |------|--------|---------|
 | Product pipeline | `MedWear-AnalyticsCore-v1` | Live alerts, anomaly, BHI watch-tier / attention-signal classification in the app |
 | Independent synthetic reference | `independentSyntheticReference-v1` | Rule-based synthetic reference labels (stricter SpO₂, different score formula) |
-| Evaluation | `engine-vs-reference-agreement` | Measures disagreement — **not** engine self-labeling |
+| Evaluation | `engine-versus-reference-agreement` | Measures disagreement — **not** engine self-labeling |
 
 Physiology: **28% clinical-random adults** + **72% phenotype-random synthesis** (`seed=42`), including exercise/SpO₂-artifact/rest-day false-positive scenarios.
 
@@ -55,7 +55,7 @@ Output: `benchmarks/results/latest.json`
 
 ## Reference Results (v3.0, n=5000, seed=42, BHI + MAD engine)
 
-Run `npm run evaluate` for current numbers. Example (product engine vs **independentSyntheticReference-v1** synthetic reference labels — engine-vs-reference agreement):
+Run `npm run evaluate` for current numbers. Example (product engine vs **independentSyntheticReference-v1** independent synthetic reference labels — engine-versus-reference agreement):
 
 | Metric | Value | 95% CI |
 |--------|-------|--------|
@@ -220,7 +220,7 @@ curl http://localhost:3001/api/research/validate
 
 | Model | Reference-tier agreement / Macro F1 | Notes |
 |-------|-------------------------------------|-------|
-| Rule engine (engine-vs-reference) | 0.76, alert F1 0.8542 | product vs synthetic reference |
+| Rule engine (engine-versus-reference) | 0.76, alert F1 0.8542 | product vs independent synthetic reference |
 | majority-class | acc 0.6328, F1 0.2584 | node baseline |
 | lr (sklearn, vs reference) | acc 0.9469999999999998, F1 0.9385803982951801 | 5-fold CV, reference label target |
 | dt (sklearn, vs reference) | acc 0.9693999999999999, F1 0.9670046819306586 | 5-fold CV, reference label target |

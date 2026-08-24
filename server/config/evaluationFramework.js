@@ -31,7 +31,7 @@ const wearable = {
   referenceStandard: INDEPENDENT_SYNTHETIC_REFERENCE,
   /** @deprecated API alias — use referenceStandard */
   goldStandard: INDEPENDENT_SYNTHETIC_REFERENCE,
-  evaluationModel: 'engine-vs-reference-agreement',
+  evaluationModel: 'engine-versus-reference-agreement',
   scoreAgreementTolerance: 8,
   circularThreshold: CIRCULAR_THRESHOLD,
   commands: {

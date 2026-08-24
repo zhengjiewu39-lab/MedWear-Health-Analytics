@@ -193,8 +193,8 @@ function ResearchCenter() {
         <strong>MedWear-Wearable-Analytics-Benchmark-v3</strong>
         {' — '}
         {t(
-          `${wn} 例随机合成（28% 均匀随机 + 表型随机 · 临床金标准 adjudication-v1，独立于产品引擎）· CC-BY-4.0`,
-          `${wn} random synthesis (28% uniform + phenotype random · clinical gold standard adjudication-v1, independent of product engine) · CC-BY-4.0`,
+          `${wn} 例随机合成（28% 均匀随机 + 表型随机 · independentSyntheticReference-v1 规则化参考标注，独立于产品引擎）· CC-BY-4.0`,
+          `${wn} random synthesis (28% uniform + phenotype random · independentSyntheticReference-v1 rule-based reference labeling, independent of product engine) · CC-BY-4.0`,
         )}
         {wearableDataset?.superseded && (
           <Typography variant="caption" display="block" sx={{ mt: 0.5 }}>
@@ -210,8 +210,8 @@ function ResearchCenter() {
       {wearableResults?.mismatchCount != null && wearableResults?.integrity !== 'invalid-circular' && (
         <Alert severity="info" sx={{ mb: 2 }}>
           {t(
-            `引擎 vs 临床金标准：${wearableResults.mismatchCount} / ${wn} 例存在分歧（独立评测，非自评）`,
-            `Engine vs clinical gold: ${wearableResults.mismatchCount} / ${wn} cases disagree (independent evaluation)`,
+            `引擎 vs 合成参考：${wearableResults.mismatchCount} / ${wn} 例存在分歧（engine-versus-reference agreement，非自评）`,
+            `Engine vs synthetic reference: ${wearableResults.mismatchCount} / ${wn} cases disagree (engine-versus-reference agreement, not self-test)`,
           )}
         </Alert>
       )}
@@ -231,7 +231,7 @@ function ResearchCenter() {
           { label: t('告警精确率', 'Alert precision'), value: wm ? pct(wm.alerts?.precision) : '—', icon: <Security />, color: IV },
           { label: t('告警召回率', 'Alert recall'), value: wm ? pct(wm.alerts?.recall) : '—', icon: <MonitorHeart />, color: IV },
           { label: t('异常准确率', 'Anomaly acc'), value: wm ? pct(wm.anomalyAccuracy) : '—', icon: <Timeline />, color: IV, ci: wci?.anomalyAccuracy },
-          { label: t('风险准确率', 'Risk acc'), value: wm ? pct(wm.riskAccuracy) : '—', icon: <Groups />, color: IV, ci: wci?.riskAccuracy },
+          { label: t('BHI 分层一致率', 'BHI tier agreement'), value: wm ? pct(wm.bhiTierAgreement ?? wm.riskAccuracy) : '—', icon: <Groups />, color: IV, ci: wci?.bhiTierAgreement ?? wci?.riskAccuracy },
           { label: t('BHI 一致', 'BHI agree'), value: wm ? pct(wm.healthScoreAgreementRate ?? wm.healthScoreInRangeRate) : '—', icon: <Biotech />, color: IV, ci: wci?.healthScoreAgreement || wci?.healthScoreInRange },
         ].map((item) => (
           <Grid item xs={6} md={4} lg={2} key={item.label}>
@@ -337,11 +337,11 @@ function ResearchCenter() {
                       {wearableDataset?.dataset || 'MedWear-Wearable-Analytics-Benchmark-v3'}
                     </Typography>
                     <Typography variant="body2" color="text.secondary" paragraph>
-                      {t('版本', 'Version')} {wearableDataset?.version || evalFramework?.wearable?.version || '2.5.0'}
-                      {' · '}{wearableDataset?.labelSource || 'clinical-gold-standard-v1'}
+                      {t('版本', 'Version')} {wearableDataset?.version || evalFramework?.wearable?.version || '3.0.0'}
+                      {' · '}{wearableDataset?.labelSource || 'independent-synthetic-reference-v1'}
                       {' · '}seed={wearableDataset?.seed ?? 42}
                       {' · '}{wearableDataset?.rng || 'mulberry32'}
-                      {' · '}{wearableDataset?.expansionMethod || 'clinical-random-physiology-adjudication'}
+                      {' · '}{wearableDataset?.expansionMethod || 'clinical-random-physiology-fp-reference-labeling'}
                     </Typography>
                     {wearableDataset?.physiologyMix && (
                       <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
@@ -367,7 +367,7 @@ function ResearchCenter() {
                             [t('告警精确率', 'Alert precision'), pct(wm.alerts?.precision), null],
                             [t('告警召回率', 'Alert recall'), pct(wm.alerts?.recall), null],
                             [t('异常准确率', 'Anomaly acc'), pct(wm.anomalyAccuracy), ciRange(wci?.anomalyAccuracy)],
-                            [t('风险准确率', 'Risk acc'), pct(wm.riskAccuracy), ciRange(wci?.riskAccuracy)],
+                            [t('BHI 分层一致率', 'BHI tier agreement'), pct(wm.bhiTierAgreement ?? wm.riskAccuracy), ciRange(wci?.bhiTierAgreement ?? wci?.riskAccuracy)],
                             [t('BHI 一致率', 'BHI agreement'), pct(wm.healthScoreAgreementRate ?? wm.healthScoreInRangeRate), ciRange(wci?.healthScoreAgreement || wci?.healthScoreInRange)],
                           ].map(([label, val, ci]) => (
                             <TableRow key={label}>
@@ -435,7 +435,7 @@ function ResearchCenter() {
                       <TableCell>{t('标签', 'Label')}</TableCell>
                       <TableCell>{t('告警', 'Alerts')}</TableCell>
                       <TableCell>{t('异常', 'Anomaly')}</TableCell>
-                      <TableCell>{t('风险', 'Risk')}</TableCell>
+                      <TableCell>{t('BHI 关注分层', 'BHI watch tier')}</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>

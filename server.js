@@ -225,7 +225,7 @@ app.get('/api/methodology', (req, res) => {
       benchmark_name_zh: 'MedWear 可穿戴分析临床基准 v2',
       benchmark_n: wearablePolicy.n,
       benchmark_supersedes: 'MedWear-Wearable-Analytics-Mini-v1 (n=8)',
-      evaluation_type: 'Engine vs independent clinical gold standard (not self-test)',
+      evaluation_type: 'Engine vs independent synthetic reference (not self-test)',
       evaluation_type_zh: '产品引擎 vs 独立临床金标准（非自评）',
       layers: [
         { id: 'L0', title: 'Proxy signals', title_zh: '代理信号' },

@@ -8,7 +8,7 @@ function pct(x) {
 }
 
 /**
- * Explains independent gold-standard evaluation (anti circular self-test).
+ * Explains independent synthetic reference evaluation (anti circular self-test).
  */
 export default function EvaluationIntegrityBanner({
   framework,
@@ -33,7 +33,7 @@ export default function EvaluationIntegrityBanner({
       sx={{ mb: 2 }}
     >
       <Typography variant="subtitle2" fontWeight={700} gutterBottom>
-        {t('独立临床评测架构（非自评）', 'Independent clinical evaluation (not self-test)')}
+        {t('独立合成参考评测（非自评）', 'Independent synthetic reference evaluation (not self-test)')}
       </Typography>
       {!compact && desc && (
         <Typography variant="body2" sx={{ mb: 1 }}>{desc}</Typography>
@@ -48,11 +48,11 @@ export default function EvaluationIntegrityBanner({
       </Box>
       {m && (
         <Typography variant="body2" component="div">
-          {t('引擎 vs 金标准', 'Engine vs gold')}: F1 {pct(m.alerts?.f1)}
+          {t('引擎 vs 合成参考', 'Engine vs synthetic reference')}: F1 {pct(m.alerts?.f1)}
           {' · '}{t('精确率', 'Precision')} {pct(m.alerts?.precision)}
           {' · '}{t('召回率', 'Recall')} {pct(m.alerts?.recall)}
           {' · '}{t('异常', 'Anomaly')} {pct(m.anomalyAccuracy)}
-          {' · '}{t('风险', 'Risk')} {pct(m.riskAccuracy)}
+          {' · '}{t('BHI 分层', 'BHI tier')} {pct(m.bhiTierAgreement ?? m.riskAccuracy)}
           {' · '}{t('BHI 一致', 'BHI agree')} {pct(m.healthScoreAgreementRate ?? m.healthScoreInRangeRate)}
           {wearableResults?.mismatchCount != null && (
             <> · {t('分歧', 'Disagree')} {wearableResults.mismatchCount}/{wearableResults.n || w?.n}</>

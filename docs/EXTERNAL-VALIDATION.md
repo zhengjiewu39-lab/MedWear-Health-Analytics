@@ -35,8 +35,8 @@ Adapters map to `server/services/extractFeatures.js` column names for rule-engin
 
 ## Reporting guidance
 
-1. State population and label definition (not identical to MedWear gold standard).
-2. Report **descriptive** performance only unless independent rule-based reference labeling with external adjudication exists.
+1. State population and label definition (not identical to MedWear independent synthetic reference).
+2. Report **descriptive** performance only unless independent rule-based reference labeling with external clinician adjudication exists.
 3. Do not merge internal synthetic metrics with proxy numbers without clear separation.
 4. Never cite WESAD-inspired proxy AUC as clinical or external validation.
 
