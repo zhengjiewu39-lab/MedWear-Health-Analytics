@@ -1,6 +1,12 @@
 const { computeBHIWithTrend, computeBehavioralHealthIndex, SCORE_FIELD } = require('./behavioralHealthIndex');
 const { detectRobustAnomalies } = require('./robustAnomaly');
 const { classifyBHIWatchTier } = require('../config/bhiWatchTier');
+const { resolveBhiDemographics } = require('./demographics');
+
+function bhiOpts(opts = {}) {
+  const demo = resolveBhiDemographics(opts);
+  return { age: demo.age, sex: demo.sex, demographicsInferred: demo.inferred };
+}
 
 function avg(arr) {
   if (!arr?.length) return null;
@@ -34,14 +40,14 @@ function normalizeDay(raw = {}) {
 function computeDayScore(dayData, opts = {}) {
   const d = normalizeDay(dayData);
   const prior = (opts.priorDays || []).map(normalizeDay);
-  const bhi = computeBHIWithTrend(d, prior, { age: opts.age, sex: opts.sex });
+  const bhi = computeBHIWithTrend(d, prior, bhiOpts(opts));
   return bhi.score;
 }
 
 function computeDayScoreDetail(dayData, opts = {}) {
   const d = normalizeDay(dayData);
   const prior = (opts.priorDays || []).map(normalizeDay);
-  return computeBHIWithTrend(d, prior, { age: opts.age, sex: opts.sex });
+  return computeBHIWithTrend(d, prior, bhiOpts(opts));
 }
 
 /** BHI watch tier — NOT calibrated disease risk. Prefer classifyBHIWatchTier. */
@@ -104,9 +110,10 @@ function evaluateCase(caseData, thresholds) {
     ? dayKeys.slice(Math.max(0, targetIdx - 7), targetIdx).map((k) => caseData.days[k])
     : [];
   const dayData = store.daily[target];
+  const demo = bhiOpts(caseData);
   const alerts = evaluateDayAlerts(dayData, thresholds);
   const anomalies = detectAnomaliesFromStore(store);
-  const score = computeDayScore(dayData, { priorDays });
+  const score = computeDayScore(dayData, { priorDays, ...demo });
   const bhiWatchTier = classifyBHIWatchTier(score);
 
   return {

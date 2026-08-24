@@ -1,9 +1,12 @@
 /**
- * Independent clinical adjudication for benchmark gold labels.
- * Uses guideline-style criteria that differ from MedWear-AnalyticsCore-v1
- * (stricter SpO2, different activity cutoffs, alternate risk stratification).
+ * Independent reference adjudication for benchmark labels (independentReference-v1).
+ * Uses guideline-style criteria that differ from MedWear-AnalyticsCore-v1.
  * NOT used by the product pipeline — only for benchmark label generation.
  */
+
+const INDEPENDENT_REFERENCE = 'independentReference-v1';
+/** @deprecated Use INDEPENDENT_REFERENCE */
+const LEGACY_GOLD_STANDARD = 'clinicalGoldStandard-v1';
 
 const EXPERT_THRESHOLDS = {
   heartRateMax: 95,
@@ -41,8 +44,8 @@ function referenceHealthScore(day) {
     score += (sh >= 7 ? 1 : sh >= 5.5 ? 0.65 : 0.35) * 25;
     w += 25;
   }
-  const rhr = day.restingHeartRate || avg(day.heartRate);
-  if (rhr) {
+  const rhr = day.restingHeartRate;
+  if (rhr != null && rhr > 0) {
     score += (rhr >= 55 && rhr <= 72 ? 1 : rhr < 55 ? 0.75 : 0.45) * 20;
     w += 20;
   }
@@ -147,12 +150,16 @@ function adjudicateCase(caseData) {
     healthScoreMin,
     healthScoreMax,
     referenceScore: refScore,
-    adjudication: 'clinical-gold-standard-v1',
+    adjudication: INDEPENDENT_REFERENCE,
+    referenceStandard: INDEPENDENT_REFERENCE,
+    legacyAlias: LEGACY_GOLD_STANDARD,
   };
 }
 
 module.exports = {
   EXPERT_THRESHOLDS,
+  INDEPENDENT_REFERENCE,
+  LEGACY_GOLD_STANDARD,
   referenceHealthScore,
   adjudicateCase,
 };

@@ -4,7 +4,7 @@
 
 > **Documentation (main):** English and Chinese methods docs are **auto-generated from the same source** (`server/config/methodologyTransparency.js`). Core analytics = **BHI** + **robust MAD heuristic** + **`MedWear-RuleEngine-v1`** (not legacy 2σ / discrete health score). Sync: `npm run docs:sync` · verify: `npm run docs:verify`.
 
-A full-stack **digital health analytics platform** — Apple Health import, transparent statistical analysis, clinical screening workflow, and reproducible benchmarks.
+A full-stack **digital health analytics platform** — Apple Health import, transparent statistical analysis, research screening simulation, and reproducible benchmarks.
 
 **Positioning:** **Research-grade Digital Phenotyping & Simulation Benchmarking** — a transparent, local-first research prototype. **Not a clinical diagnostic medical device**; all outputs require professional review.
 
@@ -66,7 +66,7 @@ docker build -t medwear-api . && docker run --rm -p 3001:3001 \
 | **Dual-mode architecture** | Demo (synthetic) vs Real (Apple Health) — fully isolated |
 | **Apple Health pipeline** | SAX streaming parser → SQLite local store → analytics |
 | **Transparent analytics** | BHI (behavioral health index), peak/single-reading alerts, robust MAD anomaly heuristic |
-| **Clinical workflow** | Screening → exam booking → structured doctor report |
+| **Research screening simulation** | Exploratory signal review → exam booking → structured research report |
 | **Analytics Lab** | In-app benchmark charts, methods transparency, evaluation metrics |
 | **Engineering quality** | Unit tests, CI, Docker, audit log, encrypted vault |
 
@@ -154,7 +154,7 @@ Supported: HeartRate, OxygenSaturation, StepCount, SleepAnalysis, HRV, ActiveEne
 
 ## Evaluation & Reproducibility
 
-**Anti–self-test policy:** wearable benchmark labels come from `clinicalGoldStandard-v1` (independent of `MedWear-AnalyticsCore-v1`). Metrics measure **engine vs gold agreement** — not circular 100% self-scores.
+**Anti–self-test policy:** wearable benchmark labels come from `independentReference-v1` (legacy alias: `clinicalGoldStandard-v1`). Metrics measure **engine vs independent reference agreement** — not circular 100% self-scores.
 
 ```bash
 npm run generate:benchmark   # random physiology + independent gold labels (n=5000)
@@ -167,12 +167,12 @@ npm run evaluate:supplement    # scenarios + FP burden + fair/oracle ML compare 
 
 | Metric (n=5000, seed=42, BHI + MAD engine) | Value | 95% CI |
 |--------------|-------|--------|
-| Alert F1 | 0.844 | — |
-| Alert precision | 0.758 | — |
-| Alert recall | 0.953 | — |
-| Anomaly accuracy | 0.700 | 0.688–0.713 |
-| Risk accuracy (BHI tiers) | 0.787 | 0.775–0.798 |
-| BHI agreement (±8 pts) | 0.760 | 0.748–0.772 |
+| Alert F1 | 0.854 | — |
+| Alert precision | 0.772 | — |
+| Alert recall | 0.956 | — |
+| Anomaly accuracy | 0.694 | 0.681–0.707 |
+| BHI watch-tier agreement | 0.760 | 0.748–0.772 |
+| BHI score agreement (±8 pts) | 0.701 | 0.688–0.713 |
 
 ### Documentation
 

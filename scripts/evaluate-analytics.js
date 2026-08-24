@@ -112,12 +112,14 @@ function run() {
     alerts: prf1(alertTp, alertFp, alertFn),
     alertExactMatchRate: +(results.cases.filter(c => c.alertExactMatch).length / n).toFixed(4),
     anomalyAccuracy: +(anomalyCorrect / n).toFixed(4),
+    bhiTierAgreement: +(riskCorrect / n).toFixed(4),
     riskAccuracy: +(riskCorrect / n).toFixed(4),
     healthScoreAgreementRate: +(scoreInRange / n).toFixed(4),
     healthScoreInRangeRate: +(scoreInRange / n).toFixed(4),
     confidence95: {
       alertExactMatch: wilsonCI(results.cases.filter(c => c.alertExactMatch).length, n),
       anomalyAccuracy: wilsonCI(anomalyCorrect, n),
+      bhiTierAgreement: wilsonCI(riskCorrect, n),
       riskAccuracy: wilsonCI(riskCorrect, n),
       healthScoreAgreement: wilsonCI(scoreInRange, n),
       healthScoreInRange: wilsonCI(scoreInRange, n),
@@ -147,12 +149,12 @@ if (require.main === module) {
   console.log(`MedWear Analytics Evaluation — n=${results.n}`);
   console.log(`  Alert F1:        ${results.metrics.alerts.f1} (P=${results.metrics.alerts.precision} R=${results.metrics.alerts.recall})`);
   console.log(`  Anomaly Acc:     ${results.metrics.anomalyAccuracy}`);
-  console.log(`  Risk Acc:        ${results.metrics.riskAccuracy}`);
+  console.log(`  BHI tier agree:  ${results.metrics.bhiTierAgreement}`);
   console.log(`  Score agreement: ${results.metrics.healthScoreAgreementRate} (field \`${SCORE_FIELD.apiField}\` = ${SCORE_FIELD.label_en})`);
   if (results.metrics.confidence95) {
     const c = results.metrics.confidence95;
     console.log(`  95% CI anomaly:  ${c.anomalyAccuracy.lower}–${c.anomalyAccuracy.upper}`);
-    console.log(`  95% CI risk:     ${c.riskAccuracy.lower}–${c.riskAccuracy.upper}`);
+    console.log(`  95% CI BHI tier: ${c.bhiTierAgreement.lower}–${c.bhiTierAgreement.upper}`);
     console.log(`  95% CI score:    ${c.healthScoreAgreement.lower}–${c.healthScoreAgreement.upper}`);
   }
   if (results.circularLabelWarning) console.warn(`  ⚠ ${results.circularLabelWarning}`);

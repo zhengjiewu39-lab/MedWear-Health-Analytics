@@ -18,6 +18,7 @@ const {
   buildClinicalRandomDays,
   enforceClinicalPlausibility,
   computeCohortClinicalStats,
+  sampleSubjectProfile,
 } = require('../server/services/clinicalPhysiology');
 
 const DEFAULT_OUT = path.join(__dirname, '../benchmarks/wearable-analytics-dataset.json');
@@ -289,8 +290,8 @@ function alertsEqual(a, b) {
 }
 
 function buildRandomDays(rng, days) {
-  const { days: daysMap, targetDay } = buildClinicalRandomDays(rng, days);
-  return { days: daysMap, targetDay };
+  const { days: daysMap, targetDay, profile } = buildClinicalRandomDays(rng, days);
+  return { days: daysMap, targetDay, age: profile.age, sex: profile.sex };
 }
 
 function labelCase(caseData, phenotypeKey) {
@@ -311,29 +312,34 @@ function labelCase(caseData, phenotypeKey) {
 }
 
 function generateCase(id, phenotype, rng, days) {
+  const demo = sampleSubjectProfile(rng);
   const { days: daysMap, targetDay } = buildDays(rng, days, phenotype.baseline, phenotype.target);
   return labelCase({
     id,
     label: phenotype.label,
     targetDay,
     days: daysMap,
+    age: demo.age,
+    sex: demo.sex,
   }, phenotype.key);
 }
 
 function generateUniformRandomCase(id, rng, days) {
-  const { days: daysMap, targetDay } = buildRandomDays(rng, days);
+  const { days: daysMap, targetDay, age, sex } = buildRandomDays(rng, days);
   return labelCase({
     id,
     label: 'Clinical-random adult wearable profile',
     targetDay,
     days: daysMap,
+    age,
+    sex,
   }, 'clinical_random');
 }
 
 function generateRandomBenchmark(targetN, seed, daysPerCase) {
   const rng = mulberry32(seed);
   const seeds = loadSeedCases();
-  const cases = seeds.map((c) => labelCase({ ...c }, 'seed'));
+  const cases = seeds.map((c) => labelCase({ ...c, age: c.age ?? 42, sex: c.sex ?? 'F' }, 'seed'));
   const counts = { seed: seeds.length };
 
   while (cases.length < targetN) {
@@ -402,8 +408,9 @@ function main() {
     dataset: 'MedWear-Wearable-Analytics-Clinical-v2',
     version: '2.5.0',
     license: 'CC-BY-4.0',
-    description: 'Synthetic multi-day wearable cases. Physiology: 72% weighted-random phenotypes (incl. exercise/SpO₂ artifact/rest-day FP scenarios) + 28% clinically correlated random adults. Gold labels: contextual clinical adjudication (clinicalGoldStandard-v1), NOT the product analytics engine.',
-    labelSource: 'clinical-gold-standard-v1',
+    description: 'Synthetic multi-day wearable cases with per-case age/sex demographics. Labels: independentReference-v1 adjudication (NOT the product analytics engine).',
+    labelSource: 'independent-reference-v1',
+    legacyLabelSource: 'clinical-gold-standard-v1',
     superseded: 'MedWear-Wearable-Analytics-Mini-v1',
     generatedAt: new Date().toISOString(),
     seed: opts.seed,

@@ -6,7 +6,10 @@
 const { SCORE_FIELD } = require('../services/behavioralHealthIndex');
 
 const PRODUCT_ENGINE = 'MedWear-AnalyticsCore-v1';
-const GOLD_STANDARD = 'clinicalGoldStandard-v1';
+const INDEPENDENT_REFERENCE = 'independentReference-v1';
+/** @deprecated alias — use INDEPENDENT_REFERENCE in new docs/UI */
+const GOLD_STANDARD = INDEPENDENT_REFERENCE;
+const LEGACY_GOLD_STANDARD = 'clinicalGoldStandard-v1';
 const CIRCULAR_THRESHOLD = 0.98;
 
 const wearable = {
@@ -15,16 +18,17 @@ const wearable = {
   n: 5000,
   seed: 42,
   rng: 'mulberry32',
-  labelSource: 'clinical-gold-standard-v1',
+  labelSource: 'independent-reference-v1',
   expansionMethod: 'clinical-random-physiology-fp-adjudication',
   physiologyMix: { clinicalRandom: 0.28, phenotypeRandom: 0.72 },
   clinicalPhysiologyModule: 'clinicalPhysiology-v1',
   alertFalsePositiveScenarios: ['exercise_fp', 'spo2_artifact_fp', 'recovery_rest_fp'],
   productAlertModel: 'peak-and-single-reading (wearable-style)',
-  goldAdjudication: 'contextual-clinical-suppression',
+  goldAdjudication: 'contextual-reference-suppression',
   productEngine: PRODUCT_ENGINE,
-  goldStandard: GOLD_STANDARD,
-  evaluationModel: 'engine-vs-gold-agreement',
+  goldStandard: INDEPENDENT_REFERENCE,
+  legacyGoldStandard: LEGACY_GOLD_STANDARD,
+  evaluationModel: 'engine-vs-independent-reference-agreement',
   scoreAgreementTolerance: 8,
   circularThreshold: CIRCULAR_THRESHOLD,
   commands: {
@@ -34,7 +38,7 @@ const wearable = {
   description_zh:
     '临床随机生理 + 误报场景（运动心率峰值/SpO₂ 伪影/恢复日）；产品用峰值/单点触发，金标准经临床上下文抑制。评测=引擎 vs 金标准，非自评。',
   description_en:
-    'Clinical random physiology with FP scenarios (exercise HR peaks, SpO₂ artifact, rest day). Product uses peak/single-reading triggers; gold applies contextual suppression. Engine vs gold — not self-test.',
+    'Clinical random physiology with FP scenarios (exercise HR peaks, SpO2 artifact, rest day). Product uses peak/single-reading triggers; independent reference applies contextual suppression. Engine vs independent reference — not self-test.',
   invalidIf_zh: '若告警/异常/风险/评分四项均≥98%，说明金标准与引擎同源，临床性能估计无效。',
   invalidIf_en:
     'If alert/anomaly/risk/score metrics are all ≥98%, gold labels are likely engine-derived — invalid for clinical estimation.',
@@ -74,7 +78,8 @@ function summarizeWearableResults(raw) {
     evaluatedAt: raw.evaluatedAt,
     n: raw.n,
     engine: raw.engine,
-    goldStandard: GOLD_STANDARD,
+    goldStandard: INDEPENDENT_REFERENCE,
+    legacyGoldStandard: LEGACY_GOLD_STANDARD,
     metrics: raw.metrics,
     alertMetrics: {
       f1: alerts.f1,
@@ -92,7 +97,9 @@ function summarizeWearableResults(raw) {
 
 module.exports = {
   PRODUCT_ENGINE,
+  INDEPENDENT_REFERENCE,
   GOLD_STANDARD,
+  LEGACY_GOLD_STANDARD,
   CIRCULAR_THRESHOLD,
   wearable,
   screening,

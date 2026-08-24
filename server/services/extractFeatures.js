@@ -14,6 +14,7 @@ const {
   evaluateCase,
 } = require('./analyticsCore');
 const { cleanDayData, validateFeatureVector } = require('./physioValidation');
+const { resolveBhiDemographics } = require('./demographics');
 
 const FEATURE_NAMES = [
   'steps_norm',
@@ -64,7 +65,8 @@ function extractFeatures(caseData, thresholds = DEFAULT_THRESHOLDS) {
   const allHR = sorted.flatMap((d) => cleanedDays[d].heartRate || []);
   const alerts = evaluateDayAlerts(day, thresholds);
   const anomalies = detectAnomaliesFromStore(store);
-  const score = computeDayScore(day) || 0;
+  const demo = resolveBhiDemographics(caseData);
+  const score = computeDayScore(day, demo) || 0;
   const spo2 = day.spo2 || [];
   const totalSleep = sleepHours(day);
   const deep = (day.sleepMinutes?.deep || 0) / 60;
@@ -73,7 +75,7 @@ function extractFeatures(caseData, thresholds = DEFAULT_THRESHOLDS) {
     steps_norm: Math.min(day.steps / 10000, 2),
     avg_hr: avg(day.heartRate) || 0,
     std_hr: stdDev(day.heartRate || []),
-    resting_hr: day.restingHeartRate || avg(day.heartRate) || 0,
+    resting_hr: day.restingHeartRate ?? 0,
     avg_spo2: avg(spo2) || 97,
     min_spo2: spo2.length ? Math.min(...spo2) : 97,
     avg_hrv: avg(day.hrv) || 0,
@@ -106,7 +108,8 @@ function extractLabels(caseData) {
   const daysMap = caseData.days || {};
   const targetDay = caseData.targetDay || Object.keys(daysMap).sort().pop();
   const { day } = cleanDayData(daysMap[targetDay] || {});
-  const score = computeDayScore(day) || 0;
+  const demo = resolveBhiDemographics(caseData);
+  const score = computeDayScore(day, demo) || 0;
   return { label: classifyRiskFromScore(score), task: 'risk' };
 }
 

@@ -18,6 +18,8 @@ const emptyDay = {
   sleepMinutes: { deep: 0, rem: 0, light: 0, awake: 0 },
 };
 
+const BHI_DEMO = { age: 42, sex: 'F' };
+
 describe('Robustness — BHI and anomaly pipelines', () => {
   test('missing target day data returns finite BHI tier without throw', () => {
     const score = computeDayScore(emptyDay);
@@ -27,6 +29,8 @@ describe('Robustness — BHI and anomaly pipelines', () => {
 
   test('missing sensor dimensions (no HRV, no SpO2) still extracts features', () => {
     const features = extractFeatures({
+      age: 42,
+      sex: 'F',
       days: {
         '2026-04-01': {
           steps: 5000,
@@ -43,6 +47,8 @@ describe('Robustness — BHI and anomaly pipelines', () => {
 
   test('single-point HR/SpO2 outliers are cleaned before scoring', () => {
     const features = extractFeatures({
+      age: 42,
+      sex: 'F',
       days: {
         '2026-04-02': {
           steps: 6000,
@@ -70,7 +76,7 @@ describe('Robustness — BHI and anomaly pipelines', () => {
         sleepMinutes: { deep: 60, rem: 90, light: 180, awake: 10 },
       };
     }
-    const detail = computeDayScoreDetail(days['2026-05-07'], { priorDays: Object.values(days).slice(0, 6) });
+    const detail = computeDayScoreDetail(days['2026-05-07'], { priorDays: Object.values(days).slice(0, 6), ...BHI_DEMO });
     assert.ok(Number.isFinite(detail.score));
   });
 
@@ -103,13 +109,15 @@ describe('Robustness — BHI and anomaly pipelines', () => {
     };
     const alerts = evaluateDayAlerts(day);
     assert.ok(Array.isArray(alerts));
-    const score = computeDayScore(day);
+    const score = computeDayScore({ ...day, restingHeartRate: 62 }, BHI_DEMO);
     assert.ok(Number.isFinite(score));
     assert.ok(classifyBHIWatchTier(score));
   });
 
   test('extractRawFeatures omits engine-derived columns', () => {
     const raw = extractRawFeatures({
+      age: 42,
+      sex: 'F',
       days: {
         '2026-07-01': {
           steps: 7000,

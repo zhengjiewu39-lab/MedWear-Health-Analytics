@@ -25,7 +25,7 @@ function avg(arr) {
 }
 
 function sleepHours(sm = {}) {
-  return (sm.deep + sm.rem + sm.light + (sm.awake || 0)) / 60;
+  return (sm.deep + sm.rem + sm.light) / 60;
 }
 
 /** Sigmoid-like activity score centred ~5500 steps/day. */
@@ -33,31 +33,38 @@ function scoreSteps(steps) {
   return 1 / (1 + Math.exp(-(steps - 5500) / 1800));
 }
 
-/** Gaussian sleep adequacy peaking ~7.25 h (includes awake time in architecture). */
+/** Gaussian sleep adequacy peaking ~7.25 h (estimated sleep duration: deep + REM + light). */
 function scoreSleep(hours) {
   return Math.exp(-((hours - 7.25) ** 2) / (2 * 1.4 ** 2));
 }
 
 /** Age/sex-adjusted RHR — smooth bell around reference. */
-function scoreRhr(rhr, age = 45, sex = 'F') {
+function scoreRhr(rhr, age, sex) {
   const ref = (sex === 'M' ? 62 : 65) + Math.max(0, age - 40) * 0.15;
   return Math.exp(-((rhr - ref) ** 2) / (2 * 12 ** 2));
 }
 
-/** Smooth SpO₂ curve — steeper decline below 94%. */
+/** Smooth SpO2 curve — steeper decline below 94%. */
 function scoreSpo2(spo2) {
   return 1 / (1 + Math.exp(-(spo2 - 94) / 0.75));
 }
 
-/** Age-adjusted HRV — linear cap vs reference RMSSD. */
+/** Age-adjusted HRV (SDNN, ms) — transparent cap vs reference (not RMSSD). */
+function sdnnReferenceMs(age = 45) {
+  return Math.max(28, 50 - Math.max(0, age - 30) * 0.45);
+}
+
 function scoreHrv(hrv, age = 45) {
-  const ref = Math.max(22, 48 - Math.max(0, age - 40) * 0.35);
+  const ref = sdnnReferenceMs(age);
   return Math.min(1, hrv / ref);
 }
 
 function computeBehavioralHealthIndex(dayData, opts = {}) {
-  const age = opts.age ?? 45;
-  const sex = opts.sex ?? 'F';
+  const age = opts.age;
+  const sex = opts.sex;
+  if (age == null || sex == null) {
+    throw new Error('BHI requires explicit age and sex (parse Apple Health Me or benchmark case demographics)');
+  }
   const components = {};
   const missing = [];
   let weighted = 0;
@@ -76,8 +83,8 @@ function computeBehavioralHealthIndex(dayData, opts = {}) {
     totalW += WEIGHTS.sleep;
   } else missing.push('sleep');
 
-  const rhr = dayData.restingHeartRate || avg(dayData.heartRate);
-  if (rhr) {
+  const rhr = dayData.restingHeartRate;
+  if (rhr != null && rhr > 0) {
     components.rhr = +scoreRhr(rhr, age, sex).toFixed(3);
     weighted += components.rhr * WEIGHTS.rhr;
     totalW += WEIGHTS.rhr;
@@ -142,7 +149,7 @@ function missingDataSensitivity(dayData, opts = {}) {
   if (!sleepHours(filled.sleepMinutes || {})) {
     filled.sleepMinutes = { deep: 85, rem: 95, light: 200, awake: 20 };
   }
-  if (!filled.restingHeartRate && !filled.heartRate?.length) filled.restingHeartRate = medians.rhr;
+  if (!filled.restingHeartRate) filled.restingHeartRate = medians.rhr;
   if (!filled.spo2?.length) filled.spo2 = [medians.spo2];
   if (!filled.hrv?.length) filled.hrv = [medians.hrv];
   const imputed = computeBehavioralHealthIndex(filled, opts);
@@ -166,4 +173,5 @@ module.exports = {
   scoreSpo2,
   scoreHrv,
   scoreSleep,
+  sdnnReferenceMs,
 };

@@ -9,6 +9,8 @@ const {
   evaluateCase,
 } = require('../services/analyticsCore');
 
+const BHI_DEMO = { age: 42, sex: 'F' };
+
 describe('behavioral health index', () => {
   test('healthy day scores above 75 (BHI)', () => {
     const score = computeDayScore({
@@ -18,7 +20,7 @@ describe('behavioral health index', () => {
       hrv: [50],
       restingHeartRate: 62,
       sleepMinutes: { deep: 90, rem: 100, light: 200, awake: 15 },
-    });
+    }, BHI_DEMO);
     assert.ok(score >= 75);
   });
 
@@ -31,7 +33,7 @@ describe('behavioral health index', () => {
       hrv: [50],
       restingHeartRate: 62,
       sleepMinutes: { deep: 90, rem: 100, light: 200, awake: 15 },
-    });
+    }, BHI_DEMO);
     assert.equal(detail.kind, 'behavioral-health-index');
     assert.ok(detail.disclaimer_zh);
   });
@@ -95,7 +97,10 @@ describe('benchmark dataset integrity', () => {
     const ds = require('../../benchmarks/wearable-analytics-dataset.json');
     assert.ok(ds.cases.length >= 100, `expected n≥100 for clinical estimation, got ${ds.cases.length}`);
     assert.ok(ds.n >= 100 || ds.cases.length >= 100);
-    assert.equal(ds.labelSource, 'clinical-gold-standard-v1');
+    assert.ok(
+      ['independent-reference-v1', 'clinical-gold-standard-v1'].includes(ds.labelSource),
+      'expected independent reference label source',
+    );
     assert.ok(ds.clinicalCharacteristics?.targetDayVitals, 'expected clinical cohort summary');
     assert.ok(ds.physiologyMix?.clinicalRandom != null, 'expected random physiology mix');
     ds.cases.forEach(c => {

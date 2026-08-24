@@ -99,7 +99,7 @@ function Login() {
           </Box>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
             {t('使用管理员账号登录，默认进入临床早筛中心',
-              'Sign in with the administrator account — you will land on the clinical screening hub')}
+              'Sign in with the administrator account — you will land on the research screening hub')}
           </Typography>
 
           {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}

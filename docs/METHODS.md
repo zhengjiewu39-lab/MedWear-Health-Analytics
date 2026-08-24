@@ -21,10 +21,10 @@ Transparent, reproducible pipeline for real mode and benchmark evaluation. **No 
 **Formulas:**
 
 - Steps (28%): sigmoid — `1 / (1 + exp(-(steps - 5500) / 1800))`
-- Sleep (24%): Gaussian peak ~7.25 h — `(deep + rem + light + awake) / 60`
+- Sleep (24%): Gaussian peak ~7.25 h — `(deep + rem + light) / 60` (estimated sleep duration; awake excluded)
 - RHR (20%): age/sex-adjusted Gaussian — ref ≈ 65 (F) / 62 (M) + 0.15×max(0, age−40)
 - SpO₂ (16%): logistic — `1 / (1 + exp(-(spo2 - 94) / 0.75))`
-- HRV (12%): age-adjusted cap — `min(1, hrv / ref)` where ref declines with age
+- HRV (12%): age-adjusted SDNN (ms) — `min(1, sdnn / ref_sdnn(age))`
 - Trend (optional): ±3 pts max vs prior 7-day BHI mean
 - Missing data: re-normalize over available components; median-imputation sensitivity via `missingDataSensitivity()`
 

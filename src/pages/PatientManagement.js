@@ -126,7 +126,7 @@ function PatientManagement() {
             ))}
           </TextField>
           <TextField
-            select size="small" label={t('风险分层', 'Risk tier')} value={riskTier}
+            select size="small" label={t('BHI 关注分层', 'BHI watch tier')} value={riskTier}
             onChange={(e) => { setRiskTier(e.target.value); setPage(0); }}
             sx={{ minWidth: 140 }}
           >

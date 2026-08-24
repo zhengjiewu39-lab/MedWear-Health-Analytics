@@ -9,6 +9,7 @@ const {
   finalizeStore,
   saveStore,
 } = require('./store');
+const { parseAppleBiologicalSex, ageFromBirthDate } = require('../services/demographics');
 
 const BATCH_SIZE = 1000;
 
@@ -142,6 +143,7 @@ function parseExportXml(xmlPath, onProgress) {
 
     let parsedRecords = 0;
     let meName = null;
+    let meProfile = { birthDate: null, sex: null, age: null };
     let currentAttrs = null;
     let batch = [];
 
@@ -157,7 +159,14 @@ function parseExportXml(xmlPath, onProgress) {
     parser.on('opentag', (node) => {
       currentAttrs = node.attributes;
       if (node.name === 'Me') {
-        meName = node.attributes.charCreationDate ? 'Apple Health 用户' : '我';
+        const attrs = node.attributes;
+        meProfile.birthDate = attrs.HKCharacteristicTypeIdentifierDateOfBirth || meProfile.birthDate;
+        const sex = parseAppleBiologicalSex(attrs.HKCharacteristicTypeIdentifierBiologicalSex);
+        if (sex) meProfile.sex = sex;
+        if (attrs.HKCharacteristicTypeIdentifierDateOfBirth) {
+          meProfile.age = ageFromBirthDate(attrs.HKCharacteristicTypeIdentifierDateOfBirth);
+        }
+        meName = attrs.charCreationDate ? 'Apple Health 用户' : '我';
       }
       if (node.name === 'Record' && RELEVANT_TYPES.has(node.attributes.type)) {
         batch.push({
@@ -180,8 +189,9 @@ function parseExportXml(xmlPath, onProgress) {
 
     parser.on('closetag', (name) => {
       if (name === 'Me' && currentAttrs?.HKCharacteristicTypeIdentifierBiologicalSex) {
-        const sex = currentAttrs.HKCharacteristicTypeIdentifierBiologicalSex;
-        meName = sex.includes('Female') ? '女' : sex.includes('Male') ? '男' : '用户';
+        const sex = parseAppleBiologicalSex(currentAttrs.HKCharacteristicTypeIdentifierBiologicalSex);
+        if (sex) meProfile.sex = sex;
+        meName = sex === 'F' ? '女' : sex === 'M' ? '男' : '用户';
       }
       currentAttrs = null;
     });
@@ -198,6 +208,9 @@ function parseExportXml(xmlPath, onProgress) {
         totalRecords: parsedRecords,
         parsedRecords,
         userLabel: meName || 'Apple Health 用户',
+        birthDate: meProfile.birthDate,
+        sex: meProfile.sex,
+        age: meProfile.age,
       });
       if (!store.meta?.dayCount) {
         reject(new Error(

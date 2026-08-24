@@ -184,10 +184,10 @@ curl http://localhost:3001/api/research/validate
 
 | Per 1000 individuals | Value |
 |----------------------|-------|
-| False-positive alerts | 154 |
-| Est. follow-up workups (35% of FP) | 54 |
-| Est. extra outpatient visits | 64.8 |
-| Alert precision (eval) | 0.7576 |
+| False-positive alerts | 151 |
+| Est. follow-up workups (35% of FP) | 53 |
+| Est. extra outpatient visits | 63.6 |
+| Alert precision (eval) | 0.7718 |
 
 ## Rule engine vs simple ML — fair comparison (raw wearable features)
 
@@ -195,12 +195,12 @@ curl http://localhost:3001/api/research/validate
 
 | Model | BHI tier accuracy / Macro F1 | Notes |
 |-------|------------------------------|-------|
-| Rule engine (vs clinical gold) | risk 0.787, alert F1 0.8441 | product metric |
-| majority-class | acc 0.5416, F1 0.2342 | node baseline |
-| hr-steps-heuristic | acc 0.5114, F1 0.4558 | node baseline |
-| lr (sklearn, fair) | acc 0.9358000000000001, F1 0.9281274479488534 | 5-fold CV, raw features |
-| dt (sklearn, fair) | acc 0.9334, F1 0.9237003603134115 | 5-fold CV, raw features |
-| rf (sklearn, fair) | acc 0.9592, F1 0.9504472811020424 | 5-fold CV, raw features |
+| Rule engine (vs clinical gold) | risk 0.76, alert F1 0.8542 | product metric |
+| majority-class | acc 0.5122, F1 0.2258 | node baseline |
+| hr-steps-heuristic | acc 0.5032, F1 0.4511 | node baseline |
+| lr (sklearn, fair) | acc 0.9390000000000001, F1 0.938260223082613 | 5-fold CV, raw features |
+| dt (sklearn, fair) | acc 0.9410000000000001, F1 0.9392945829877892 | 5-fold CV, raw features |
+| rf (sklearn, fair) | acc 0.9586, F1 0.9562394174159635 | 5-fold CV, raw features |
 
 > **Fair ML note:** Sklearn targets are **product-engine BHI watch tiers** (not gold labels). 5-fold CV uses random stratified splits on the same synthetic export. High accuracy reflects **feature distinguishability ceiling** on correlated synthetic data — **not** independent clinical validation. Rule engine is preferred for interpretability, not because sklearn "loses" on oracle features.
 
@@ -210,9 +210,9 @@ curl http://localhost:3001/api/research/validate
 
 | Model | Accuracy / Macro F1 | Notes |
 |-------|---------------------|-------|
-| lr (sklearn, oracle) | acc 0.9446, F1 0.9364173036358509 | appendix only |
-| dt (sklearn, oracle) | acc 0.9827999999999999, F1 0.9794665527307297 | appendix only |
-| rf (sklearn, oracle) | acc 0.9858, F1 0.9834401404422785 | appendix only |
+| lr (sklearn, oracle) | acc 0.9471999999999999, F1 0.9385634156470202 | appendix only |
+| dt (sklearn, oracle) | acc 0.9762000000000001, F1 0.9729773375259132 | appendix only |
+| rf (sklearn, oracle) | acc 0.9852000000000001, F1 0.9827387082115269 | appendix only |
 
 ### Gold-tier ML comparison (clinicalGoldStandard-v1 labels)
 
@@ -220,11 +220,11 @@ curl http://localhost:3001/api/research/validate
 
 | Model | Gold-tier accuracy / Macro F1 | Notes |
 |-------|-------------------------------|-------|
-| Rule engine (engine-vs-gold) | 0.787, alert F1 0.8441 | product vs gold reference |
-| majority-class | acc 0.6432, F1 0.261 | node baseline |
-| lr (sklearn, vs gold) | acc 0.9474, F1 0.93925697992577 | 5-fold CV, gold label target |
-| dt (sklearn, vs gold) | acc 0.9715999999999999, F1 0.9682518572606396 | 5-fold CV, gold label target |
-| rf (sklearn, vs gold) | acc 0.9872, F1 0.9841347841015973 | 5-fold CV, gold label target |
+| Rule engine (engine-vs-gold) | 0.76, alert F1 0.8542 | product vs gold reference |
+| majority-class | acc 0.6328, F1 0.2584 | node baseline |
+| lr (sklearn, vs gold) | acc 0.9469999999999998, F1 0.9385803982951801 | 5-fold CV, gold label target |
+| dt (sklearn, vs gold) | acc 0.9693999999999999, F1 0.9670046819306586 | 5-fold CV, gold label target |
+| rf (sklearn, vs gold) | acc 0.9848000000000001, F1 0.9820846830849433 | 5-fold CV, gold label target |
 
 ## Parameter sensitivity (outcome simulation)
 

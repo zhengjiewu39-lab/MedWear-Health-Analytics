@@ -1,4 +1,5 @@
 const { SCORE_FIELD } = require('../services/behavioralHealthIndex');
+const { demographicsFromMeta } = require('../services/demographics');
 const { getStore, hasData } = require('./store');
 const { CATEGORY_META } = require('../data/predictionsCatalog');
 const {
@@ -34,6 +35,10 @@ function lastNDays(store, n) {
 
 function todayKey() {
   return new Date().toISOString().slice(0, 10);
+}
+
+function bhiOptsFromStore(store, extra = {}) {
+  return { ...demographicsFromMeta(store?.meta), ...extra };
 }
 
 function computeDayScoreLocal(dayData, opts = {}) {
@@ -224,7 +229,7 @@ function buildPredictions(store) {
     return predictions;
   }
 
-  const rhrTrend = days.map(d => store.daily[d].restingHeartRate || avg(store.daily[d].heartRate)).filter(Boolean);
+  const rhrTrend = days.map(d => store.daily[d].restingHeartRate).filter(v => v != null && v > 0);
   if (rhrTrend.length >= 5) {
     const recent = avg(rhrTrend.slice(-7));
     const earlier = avg(rhrTrend.slice(0, 7));
@@ -388,8 +393,10 @@ function buildDigitalTwin(store) {
     { name: '压力', status: hrv && hrv < 30 ? 'warning' : 'normal', score: hrv ? Math.min(100, Math.round(hrv)) : 50, metrics: { hrv } },
   ].filter(o => o.score > 0 || day);
 
-  const overallScore = day ? computeDayScoreLocal(d) || 0 : 0;
-  return { patient, age: null, organs, overallScore, dataSource: 'real' };
+  const overallScore = day ? computeDayScoreLocal(d, bhiOptsFromStore(store)) || 0 : 0;
+  const sex = store.meta?.sex;
+  const genderLabel = sex === 'M' ? '男' : sex === 'F' ? '女' : '—';
+  return { patient, age: store.meta?.age ?? null, gender: genderLabel, organs, overallScore, dataSource: 'real' };
 }
 
 function buildHealthGoals(store) {
@@ -399,7 +406,7 @@ function buildHealthGoals(store) {
 
   const sleepH = (d.sleepMinutes.deep + d.sleepMinutes.rem + d.sleepMinutes.light) / 60;
   const deepH = d.sleepMinutes.deep / 60;
-  const rhr = d.restingHeartRate || avg(d.heartRate);
+  const rhr = d.restingHeartRate;
   const spo2 = avg(d.spo2);
 
   return [
@@ -467,7 +474,7 @@ function buildDevices(store) {
 function buildPatients(store) {
   const day = getTodayOrLatest(store);
   const d = day ? store.daily[day] : null;
-  const score = d ? computeDayScoreLocal(d) : null;
+  const score = d ? computeDayScoreLocal(d, bhiOptsFromStore(store)) : null;
   const alerts = detectAlerts(store);
   return [{
     id: 1,
@@ -491,7 +498,7 @@ function buildDashboardStats(store) {
   const d = day ? store.daily[day] : null;
   const scores = days.map((dayKey, idx) => {
     const prior = days.slice(Math.max(0, idx - 7), idx).map((k) => store.daily[k]);
-    return computeDayScoreLocal(store.daily[dayKey], { priorDays: prior });
+    return computeDayScoreLocal(store.daily[dayKey], bhiOptsFromStore(store, { priorDays: prior }));
   }).filter(Boolean);
   return {
     totalDevices: (store.meta?.sourceList || []).length,
@@ -539,7 +546,7 @@ function buildHealthScoreTrend(store) {
   const byMonth = {};
   days.forEach(day => {
     const m = day.slice(0, 7);
-    const score = computeDayScoreLocal(store.daily[day]);
+    const score = computeDayScoreLocal(store.daily[day], bhiOptsFromStore(store));
     if (score) {
       if (!byMonth[m]) byMonth[m] = [];
       byMonth[m].push(score);
@@ -588,7 +595,7 @@ function buildAiSummary(store) {
   const day = getTodayOrLatest(store);
   const d = day ? store.daily[day] : null;
   if (!d) return '尚未导入健康数据。请从 iPhone 导出 Apple Health 数据并导入平台。';
-  const score = computeDayScoreLocal(d);
+  const score = computeDayScoreLocal(d, bhiOptsFromStore(store));
   const hr = avg(d.heartRate);
   const spo2 = avg(d.spo2);
   const sleepH = (d.sleepMinutes.deep + d.sleepMinutes.rem + d.sleepMinutes.light) / 60;
@@ -706,9 +713,9 @@ function buildUiDashboardStats(store) {
   const day = getTodayOrLatest(store);
   const d = day ? store.daily[day] : null;
   if (!d) return getEmptyAnalytics().dashboard.stats;
-  const score = computeDayScoreLocal(d) || 0;
+  const score = computeDayScoreLocal(d, bhiOptsFromStore(store)) || 0;
   const hr = avg(d.heartRate);
-  const rhr = d.restingHeartRate || hr;
+  const rhr = d.restingHeartRate;
   const spo2 = avg(d.spo2);
   const hrv = avg(d.hrv);
   const sleepH = (d.sleepMinutes.deep + d.sleepMinutes.rem + d.sleepMinutes.light) / 60;
@@ -748,7 +755,7 @@ function buildWeekTrend(store) {
     return {
       day: DAY_NAMES[date.getDay()],
       date: dayKey,
-      healthScore: computeDayScoreLocal(d) || 0,
+      healthScore: computeDayScoreLocal(d, bhiOptsFromStore(store)) || 0,
       steps: Math.round(d.steps),
       sleep: +((d.sleepMinutes.deep + d.sleepMinutes.rem + d.sleepMinutes.light) / 60).toFixed(1),
       heartRate: d.restingHeartRate ? Math.round(d.restingHeartRate) : Math.round(avg(d.heartRate) || 0),
@@ -794,7 +801,7 @@ function buildRealAiReport(store) {
   const day = getTodayOrLatest(store);
   const d = day ? store.daily[day] : null;
   if (!d) return getEmptyAnalytics().aiReport;
-  const score = computeDayScoreLocal(d) || 0;
+  const score = computeDayScoreLocal(d, bhiOptsFromStore(store)) || 0;
   return {
     hasData: true,
     generatedAt: new Date().toISOString(),
@@ -893,7 +900,7 @@ function buildRealDoctorReport(store) {
     reportId: `MR-REAL-${Date.now().toString(36).toUpperCase()}`,
     generatedAt: new Date().toISOString(),
     reportType: 'Apple Health 真实数据 · 可穿戴临床报告',
-    reportType_en: 'Apple Health Real Data · Wearable Clinical Report',
+    reportType_en: 'Apple Health Real Data · Wearable Research Report',
     patient: {
       name: store.meta?.userLabel || 'Apple Health 用户',
       id: 'REAL-001',

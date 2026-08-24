@@ -625,7 +625,7 @@ function ResearchCenter() {
               <AccordionDetails>
                 <Typography variant="body2" component="ul" sx={{ pl: 2 }}>
                   <li>{t('可穿戴基准与筛查队列为合成数据，非真实患者', 'Wearable benchmark and screening cohort are synthetic — not real patients')}</li>
-                  <li>{t('可穿戴基准：随机生理信号 + 独立临床金标准（clinicalGoldStandard-v1），评测为引擎与金标准的一致率', 'Wearable benchmark: random physiology + independent clinical gold standard (clinicalGoldStandard-v1); metrics = engine vs gold agreement')}</li>
+                  <li>{t('可穿戴基准：随机生理信号 + 独立参考标注（independentReference-v1），评测为引擎与参考一致率', 'Wearable benchmark: random physiology + independent reference labels (independentReference-v1); metrics = engine vs reference agreement')}</li>
                   <li>{t('与结局对比页共享筛查队列数据源 outcomeModel', 'Shares screening cohort data source (outcomeModel) with Outcomes page')}</li>
                 </Typography>
               </AccordionDetails>

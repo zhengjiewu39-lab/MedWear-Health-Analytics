@@ -69,10 +69,17 @@ function sleepHours(sm = {}) {
   return (sm.deep + sm.rem + sm.light) / 60;
 }
 
+function numericAgeFromBand(bandKey, rng) {
+  const ranges = { '18-34': [20, 33], '35-54': [36, 53], '55-75': [56, 72] };
+  const [lo, hi] = ranges[bandKey] || [35, 54];
+  return randInt(rng, lo, hi);
+}
+
 /** Random adult subject baseline — fitness, age band, sex drive correlated vitals. */
 function sampleSubjectProfile(rng) {
   const ageBand = pickWeighted(rng, AGE_BANDS);
   const sex = rng() < 0.52 ? 'F' : 'M';
+  const age = numericAgeFromBand(ageBand.key, rng);
   const fitness = clamp(gaussian(rng, 0.52, 0.18), 0.08, 0.95);
 
   const rhrBase = clamp(
@@ -97,6 +104,7 @@ function sampleSubjectProfile(rng) {
 
   return {
     ageBand: ageBand.key,
+    age,
     sex,
     fitness: round(fitness, 2),
     rhrBase: round(rhrBase),
