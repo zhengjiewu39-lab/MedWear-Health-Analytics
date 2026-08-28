@@ -22,9 +22,9 @@ MedWear is a **research and education prototype** for consumer wearable analytic
 | Platform API | Integration **mock** for FHIR-style demo |
 | Benchmark | CC-BY-4.0 synthetic cases — safe to publish |
 
-## Screening & AI Outputs
+## Research Signal Integration & AI Outputs
 
-- Disease screening scores are **attention-signal stratification aids**, not diagnoses
+- Domain attention scores are **research-signal stratification aids**, not diagnoses
 - Core analytics use **BHI** (behavioral health index) — API field `healthScore` is a backward-compatible name
 - **BHI watch tiers** (Stable / Observe / Watch closely) are **not calibrated against clinical outcomes** — they indicate behavioral signal patterns only, not validated disease risk
 - Evidence levels **A/B/C** are **author annotations** from public literature — not independent third-party ratings
@@ -43,7 +43,7 @@ Before production use you **must**:
 
 ## Research & Citation
 
-When citing this work in academic contexts, state clearly: prototype / decision-support, not validated clinical tool. Describe dual-mode separation and local-only privacy model. Report benchmark metrics from `npm run evaluate` with dataset version.
+When citing this work in academic contexts, state clearly: research software prototype, not validated clinical tool. Describe dual-mode separation and local-first primary processing path. Report benchmark metrics from `npm run evaluate` with dataset version.
 
 **Methodology transparency:** Live disclosure of BHI formulas, MAD rules, sensitivity presets, rule-engine weights, and cohort simulation disclaimers — `GET /api/methodology/transparency` (also rendered in the in-app Methodology page). Regenerate static docs: `npm run docs:sync`.
 

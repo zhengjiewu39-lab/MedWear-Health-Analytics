@@ -42,10 +42,13 @@ const FORBIDDEN = [
   /on-device only/i,
   /Screening UI/i,
   /Clinical screening with citations/i,
-  /\(deep \+ rem \+ light \+ awake\)/i,
+  /local-first privacy/i,
+  /Rule engine \(vs synthetic reference\)/i,
+  /Rule engine \(engine-versus-reference\)/i,
   /Rule Engine \(Screening\)/i,
   /\boncology screening\b/i,
   /disease screening scores/i,
+  /\(deep \+ rem \+ light \+ awake\)/i,
 ];
 
 let failed = false;

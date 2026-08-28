@@ -57,7 +57,9 @@ Output: `benchmarks/results/latest.json`
 
 **MedWear-Wearable-Analytics-Benchmark-v3** · n=5000 · seed=42 · Product engine: **MedWear-AnalyticsCore-v1** · Independent reference: **independentSyntheticReference-v1** · Evaluation: **engine-versus-reference agreement**.
 
-**Directly evaluated:** fixed threshold signal outputs, MAD anomaly outputs, BHI (trend-adjusted when prior days supplied), BHI watch tier.
+**Directly evaluated (MedWear-AnalyticsCore-v1 vs independentSyntheticReference-v1):** threshold signal outputs, MAD anomaly outputs, BHI continuous score (trend-adjusted when prior days supplied), BHI watch tier.
+
+**Alert F1 (0.854) measures threshold signal agreement only** — not MedWear-RuleEngine-v1 domain-weighted research-signal integration outputs.
 
 **Not directly evaluated:** domain-weighted RuleEngine research-signal integration outputs; exploratory cohort/scenario simulation modules; optional ONNX backend.
 
@@ -203,20 +205,20 @@ curl http://localhost:3001/api/research/validate
 | Est. extra outpatient visits | 63.6 |
 | Alert precision (eval) | 0.7718 |
 
-## Rule engine vs simple ML — fair comparison (raw wearable features)
+## Primary analytics core vs simple ML — fair comparison (raw wearable features)
 
-> **Primary table:** 15-dim export **without** BHI/anomaly flags. Rule engine preferred for **interpretability & auditability**, not oracle sklearn accuracy. Regenerate: `npm run experiment:compare-fair`.
+> **Primary table:** 15-dim export **without** BHI/anomaly flags. MedWear-AnalyticsCore-v1 is preferred for **interpretability & auditability**, not oracle sklearn accuracy. Regenerate: `npm run experiment:compare-fair`.
 
 | Model | BHI tier agreement / Macro F1 | Notes |
 |-------|---------------------------------|-------|
-| Rule engine (vs synthetic reference) | BHI tier 0.76, alert F1 0.8542 | product metric |
+| MedWear-AnalyticsCore-v1 (threshold signals + MAD + BHI vs reference) | BHI tier 0.76; threshold alert F1 0.8542 | primary benchmark metrics — alert F1 is threshold-signal only, not RuleEngine |
 | majority-class | acc 0.5122, F1 0.2258 | node baseline |
 | hr-steps-heuristic | acc 0.5032, F1 0.4511 | node baseline |
 | lr (sklearn, fair) | acc 0.9390000000000001, F1 0.938260223082613 | 5-fold CV, raw features |
 | dt (sklearn, fair) | acc 0.9410000000000001, F1 0.9392945829877892 | 5-fold CV, raw features |
 | rf (sklearn, fair) | acc 0.9586, F1 0.9562394174159635 | 5-fold CV, raw features |
 
-> **Fair ML note:** Sklearn targets are **product-engine BHI watch tiers** (not synthetic reference labels). 5-fold CV uses random stratified splits on the same synthetic export. High accuracy reflects **feature distinguishability ceiling** on correlated synthetic data — **not** independent clinical validation. Rule engine is preferred for interpretability, not because sklearn "loses" on oracle features.
+> **Fair ML note:** Sklearn targets are **product-engine BHI watch tiers** (not synthetic reference labels). 5-fold CV uses random stratified splits on the same synthetic export. High accuracy reflects **feature distinguishability ceiling** on correlated synthetic data — **not** independent clinical validation. MedWear-AnalyticsCore-v1 is preferred for interpretability, not because sklearn "loses" on oracle features.
 
 ### Appendix: oracle comparison (engine-derived features — feature leakage)
 
@@ -234,7 +236,7 @@ curl http://localhost:3001/api/research/validate
 
 | Model | Reference-tier agreement / Macro F1 | Notes |
 |-------|-------------------------------------|-------|
-| Rule engine (engine-versus-reference) | 0.76, alert F1 0.8542 | product vs independent synthetic reference |
+| MedWear-AnalyticsCore-v1 (engine-versus-reference) | BHI tier 0.76; threshold alert F1 0.8542 | threshold signals + MAD + BHI vs independent synthetic reference — not RuleEngine domain outputs |
 | majority-class | acc 0.6328, F1 0.2584 | node baseline |
 | lr (sklearn, vs reference) | acc 0.9469999999999998, F1 0.9385803982951801 | 5-fold CV, reference label target |
 | dt (sklearn, vs reference) | acc 0.9693999999999999, F1 0.9670046819306586 | 5-fold CV, reference label target |

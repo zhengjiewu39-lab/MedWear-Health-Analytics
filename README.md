@@ -6,9 +6,23 @@
 
 A full-stack **wearable digital phenotyping research framework** — Apple Health local-first import, transparent statistical analysis, reproducible synthetic benchmarks, and exploratory outcome simulation (outside primary manuscript scope).
 
-**Positioning:** **Research-grade Digital Phenotyping & Simulation Benchmarking** — a transparent, local-first research prototype. **Not a clinical diagnostic medical device**; **not validated disease screening**; **not clinical risk prediction**.
+**Positioning:** **Research software framework** for **wearable digital phenotyping** — transparent-by-design analytics, **local-first primary data-processing path**, and a **reproducible computational benchmark**. **Not a clinical diagnostic system**; **not validated disease screening**; **not a calibrated disease-risk model**; **not prospective clinical validation**.
 
-Connects consumer wearables to **interpretable wearable-derived research outputs** with **local-first privacy** and **transparent-by-design analytics**.
+Connects consumer wearables to **interpretable wearable-derived research outputs** via **local-first data handling designed to reduce unnecessary external transfer of complete raw health records** and **transparent-by-design analytics**.
+
+## Primary pipeline (manuscript scope)
+
+```
+Apple Health / synthetic input
+  → local-first ingestion
+  → structured local storage (SQLite)
+  → daily wearable digital phenotypes
+  → BHI + threshold signal flags + robust MAD anomalies
+  → BHI watch tier
+  → reproducible benchmark metrics (n=5000, seed=42)
+```
+
+Real and synthetic inputs are **separated at ingestion** and enter the **shared analytics pipeline after structured data formation**. Exploratory modules (research signal integration, cohort simulation, clinician-style reports, ONNX) are **outside the primary manuscript scope** — see [docs/METHODS.md](docs/METHODS.md).
 
 **One-click manuscript reproduction:** [`notebooks/paper_reproduction.ipynb`](notebooks/paper_reproduction.ipynb) — **primary path:** synthetic benchmark (seed=42) → BHI → threshold signal flags → MAD → BHI watch tier → evaluation metrics. **Optional appendix:** ONNX / transparent component charts. See [`notebooks/README.md`](notebooks/README.md).
 

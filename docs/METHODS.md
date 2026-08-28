@@ -28,7 +28,7 @@ Transparent, reproducible pipeline for real mode and benchmark evaluation. **No 
 - HRV-SDNN (12%): Apple Health `HeartRateVariabilitySDNN` (SDNN in ms, **not RMSSD**)
 - SDNN reference: `ref_sdnn(age) = max(28, 50 - 0.45 * max(0, age - 30))`
 - SDNN score: `min(1, sdnn / ref_sdnn(age))`
-- Trend (conditional): when `priorDays` supplied and ≥3 valid prior BHI scores exist, `computeDayScore()` applies `computeBHIWithTrend()` (multiplier 0.12; adjustment clamped ±3; final BHI [0,100]). Primary benchmark supplies prior days — evaluates trend-adjusted pathway.
+- Trend (primary day-scoring pathway): when prior data are available and at least three valid prior BHI scores exist, `computeDayScore()` applies the predefined trend adjustment relative to the prior seven-day mean (up to 7 prior days supplied by the caller), multiplier 0.12, adjustment capped ±3 points, final BHI [0,100]. The primary synthetic benchmark supplies prior-day data and therefore evaluates this conditional trend-adjusted BHI pathway.
 - Missing data: re-normalize over available components; median-imputation sensitivity via `missingDataSensitivity()`
 
 **API field:** `healthScore` = Behavioral Health Index (BHI). Field name healthScore is kept for backward compatibility; values are BHI (behavioral wellness index), not a calibrated disease-risk score.
@@ -45,7 +45,7 @@ Implementation: `server/services/behavioralHealthIndex.js → analyticsCore.comp
 
 Dataset: `MedWear-Wearable-Analytics-Benchmark-v3` · n=5000 · seed=42 · Product engine: `MedWear-AnalyticsCore-v1` · Reference: `independentSyntheticReference-v1` · Evaluation: engine-versus-reference-agreement.
 
-**Evaluates:** Fixed threshold signal outputs; MAD robust anomaly outputs; BHI score (trend-adjusted when prior days supplied); BHI watch tier.
+**Evaluates:** Threshold signal outputs (fixed wearable-style alert rules); MAD robust anomaly outputs; BHI continuous score (trend-adjusted when prior days supplied); BHI watch tier.
 
 **Does not evaluate:** Domain-weighted RuleEngine research-signal integration outputs; Exploratory cohort/scenario simulation modules; Optional ONNX experimental backend.
 

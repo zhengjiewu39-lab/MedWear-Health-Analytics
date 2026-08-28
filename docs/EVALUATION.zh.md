@@ -58,7 +58,9 @@ npm run evaluate
 
 **MedWear-Wearable-Analytics-Benchmark-v3** · n=5000 · seed=42 · 产品引擎：**MedWear-AnalyticsCore-v1** · 独立参考：**independentSyntheticReference-v1** · 评测：**engine-versus-reference agreement**。
 
-**直接评测：** 固定阈值信号输出、MAD 异常输出、BHI（提供 prior days 时含趋势调整）、BHI 关注分层。
+**直接评测（MedWear-AnalyticsCore-v1 vs independentSyntheticReference-v1）：** 阈值信号输出、MAD 异常输出、BHI 连续评分（提供 prior days 时含趋势调整）、BHI 关注分层。
+
+**告警 F1（0.854）仅衡量阈值信号一致率** — 非 MedWear-RuleEngine-v1 领域加权研究信号整合输出。
 
 **不直接评测：** 领域加权 RuleEngine 研究信号整合输出；探索性队列/情景模拟模块；可选 ONNX 后端。
 
@@ -198,20 +200,20 @@ curl http://localhost:3001/api/research/validate
 | Est. extra outpatient visits | 63.6 |
 | Alert precision (eval) | 0.7718 |
 
-## 规则引擎 vs 简单 ML — 公平比较（原始可穿戴特征）
+## 主分析核心 vs 简单 ML — 公平比较（原始可穿戴特征）
 
-> **主表：** 15 维导出，**不含** BHI/异常标记。规则引擎因**可解释与可审计**优先，而非 oracle sklearn 准确率。`npm run experiment:compare-fair`。
+> **主表：** 15 维导出，**不含** BHI/异常标记。MedWear-AnalyticsCore-v1 因**可解释与可审计**优先，而非 oracle sklearn 准确率。`npm run experiment:compare-fair`。
 
 | Model | BHI tier agreement / Macro F1 | Notes |
 |-------|---------------------------------|-------|
-| Rule engine (vs synthetic reference) | BHI tier 0.76, alert F1 0.8542 | product metric |
+| MedWear-AnalyticsCore-v1（阈值信号 + MAD + BHI vs 参考） | BHI tier 0.76；阈值告警 F1 0.8542 | 主基准指标 — 告警 F1 仅阈值信号，非 RuleEngine |
 | majority-class | acc 0.5122, F1 0.2258 | node baseline |
 | hr-steps-heuristic | acc 0.5032, F1 0.4511 | node baseline |
 | lr (sklearn, fair) | acc 0.9390000000000001, F1 0.938260223082613 | 5-fold CV, raw features |
 | dt (sklearn, fair) | acc 0.9410000000000001, F1 0.9392945829877892 | 5-fold CV, raw features |
 | rf (sklearn, fair) | acc 0.9586, F1 0.9562394174159635 | 5-fold CV, raw features |
 
-> **公平 ML 说明：** sklearn 目标为**产品引擎 BHI 关注分层**（非合成参考标签）。5-fold CV 为同导出集上的随机分层分割。高准确率反映合成数据上的**特征可区分性上限** — **非**独立临床验证。规则引擎因可解释性优先，而非 oracle 特征上 sklearn 更差。
+> **公平 ML 说明：** sklearn 目标为**产品引擎 BHI 关注分层**（非合成参考标签）。5-fold CV 为同导出集上的随机分层分割。高准确率反映合成数据上的**特征可区分性上限** — **非**独立临床验证。MedWear-AnalyticsCore-v1 因可解释性优先，而非 oracle 特征上 sklearn 更差。
 
 ### 附录：oracle 比较（含引擎衍生特征 — 特征泄露）
 
@@ -229,7 +231,7 @@ curl http://localhost:3001/api/research/validate
 
 | Model | Reference-tier agreement / Macro F1 | Notes |
 |-------|-------------------------------------|-------|
-| Rule engine (engine-versus-reference) | 0.76, alert F1 0.8542 | product vs independent synthetic reference |
+| MedWear-AnalyticsCore-v1（engine-versus-reference） | BHI tier 0.76；阈值告警 F1 0.8542 | 阈值信号 + MAD + BHI vs 独立合成参考 — 非 RuleEngine 领域输出 |
 | majority-class | acc 0.6328, F1 0.2584 | node baseline |
 | lr (sklearn, vs reference) | acc 0.9469999999999998, F1 0.9385803982951801 | 5-fold CV, reference label target |
 | dt (sklearn, vs reference) | acc 0.9693999999999999, F1 0.9670046819306586 | 5-fold CV, reference label target |

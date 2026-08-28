@@ -32,7 +32,7 @@ const healthScore = {
     'HRV-SDNN (12%): Apple Health `HeartRateVariabilitySDNN` (SDNN in ms, **not RMSSD**)',
     'SDNN reference: `ref_sdnn(age) = max(28, 50 - 0.45 * max(0, age - 30))`',
     'SDNN score: `min(1, sdnn / ref_sdnn(age))`',
-    'Trend (conditional): when `priorDays` supplied and ≥3 valid prior BHI scores exist, `computeDayScore()` applies `computeBHIWithTrend()` (multiplier 0.12; adjustment clamped ±3; final BHI [0,100]). Primary benchmark supplies prior days — evaluates trend-adjusted pathway.',
+    'Trend (primary day-scoring pathway): when prior data are available and at least three valid prior BHI scores exist, `computeDayScore()` applies the predefined trend adjustment relative to the prior seven-day mean (up to 7 prior days supplied by the caller), multiplier 0.12, adjustment capped ±3 points, final BHI [0,100]. The primary synthetic benchmark supplies prior-day data and therefore evaluates this conditional trend-adjusted BHI pathway.',
     'Missing data: re-normalize over available components; median-imputation sensitivity via `missingDataSensitivity()`',
   ],
   formulas_zh: [
@@ -44,7 +44,7 @@ const healthScore = {
     'HRV-SDNN (12%)：Apple Health `HeartRateVariabilitySDNN`（SDNN，单位 ms，**非 RMSSD**）',
     'SDNN 参考：`ref_sdnn(age) = max(28, 50 - 0.45 * max(0, age - 30))`',
     'SDNN 得分：`min(1, sdnn / ref_sdnn(age))`',
-    '趋势（条件性）：当提供 `priorDays` 且 ≥3 个有效 prior BHI 时，`computeDayScore()` 调用 `computeBHIWithTrend()`（系数 0.12；调整限 ±3；最终 BHI [0,100]）。主基准提供 prior days — 评测含趋势调整路径。',
+    '趋势（主日评分路径）：当存在 prior 数据且至少 3 个有效 prior BHI 时，`computeDayScore()` 相对 prior 七日均值（调用方最多提供 7 个 prior 日）应用预设趋势调整，系数 0.12，调整限 ±3 分，最终 BHI [0,100]。主合成基准提供 prior days，因此评测该条件性趋势调整 BHI 路径。',
     '缺失数据：对可用分量重新归一化；中位数插补敏感性见 `missingDataSensitivity()`',
   ],
   demographicsFallback_en:
@@ -146,15 +146,15 @@ const primaryBenchmark = {
   referenceEngine: 'independentSyntheticReference-v1',
   evaluationModel: 'engine-versus-reference-agreement',
   evaluates_en: [
-    'Fixed threshold signal outputs',
+    'Threshold signal outputs (fixed wearable-style alert rules)',
     'MAD robust anomaly outputs',
-    'BHI score (trend-adjusted when prior days supplied)',
+    'BHI continuous score (trend-adjusted when prior days supplied)',
     'BHI watch tier',
   ],
   evaluates_zh: [
-    '固定阈值告警输出',
+    '阈值信号输出（固定可穿戴式告警规则）',
     'MAD 稳健异常输出',
-    'BHI 评分（提供 prior days 时含趋势调整）',
+    'BHI 连续评分（提供 prior days 时含趋势调整）',
     'BHI 关注分层',
   ],
   doesNotEvaluate_en: [

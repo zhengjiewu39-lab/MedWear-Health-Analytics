@@ -115,7 +115,7 @@ def draw_main_diagram():
         ax, (5.45, 10.35), 4.0, 1.35,
         "Real-data mode",
         C_REAL, C_REAL_EDGE, bold=True,
-        sub="Local-first primary path\nApple Health export.zip · on-device only",
+        sub="Local-first primary processing path\nApple Health export.zip · structured local ingest",
     )
 
     barrier = Rectangle((4.72, 10.15), 0.56, 1.75, linewidth=0, facecolor="white", zorder=4)
