@@ -26,13 +26,21 @@ function ageFromBirthDate(birthDateStr, refDate = new Date()) {
 /** Resolve BHI demographics from store meta, benchmark case, or explicit opts. */
 function resolveBhiDemographics(source = {}) {
   const meta = source.meta || source;
-  const age = source.age ?? meta.age ?? null;
-  const sex = source.sex ?? meta.sex ?? null;
-  const inferred = age == null || sex == null;
+  const ageRaw = source.age ?? meta.age ?? null;
+  const sexRaw = source.sex ?? meta.sex ?? null;
+  const ageMissing = ageRaw == null;
+  const sexMissing = sexRaw == null;
+  const inferred = ageMissing || sexMissing;
+  let demographicsSource = 'provided';
+  if (ageMissing && sexMissing) demographicsSource = 'fallback';
+  else if (inferred) demographicsSource = 'partial-fallback';
+
   return {
-    age: age ?? 45,
-    sex: sex ?? 'F',
+    age: ageRaw ?? 45,
+    sex: sexRaw ?? 'F',
     inferred,
+    fallbackUsed: inferred,
+    demographicsSource,
     birthDate: meta.birthDate ?? null,
   };
 }

@@ -5,7 +5,13 @@ const { resolveBhiDemographics } = require('./demographics');
 
 function bhiOpts(opts = {}) {
   const demo = resolveBhiDemographics(opts);
-  return { age: demo.age, sex: demo.sex, demographicsInferred: demo.inferred };
+  return {
+    age: demo.age,
+    sex: demo.sex,
+    demographicsInferred: demo.inferred,
+    fallbackUsed: demo.fallbackUsed,
+    demographicsSource: demo.demographicsSource,
+  };
 }
 
 function avg(arr) {

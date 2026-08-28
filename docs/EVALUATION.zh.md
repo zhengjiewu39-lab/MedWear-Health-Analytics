@@ -52,7 +52,21 @@ npm run evaluate
 | 异常准确率 | `anomalyDetected` 二分类一致率 |
 | BHI 分层一致率 | BHI 行为健康分层（`bhiWatchTier`）三分类一致率 |
 | 评分一致 | BHI 与合成参考值相差 ≤8 分（`healthScore` 字段 = BHI） |
-| 95% CI | Wilson 区间（n≥100 时可用于临床报告） |
+| 95% CI | Wilson 区间（n≥100 时可用于报告） |
+
+## 主基准范围
+
+**MedWear-Wearable-Analytics-Benchmark-v3** · n=5000 · seed=42 · 产品引擎：**MedWear-AnalyticsCore-v1** · 独立参考：**independentSyntheticReference-v1** · 评测：**engine-versus-reference agreement**。
+
+**直接评测：** 固定阈值告警、MAD 异常输出、BHI（提供 prior days 时含趋势调整）、BHI 关注分层。
+
+**不直接评测：** 领域加权 RuleEngine 研究信号整合输出；探索性队列/情景模拟模块；可选 ONNX 后端。
+
+独立合成参考标签为**规则生成的合成参考标签** — **非**临床 ground truth。
+
+±8 分 BHI 一致标准为**预设的启发式基准容差**，非经临床验证的等效界值。
+
+探索性筛查/结局模拟模块见 [METHODS.zh.md](./METHODS.zh.md) 中“不在稿件主范围”说明。
 
 ## 参考结果（v3.0，n=5000，seed=42，BHI + MAD 引擎）
 
@@ -83,7 +97,7 @@ curl http://localhost:3001/api/research/results
 - 在 v3 生成器内扩展边界案例（缺失传感器、稀疏数据等）
 - 与朴素基线对比（人群固定阈值）
 - 公开数据集启发代理健全性检查（WESAD 启发 stress 代理、PPG-DaLiA 计划中）— 非外部验证
-- 临床专家对筛查类别映射的审阅
+- 探索性研究信号模块的参考域映射审阅（不在主基准范围内）
 
 ---
 

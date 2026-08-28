@@ -12,6 +12,97 @@ const {
 const BHI_DEMO = { age: 42, sex: 'F' };
 
 describe('behavioral health index', () => {
+  test('BHI weights unchanged', () => {
+    const { WEIGHTS } = require('../services/behavioralHealthIndex');
+    assert.deepEqual(WEIGHTS, { steps: 0.28, sleep: 0.24, rhr: 0.20, spo2: 0.16, hrv: 0.12 });
+  });
+
+  test('sleepHours excludes awake from duration', () => {
+    const { sleepHours } = require('../services/behavioralHealthIndex');
+    const hours = sleepHours({ deep: 60, rem: 60, light: 120, awake: 480 });
+    assert.equal(hours, 4);
+  });
+
+  test('SDNN reference uses age-adjusted formula', () => {
+    const { sdnnReferenceMs, scoreHrv } = require('../services/behavioralHealthIndex');
+    const age = 45;
+    const ref = Math.max(28, 50 - 0.45 * Math.max(0, age - 30));
+    assert.equal(sdnnReferenceMs(age), ref);
+    assert.equal(scoreHrv(ref, age), 1);
+  });
+
+  test('missing RHR omits component — no ordinary HR mean fallback', () => {
+    const { computeBehavioralHealthIndex } = require('../services/behavioralHealthIndex');
+    const withRhr = computeBehavioralHealthIndex({
+      steps: 8000,
+      heartRate: [90, 95],
+      restingHeartRate: 62,
+      spo2: [97],
+      hrv: [45],
+      sleepMinutes: { deep: 60, rem: 60, light: 120, awake: 0 },
+    }, { age: 42, sex: 'F' });
+    const withoutRhr = computeBehavioralHealthIndex({
+      steps: 8000,
+      heartRate: [90, 95],
+      spo2: [97],
+      hrv: [45],
+      sleepMinutes: { deep: 60, rem: 60, light: 120, awake: 0 },
+    }, { age: 42, sex: 'F' });
+    assert.ok(withRhr.missing.includes('rhr') === false);
+    assert.ok(withoutRhr.missing.includes('rhr'));
+    assert.notEqual(withRhr.score, withoutRhr.score);
+  });
+
+  test('demographic fallback marked inferred with fallbackUsed', () => {
+    const { resolveBhiDemographics } = require('../services/demographics');
+    const d = resolveBhiDemographics({});
+    assert.equal(d.age, 45);
+    assert.equal(d.sex, 'F');
+    assert.equal(d.inferred, true);
+    assert.equal(d.fallbackUsed, true);
+    assert.equal(d.demographicsSource, 'fallback');
+  });
+
+  test('computeDayScore applies trend when >=3 prior days supplied', () => {
+    const baseDay = {
+      steps: 8500,
+      heartRate: [68, 70],
+      spo2: [97, 98],
+      hrv: [50],
+      restingHeartRate: 62,
+      sleepMinutes: { deep: 90, rem: 100, light: 200, awake: 15 },
+    };
+    const lowPrior = { ...baseDay, steps: 2000, restingHeartRate: 78 };
+    const scoreNoPrior = computeDayScore(baseDay, BHI_DEMO);
+    const scoreWithPrior = computeDayScore(baseDay, {
+      ...BHI_DEMO,
+      priorDays: [lowPrior, lowPrior, lowPrior],
+    });
+    assert.notEqual(scoreNoPrior, scoreWithPrior);
+  });
+
+  test('trend adjustment clamped to ±3', () => {
+    const { computeBHIWithTrend } = require('../services/behavioralHealthIndex');
+    const day = {
+      steps: 12000,
+      heartRate: [65, 68],
+      spo2: [98],
+      hrv: [55],
+      restingHeartRate: 58,
+      sleepMinutes: { deep: 100, rem: 110, light: 220, awake: 10 },
+    };
+    const veryLowPrior = {
+      steps: 500,
+      heartRate: [95],
+      spo2: [92],
+      hrv: [20],
+      restingHeartRate: 88,
+      sleepMinutes: { deep: 30, rem: 30, light: 60, awake: 200 },
+    };
+    const detail = computeBHIWithTrend(day, [veryLowPrior, veryLowPrior, veryLowPrior], BHI_DEMO);
+    assert.ok(detail.trendDelta >= -3 && detail.trendDelta <= 3);
+  });
+
   test('healthy day scores above 75 (BHI)', () => {
     const score = computeDayScore({
       steps: 8500,
@@ -107,6 +198,13 @@ describe('benchmark dataset integrity', () => {
       assert.ok(c.id && c.expected && c.days);
       assert.ok(['low', 'moderate', 'high'].includes(c.expected.riskLevel));
     });
+  });
+
+  test('benchmark seed remains 42 and n=5000', () => {
+    const ds = require('../../benchmarks/wearable-analytics-dataset.json');
+    assert.equal(ds.seed, 42);
+    assert.equal(ds.n, 5000);
+    assert.equal(ds.dataset, 'MedWear-Wearable-Analytics-Benchmark-v3');
   });
 
   test('evaluation metrics are not circular self-test (all ≥98%)', () => {

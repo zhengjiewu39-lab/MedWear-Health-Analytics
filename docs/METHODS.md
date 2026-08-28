@@ -20,19 +20,38 @@ Transparent, reproducible pipeline for real mode and benchmark evaluation. **No 
 
 **Formulas:**
 
-- Steps (28%): sigmoid — `1 / (1 + exp(-(steps - 5500) / 1800))`
-- Sleep (24%): Gaussian peak ~7.25 h — `(deep + rem + light) / 60` (estimated sleep duration; awake excluded)
-- RHR (20%): age/sex-adjusted Gaussian — ref ≈ 65 (F) / 62 (M) + 0.15×max(0, age−40)
+- Steps (28%): sigmoid — `1 / (1 + exp(-(steps - 5500) / 1800))` (component used only when `steps > 0`; see step-zero limitation)
+- Sleep (24%): Gaussian peak ~7.25 h — estimated sleep duration `(deep + rem + light) / 60` hours; **awake is excluded** from sleep duration
+- Sleep score: `exp(-((hours - 7.25)^2) / (2 * 1.4^2))`
+- RHR (20%): age/sex-adjusted Gaussian — ref = (male ? 62 : 65) + 0.15 × max(0, age−40); score `exp(-((rhr - ref)^2) / (2 * 12^2))`
 - SpO₂ (16%): logistic — `1 / (1 + exp(-(spo2 - 94) / 0.75))`
-- HRV (12%): age-adjusted SDNN (ms) — `min(1, sdnn / ref_sdnn(age))`
-- Trend (optional): ±3 pts max vs prior 7-day BHI mean
+- HRV-SDNN (12%): Apple Health `HeartRateVariabilitySDNN` (SDNN in ms, **not RMSSD**)
+- SDNN reference: `ref_sdnn(age) = max(28, 50 - 0.45 * max(0, age - 30))`
+- SDNN score: `min(1, sdnn / ref_sdnn(age))`
+- Trend (conditional): when `priorDays` supplied and ≥3 valid prior BHI scores exist, `computeDayScore()` applies `computeBHIWithTrend()` (multiplier 0.12; adjustment clamped ±3; final BHI [0,100]). Primary benchmark supplies prior days — evaluates trend-adjusted pathway.
 - Missing data: re-normalize over available components; median-imputation sensitivity via `missingDataSensitivity()`
 
 **API field:** `healthScore` = Behavioral Health Index (BHI). Field name healthScore is kept for backward compatibility; values are BHI (behavioral wellness index), not a calibrated disease-risk score.
 
 Implementation: `server/services/behavioralHealthIndex.js → analyticsCore.computeDayScore()`
 
+**Demographics fallback:** When age or biological-sex metadata are unavailable, the compatibility path uses age 45 and female as fallback values and marks the demographic configuration as inferred (`fallbackUsed: true`). These fallback values are software compatibility defaults and are not population reference standards.
+
+**Step-zero limitation:** Zero step count is currently treated as unavailable for BHI component scoring (`steps > 0` required). The implementation cannot distinguish a true zero-step day from an absent daily step record in this path. The steps component is omitted and remaining BHI weights are renormalized.
+
 **Limitations:** Not calibrated against clinical outcomes; No comorbidity or medication adjustment; Wearable proxy signals only.
+
+## Primary benchmark scope (MedWear-Wearable-Analytics-Benchmark-v3)
+
+Dataset: `MedWear-Wearable-Analytics-Benchmark-v3` · n=5000 · seed=42 · Product engine: `MedWear-AnalyticsCore-v1` · Reference: `independentSyntheticReference-v1` · Evaluation: engine-versus-reference-agreement.
+
+**Evaluates:** Fixed threshold alert outputs; MAD robust anomaly outputs; BHI score (trend-adjusted when prior days supplied); BHI watch tier.
+
+**Does not evaluate:** Domain-weighted RuleEngine research-signal integration outputs; Exploratory cohort/scenario simulation modules; Optional ONNX experimental backend.
+
+Independent synthetic reference labels are rule-generated synthetic reference labels and do not constitute clinical ground truth.
+
+The ±8 BHI score-agreement criterion is a prespecified heuristic benchmark tolerance, not a clinically validated equivalence margin.
 
 ## Alerts {#alerts}
 
@@ -86,7 +105,9 @@ Implementation: `server/config/bhiWatchTier.js → classifyBHIWatchTier()`
 
 Implementation: `server/data/researchReferences.js → EVIDENCE_LEVEL_RULES + EVIDENCE_RATIONALE`
 
-## Rule Engine (Screening)
+## Rule Engine (Research Signal Integration — exploratory)
+
+**Exploratory — outside primary manuscript scope.** Not evaluated in MedWear-Wearable-Analytics-Benchmark-v3 primary benchmark Not part of the manuscript principal claims Not clinical validation or validated screening performance Not evidence of patient benefit
 
 **Domain weights are configurable placeholders — not trained model votes.** `engineType: evidence-weighted-rule-engine` · Version: `MedWear-RuleEngine-v1`. Confidence capped at 0.85.
 
@@ -94,7 +115,7 @@ Implementation: `server/data/researchReferences.js → EVIDENCE_LEVEL_RULES + EV
 |--------|--------|
 | cardiovascular | 28% |
 | vitals | 22% |
-| oncology screening | 18% |
+| oncology-related reference domain | 18% |
 | metabolic | 16% |
 | sleep | 16% |
 
@@ -106,7 +127,7 @@ Removed claims: CardioNet-style declared accuracy; ensemble confidence clamped t
 
 ## Optional ONNX inference backend
 
-**The evidence-weighted rule engine (BHI + MAD + screening rules) is the default product core — ONNX is disabled unless explicitly enabled.**
+**The deterministic rule-based analytics (BHI + MAD + research signal rules) are the primary research pathway — ONNX is disabled by default unless explicitly enabled.**
 
 | Item | Detail |
 |------|--------|
@@ -114,13 +135,13 @@ Removed claims: CardioNet-style declared accuracy; ensemble confidence clamped t
 | Artifact | `server/ai/models/medwear_rf.onnx + medwear_rf.meta.json` |
 | Training | `experiments/medwear/train.py (sklearn RandomForest → skl2onnx export)` |
 | Training data | MedWear-Wearable-Analytics-Benchmark-v3 synthetic export (n=5000, seed=42) → experiments/data/medwear/features_v1.csv via scripts/export_features.js |
-| Label target | BHI watch tier (low/moderate/high) — experimental comparison display only; never feeds disease screening scores |
+| Label target | BHI watch tier (low/moderate/high) — experimental comparison display only when ONNX enabled; never feeds domain attention scores |
 | Runtime | onnxruntime-node via server/ai/onnxInference.js |
 | Used in | runFullAnalysis() when MEDWEAR_ENABLE_ONNX=true — experimentalBhiTierComparison field only |
-| **Not used in** | deriveConditionRisk / disease screening scores / npm run evaluate / MedWear-AnalyticsCore-v1 benchmark |
+| **Not used in** | deriveConditionRisk / domain attention scores / npm run evaluate / MedWear-AnalyticsCore-v1 primary benchmark |
 | Fallback | `rule-engine-only (default) or feature-heuristic-fallback when enabled but load fails` — Default off. When enabled, ONNX failures silently skip to rule-engine BHI — no thrown errors. |
 
-Implementation: `server/config/onnxConfig.js → server/ai/onnxInference.js → server/ai/engine.js`. Opt-in experimental backend — BHI tier comparison only; not validated for clinical use; rule engine remains authoritative for all screening signals.
+Implementation: `server/config/onnxConfig.js → server/ai/onnxInference.js → server/ai/engine.js`. Optional experimental backend — disabled by default; not part of MedWear-AnalyticsCore-v1 primary benchmark; BHI-tier comparison only when enabled; no disease-screening or clinical-performance claims; deterministic rule-based analytics remain the primary research pathway.
 
 ## Robustness Testing
 
@@ -133,18 +154,18 @@ Implementation: `server/config/onnxConfig.js → server/ai/onnxInference.js → 
 - Motion artifact (high-activity days excluded from MAD baseline)
 - Recovery/rest day (low steps, suppressed activity alerts context)
 
-## Exploratory Cohort Scenario Simulation
+## Exploratory cohort scenario simulation (outside primary manuscript scope)
 
-**Outcomes are highly parameter-driven. For methodology demonstration and sensitivity analysis only — do not report as inferential p-values or proven clinical benefit.**
+**Exploratory modules outside primary manuscript scope. Outcomes are highly parameter-driven. For methodology demonstration and sensitivity analysis only — do not report as inferential p-values or proven clinical benefit.**
 
 Public parameters: STAGE_DISTRIBUTION, TREATMENT_INITIATION_RATE, CHRONIC_CONTROL_RATE, TIME_TO_TREATMENT, computeRiskScore coefficients.  
 Scenarios: conservative, neutral, optimistic (via `GET /api/outcomes/scenarios`).
 
-## Dual-Mode Architecture
+## Dual-mode architecture
 
 | Mode | Data | Analytics | AI |
 |------|------|-----------|-----|
-| Demo | Synthetic mock | BHI + MAD + rule engine | Rule engine |
-| Real | Apple Health import | BHI + MAD + rule engine | Optional LLM + same core |
+| Synthetic evaluation | Synthetic benchmark cohort (seed=42) | BHI + MAD + rule engine | Rule engine |
+| Real-data (local-first) | Apple Health import | BHI + MAD + rule engine | Optional LLM + same core |
 
 See [EVALUATION.md](./EVALUATION.md) for benchmark protocol.

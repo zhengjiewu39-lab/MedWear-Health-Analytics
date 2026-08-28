@@ -37,6 +37,10 @@ const FORBIDDEN = [
   /\brisk stratification\b/i,
   /clinical-random adults/i,
   /Medical Wearable Health Analytics Platform/i,
+  /\(deep \+ rem \+ light \+ awake\)/i,
+  /Rule Engine \(Screening\)/i,
+  /\boncology screening\b/i,
+  /disease screening scores/i,
 ];
 
 let failed = false;

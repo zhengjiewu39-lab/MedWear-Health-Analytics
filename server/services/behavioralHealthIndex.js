@@ -165,6 +165,7 @@ module.exports = {
   SCORE_KIND,
   SCORE_FIELD,
   WEIGHTS,
+  sleepHours,
   computeBehavioralHealthIndex,
   computeBHIWithTrend,
   missingDataSensitivity,

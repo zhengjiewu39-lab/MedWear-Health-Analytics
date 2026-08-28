@@ -53,6 +53,20 @@ Output: `benchmarks/results/latest.json`
 | Score agreement | BHI within ±8 pts of synthetic reference (`healthScore` field = BHI) |
 | 95% CI | Wilson score interval for accuracy metrics (n≥100) |
 
+## Primary benchmark scope
+
+**MedWear-Wearable-Analytics-Benchmark-v3** · n=5000 · seed=42 · Product engine: **MedWear-AnalyticsCore-v1** · Independent reference: **independentSyntheticReference-v1** · Evaluation: **engine-versus-reference agreement**.
+
+**Directly evaluated:** fixed threshold alerts, MAD anomaly outputs, BHI (trend-adjusted when prior days supplied), BHI watch tier.
+
+**Not directly evaluated:** domain-weighted RuleEngine research-signal integration outputs; exploratory cohort/scenario simulation modules; optional ONNX backend.
+
+Independent synthetic reference labels are **rule-generated synthetic reference labels** — they do **not** constitute clinical ground truth.
+
+The ±8 BHI score-agreement criterion is a **prespecified heuristic benchmark tolerance**, not a clinically validated equivalence margin.
+
+Exploratory screening/outcome simulation modules are documented under “Exploratory modules outside primary manuscript scope” in [METHODS.md](./METHODS.md).
+
 ## Reference Results (v3.0, n=5000, seed=42, BHI + MAD engine)
 
 Run `npm run evaluate` for current numbers. Example (product engine vs **independentSyntheticReference-v1** independent synthetic reference labels — engine-versus-reference agreement):
@@ -84,7 +98,7 @@ curl http://localhost:3001/api/research/results
 - Expand edge cases (missing sensors, sparse data) within v3 generator
 - Compare against naive baselines (population fixed thresholds)
 - Public-dataset-inspired proxy sanity checks (WESAD-inspired stress proxy, PPG-DaLiA planned) — not external validation
-- Clinician review of screening category mappings
+- Reference-domain mapping review for exploratory research-signal modules (outside primary benchmark)
 
 ---
 

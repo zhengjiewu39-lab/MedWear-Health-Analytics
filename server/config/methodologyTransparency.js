@@ -24,22 +24,42 @@ const healthScore = {
   implementation: 'server/services/behavioralHealthIndex.js → analyticsCore.computeDayScore()',
   weights: WEIGHTS,
   formulas_en: [
-    'Steps (28%): sigmoid — `1 / (1 + exp(-(steps - 5500) / 1800))`',
-    'Sleep (24%): Gaussian peak ~7.25 h — `(deep + rem + light) / 60` (estimated sleep duration; awake excluded)',
-    'RHR (20%): age/sex-adjusted Gaussian — ref ≈ 65 (F) / 62 (M) + 0.15×max(0, age−40)',
+    'Steps (28%): sigmoid — `1 / (1 + exp(-(steps - 5500) / 1800))` (component used only when `steps > 0`; see step-zero limitation)',
+    'Sleep (24%): Gaussian peak ~7.25 h — estimated sleep duration `(deep + rem + light) / 60` hours; **awake is excluded** from sleep duration',
+    'Sleep score: `exp(-((hours - 7.25)^2) / (2 * 1.4^2))`',
+    'RHR (20%): age/sex-adjusted Gaussian — ref = (male ? 62 : 65) + 0.15 × max(0, age−40); score `exp(-((rhr - ref)^2) / (2 * 12^2))`',
     'SpO₂ (16%): logistic — `1 / (1 + exp(-(spo2 - 94) / 0.75))`',
-    'HRV (12%): age-adjusted SDNN (ms) — `min(1, sdnn / ref_sdnn(age))`',
-    'Trend (optional): ±3 pts max vs prior 7-day BHI mean',
+    'HRV-SDNN (12%): Apple Health `HeartRateVariabilitySDNN` (SDNN in ms, **not RMSSD**)',
+    'SDNN reference: `ref_sdnn(age) = max(28, 50 - 0.45 * max(0, age - 30))`',
+    'SDNN score: `min(1, sdnn / ref_sdnn(age))`',
+    'Trend (conditional): when `priorDays` supplied and ≥3 valid prior BHI scores exist, `computeDayScore()` applies `computeBHIWithTrend()` (multiplier 0.12; adjustment clamped ±3; final BHI [0,100]). Primary benchmark supplies prior days — evaluates trend-adjusted pathway.',
     'Missing data: re-normalize over available components; median-imputation sensitivity via `missingDataSensitivity()`',
   ],
   formulas_zh: [
-    '步数 (28%)：sigmoid — `1 / (1 + exp(-(steps - 5500) / 1800))`',
-    '睡眠 (24%)：高斯峰值 ~7.25 h — `(深睡 + REM + 浅睡) / 60`（估计睡眠时长；不含 awake）',
-    '静息心率 (20%)：年龄/性别调整高斯 — 参考值 ≈ 女 65 / 男 62 + 0.15×max(0, 年龄−40)',
+    '步数 (28%)：sigmoid — `1 / (1 + exp(-(steps - 5500) / 1800))`（仅当 `steps > 0` 时使用；见步数为零说明）',
+    '睡眠 (24%)：高斯峰值 ~7.25 h — 估计睡眠时长 `(深睡 + REM + 浅睡) / 60` 小时；**清醒阶段不计入睡眠时长**',
+    '睡眠得分：`exp(-((hours - 7.25)^2) / (2 * 1.4^2))`',
+    '静息心率 (20%)：年龄/性别调整高斯 — 参考值 = (男 ? 62 : 65) + 0.15 × max(0, 年龄−40)；得分 `exp(-((rhr - ref)^2) / (2 * 12^2))`',
     'SpO₂ (16%)：logistic — `1 / (1 + exp(-(spo2 - 94) / 0.75))`',
-    'HRV (12%)：年龄调整 SDNN (ms) — `min(1, sdnn / ref_sdnn(age))`',
-    '趋势（可选）：相对前 7 日 BHI 均值 ±3 分',
+    'HRV-SDNN (12%)：Apple Health `HeartRateVariabilitySDNN`（SDNN，单位 ms，**非 RMSSD**）',
+    'SDNN 参考：`ref_sdnn(age) = max(28, 50 - 0.45 * max(0, age - 30))`',
+    'SDNN 得分：`min(1, sdnn / ref_sdnn(age))`',
+    '趋势（条件性）：当提供 `priorDays` 且 ≥3 个有效 prior BHI 时，`computeDayScore()` 调用 `computeBHIWithTrend()`（系数 0.12；调整限 ±3；最终 BHI [0,100]）。主基准提供 prior days — 评测含趋势调整路径。',
     '缺失数据：对可用分量重新归一化；中位数插补敏感性见 `missingDataSensitivity()`',
+  ],
+  demographicsFallback_en:
+    'When age or biological-sex metadata are unavailable, the compatibility path uses age 45 and female as fallback values and marks the demographic configuration as inferred (`fallbackUsed: true`). These fallback values are software compatibility defaults and are not population reference standards.',
+  demographicsFallback_zh:
+    '当年龄或生理性别元数据不可获得时，兼容路径使用年龄45岁和女性作为后备参数，并将人口学配置标记为推断值（`fallbackUsed: true`）。该后备参数仅用于软件兼容，不代表人群正常参考标准。',
+  stepZeroLimitation_en: [
+    'Zero step count is currently treated as unavailable for BHI component scoring (`steps > 0` required).',
+    'The implementation cannot distinguish a true zero-step day from an absent daily step record in this path.',
+    'The steps component is omitted and remaining BHI weights are renormalized.',
+  ],
+  stepZeroLimitation_zh: [
+    '当前实现中，步数为零视为 BHI 步数分量不可用（需 `steps > 0`）。',
+    '此路径无法区分真实零步数日与缺失的日步数记录。',
+    '步数分量被省略，其余 BHI 权重重新归一化。',
   ],
   disclaimer_en: 'BHI is a behavioral wellness index — NOT a calibrated disease-risk score.',
   disclaimer_zh: 'BHI 为行为健康指数 — 非经临床校准的疾病风险评分。',
@@ -118,11 +138,64 @@ const evidenceLevels = {
   implementation: 'server/data/researchReferences.js → EVIDENCE_LEVEL_RULES + EVIDENCE_RATIONALE',
 };
 
+const primaryBenchmark = {
+  dataset: 'MedWear-Wearable-Analytics-Benchmark-v3',
+  n: 5000,
+  seed: 42,
+  productEngine: 'MedWear-AnalyticsCore-v1',
+  referenceEngine: 'independentSyntheticReference-v1',
+  evaluationModel: 'engine-versus-reference-agreement',
+  evaluates_en: [
+    'Fixed threshold alert outputs',
+    'MAD robust anomaly outputs',
+    'BHI score (trend-adjusted when prior days supplied)',
+    'BHI watch tier',
+  ],
+  evaluates_zh: [
+    '固定阈值告警输出',
+    'MAD 稳健异常输出',
+    'BHI 评分（提供 prior days 时含趋势调整）',
+    'BHI 关注分层',
+  ],
+  doesNotEvaluate_en: [
+    'Domain-weighted RuleEngine research-signal integration outputs',
+    'Exploratory cohort/scenario simulation modules',
+    'Optional ONNX experimental backend',
+  ],
+  doesNotEvaluate_zh: [
+    '领域加权 RuleEngine 研究信号整合输出',
+    '探索性队列/情景模拟模块',
+    '可选 ONNX 实验后端',
+  ],
+  referenceLabels_en:
+    'Independent synthetic reference labels are rule-generated synthetic reference labels and do not constitute clinical ground truth.',
+  referenceLabels_zh:
+    '独立合成参考标签为规则生成的合成参考标签，不构成临床 ground truth。',
+  scoreTolerance_en:
+    'The ±8 BHI score-agreement criterion is a prespecified heuristic benchmark tolerance, not a clinically validated equivalence margin.',
+  scoreTolerance_zh:
+    '±8 分 BHI 一致标准为预设的启发式基准容差，非经临床验证的等效界值。',
+};
+
 const ruleEngine = {
   engineType: 'evidence-weighted-rule-engine',
   version: 'MedWear-RuleEngine-v1',
-  label_en: 'Evidence-weighted rule engine (not ML ensemble)',
-  label_zh: '证据加权规则引擎（非 ML 集成）',
+  sectionTitle_en: 'Rule Engine (Research Signal Integration — exploratory)',
+  sectionTitle_zh: '规则引擎（研究信号整合 — 探索性）',
+  label_en: 'Evidence-weighted rule engine (research signal integration — not ML ensemble)',
+  label_zh: '证据加权规则引擎（研究信号整合 — 非 ML 集成）',
+  outsidePrimaryManuscriptScope_en: [
+    'Not evaluated in MedWear-Wearable-Analytics-Benchmark-v3 primary benchmark',
+    'Not part of the manuscript principal claims',
+    'Not clinical validation or validated screening performance',
+    'Not evidence of patient benefit',
+  ],
+  outsidePrimaryManuscriptScope_zh: [
+    '不在 MedWear-Wearable-Analytics-Benchmark-v3 主基准评测范围内',
+    '不属于稿件主要结论',
+    '非临床验证或经验证的筛查性能',
+    '非患者获益证据',
+  ],
   apiFields: {
     overallBhiTier: 'BHI watch tier from rule engine — not disease risk',
     attentionScore: 'Rule-derived attention signal score — not disease probability',
@@ -140,7 +213,7 @@ const ruleEngine = {
   domainWeights: [
     { domain: 'cardiovascular', weight: 0.28 },
     { domain: 'vitals', weight: 0.22 },
-    { domain: 'oncology screening', weight: 0.18 },
+    { domain: 'oncology-related reference domain', weight: 0.18 },
     { domain: 'metabolic', weight: 0.16 },
     { domain: 'sleep', weight: 0.16 },
   ],
@@ -160,23 +233,23 @@ const optionalOnnxBackend = {
   label_zh: '可选 ONNX 推理后端',
   isDefaultCore: false,
   enableFlag: 'MEDWEAR_ENABLE_ONNX=false (default — opt-in only)',
-  defaultCore_en: 'The evidence-weighted rule engine (BHI + MAD + screening rules) is the default product core — ONNX is disabled unless explicitly enabled.',
-  defaultCore_zh: '证据加权规则引擎（BHI + MAD + 筛查规则）为默认产品核心 — 除非显式开启，否则 ONNX 默认关闭。',
+  defaultCore_en: 'The deterministic rule-based analytics (BHI + MAD + research signal rules) are the primary research pathway — ONNX is disabled by default unless explicitly enabled.',
+  defaultCore_zh: '确定性规则化分析（BHI + MAD + 研究信号规则）为主要研究路径 — 除非显式开启，否则 ONNX 默认关闭。',
   modelArtifact: 'server/ai/models/medwear_rf.onnx + medwear_rf.meta.json',
   trainingScript: 'experiments/medwear/train.py (sklearn RandomForest → skl2onnx export)',
   trainingData_en: 'MedWear-Wearable-Analytics-Benchmark-v3 synthetic export (n=5000, seed=42) → experiments/data/medwear/features_v1.csv via scripts/export_features.js',
   trainingData_zh: 'MedWear-Wearable-Analytics-Benchmark-v3 合成导出（n=5000, seed=42）→ scripts/export_features.js 生成 experiments/data/medwear/features_v1.csv',
-  labelTarget_en: 'BHI watch tier (low/moderate/high) — experimental comparison display only; never feeds disease screening scores',
-  labelTarget_zh: 'BHI 关注分层（low/moderate/high）— 仅实验性对比展示；不参与疾病筛查分数',
+  labelTarget_en: 'BHI watch tier (low/moderate/high) — experimental comparison display only when ONNX enabled; never feeds domain attention scores',
+  labelTarget_zh: 'BHI 关注分层（low/moderate/high）— 仅 ONNX 开启时的实验性对比展示；不参与领域关注分数',
   runtime: 'onnxruntime-node via server/ai/onnxInference.js',
   usedIn: 'runFullAnalysis() when MEDWEAR_ENABLE_ONNX=true — experimentalBhiTierComparison field only',
-  notUsedIn: 'deriveConditionRisk / disease screening scores / npm run evaluate / MedWear-AnalyticsCore-v1 benchmark',
+  notUsedIn: 'deriveConditionRisk / domain attention scores / npm run evaluate / MedWear-AnalyticsCore-v1 primary benchmark',
   fallback: 'rule-engine-only (default) or feature-heuristic-fallback when enabled but load fails',
   fallbackBehavior_en: 'Default off. When enabled, ONNX failures silently skip to rule-engine BHI — no thrown errors.',
   fallbackBehavior_zh: '默认关闭。开启后 ONNX 失败时静默跳过，仍用规则引擎 BHI — 不向调用方抛错。',
   implementation: 'server/config/onnxConfig.js → server/ai/onnxInference.js → server/ai/engine.js',
-  disclaimer_en: 'Opt-in experimental backend — BHI tier comparison only; not validated for clinical use; rule engine remains authoritative for all screening signals.',
-  disclaimer_zh: '需显式开启的实验性后端 — 仅 BHI 分层对比；未经临床验证；筛查信号仍由规则引擎生成。',
+  disclaimer_en: 'Optional experimental backend — disabled by default; not part of MedWear-AnalyticsCore-v1 primary benchmark; BHI-tier comparison only when enabled; no disease-screening or clinical-performance claims; deterministic rule-based analytics remain the primary research pathway.',
+  disclaimer_zh: '可选实验性后端 — 默认关闭；不属于 MedWear-AnalyticsCore-v1 主基准；仅开启时做 BHI 分层对比；无疾病筛查或临床性能声明；确定性规则化分析仍为主要研究路径。',
 };
 
 const robustnessTests = {
@@ -218,8 +291,8 @@ const cohortSimulation = {
     'TIME_TO_TREATMENT',
     'computeRiskScore coefficients',
   ],
-  disclaimer_en: 'Outcomes are highly parameter-driven. For methodology demonstration and sensitivity analysis only — do not report as inferential p-values or proven clinical benefit.',
-  disclaimer_zh: '结局高度依赖预设参数。仅用于方法论演示与敏感性分析 — 不可作为推断 p 值或已证实的临床获益。',
+  disclaimer_en: 'Exploratory modules outside primary manuscript scope. Outcomes are highly parameter-driven. For methodology demonstration and sensitivity analysis only — do not report as inferential p-values or proven clinical benefit.',
+  disclaimer_zh: '探索性模块，不在稿件主范围。结局高度依赖预设参数。仅用于方法论演示与敏感性分析 — 不可作为推断 p 值或已证实的临床获益。',
   limitations_en: [
     'Intervention advantage partially encoded in preset arm parameters',
     'Not independent validation of system performance',
@@ -235,6 +308,7 @@ function getMethodologyTransparency() {
     version: '1.1.0',
     source: SOURCE_FILE,
     updatedAt: new Date().toISOString(),
+    primaryBenchmark,
     healthScore,
     bhiWatchTier,
     evidenceLevels,
@@ -258,6 +332,7 @@ function renderMethodsMarkdown(isEn = true) {
   const bw = t.bhiWatchTier;
   const ev = t.evidenceLevels;
   const rb = t.robustnessTests;
+  const pb = t.primaryBenchmark;
   const co = t.cohortSimulation;
 
   if (isEn) {
@@ -285,7 +360,23 @@ ${hs.formulas_en.map((f) => `- ${f}`).join('\n')}
 
 Implementation: \`${hs.implementation}\`
 
+**Demographics fallback:** ${hs.demographicsFallback_en}
+
+**Step-zero limitation:** ${hs.stepZeroLimitation_en.join(' ')}
+
 **Limitations:** ${hs.limitations_en.join('; ')}.
+
+## Primary benchmark scope (MedWear-Wearable-Analytics-Benchmark-v3)
+
+Dataset: \`${pb.dataset}\` · n=${pb.n} · seed=${pb.seed} · Product engine: \`${pb.productEngine}\` · Reference: \`${pb.referenceEngine}\` · Evaluation: ${pb.evaluationModel}.
+
+**Evaluates:** ${pb.evaluates_en.join('; ')}.
+
+**Does not evaluate:** ${pb.doesNotEvaluate_en.join('; ')}.
+
+${pb.referenceLabels_en}
+
+${pb.scoreTolerance_en}
 
 ## Alerts {#alerts}
 
@@ -334,7 +425,9 @@ Implementation: \`${bw.implementation}\`
 
 Implementation: \`${ev.implementation}\`
 
-## Rule Engine (Screening)
+## ${re.sectionTitle_en}
+
+**Exploratory — outside primary manuscript scope.** ${re.outsidePrimaryManuscriptScope_en.join(' ')}
 
 **${re.disclaimer_en}** \`engineType: ${re.engineType}\` · Version: \`${re.version}\`. Confidence capped at ${re.confidenceCap}.
 
@@ -372,19 +465,19 @@ Implementation: \`${onnx.implementation}\`. ${onnx.disclaimer_en}
 
 ${rb.scenarios_en.map((s) => `- ${s}`).join('\n')}
 
-## Exploratory Cohort Scenario Simulation
+## Exploratory cohort scenario simulation (outside primary manuscript scope)
 
 **${co.disclaimer_en}**
 
 Public parameters: ${co.publicParameters.join(', ')}.  
 Scenarios: ${co.scenarios.join(', ')} (via \`GET /api/outcomes/scenarios\`).
 
-## Dual-Mode Architecture
+## Dual-mode architecture
 
 | Mode | Data | Analytics | AI |
 |------|------|-----------|-----|
-| Demo | Synthetic mock | BHI + MAD + rule engine | Rule engine |
-| Real | Apple Health import | BHI + MAD + rule engine | Optional LLM + same core |
+| Synthetic evaluation | Synthetic benchmark cohort (seed=42) | BHI + MAD + rule engine | Rule engine |
+| Real-data (local-first) | Apple Health import | BHI + MAD + rule engine | Optional LLM + same core |
 
 See [EVALUATION.md](./EVALUATION.md) for benchmark protocol.
 `;
@@ -414,7 +507,23 @@ ${hs.formulas_zh.map((f) => `- ${f}`).join('\n')}
 
 实现：\`${hs.implementation}\`
 
+**人口学后备参数：** ${hs.demographicsFallback_zh}
+
+**步数为零说明：** ${hs.stepZeroLimitation_zh.join(' ')}
+
 **局限：** ${hs.limitations_zh.join('；')}。
+
+## 主基准范围（MedWear-Wearable-Analytics-Benchmark-v3）
+
+数据集：\`${pb.dataset}\` · n=${pb.n} · seed=${pb.seed} · 产品引擎：\`${pb.productEngine}\` · 参考：\`${pb.referenceEngine}\` · 评测：${pb.evaluationModel}。
+
+**评测内容：** ${pb.evaluates_zh.join('；')}。
+
+**不评测：** ${pb.doesNotEvaluate_zh.join('；')}。
+
+${pb.referenceLabels_zh}
+
+${pb.scoreTolerance_zh}
 
 ## 告警 {#alerts}
 
@@ -463,7 +572,9 @@ ${Object.entries(an.sensitivityPresets).map(([name, p]) => `| ${name} | ${p.wind
 
 实现：\`${ev.implementation}\`
 
-## 规则引擎（筛查）
+## ${re.sectionTitle_zh}
+
+**探索性 — 不在稿件主范围。** ${re.outsidePrimaryManuscriptScope_zh.join(' ')}
 
 **${re.disclaimer_zh}** \`engineType: ${re.engineType}\` · 版本：\`${re.version}\`。置信度上限 ${re.confidenceCap}。
 
@@ -501,7 +612,7 @@ ${re.domainWeights.map((d) => `| ${d.domain} | ${(d.weight * 100).toFixed(0)}% |
 
 ${rb.scenarios_zh.map((s) => `- ${s}`).join('\n')}
 
-## 探索性队列情景模拟
+## 探索性队列情景模拟（不在稿件主范围）
 
 **${co.disclaimer_zh}**
 
@@ -512,8 +623,8 @@ ${rb.scenarios_zh.map((s) => `- ${s}`).join('\n')}
 
 | 模式 | 数据 | 分析 | AI |
 |------|------|------|-----|
-| 演示 | 合成模拟 | BHI + MAD + 规则引擎 | 规则引擎 |
-| 真实 | Apple Health | BHI + MAD + 规则引擎 | 可选 LLM + 同一核心 |
+| 合成评测 | 合成基准队列（seed=42） | BHI + MAD + 规则引擎 | 规则引擎 |
+| 真实数据（local-first） | Apple Health 导入 | BHI + MAD + 规则引擎 | 可选 LLM + 同一核心 |
 
 详见 [EVALUATION.zh.md](./EVALUATION.zh.md)。
 `;
@@ -540,4 +651,5 @@ module.exports = {
   robustnessTests,
   ruleEngine,
   cohortSimulation,
+  primaryBenchmark,
 };

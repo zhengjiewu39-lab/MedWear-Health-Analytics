@@ -20,19 +20,38 @@
 
 公式：
 
-- 步数 (28%)：sigmoid — `1 / (1 + exp(-(steps - 5500) / 1800))`
-- 睡眠 (24%)：高斯峰值 ~7.25 h — `(深睡 + REM + 浅睡) / 60`（估计睡眠时长；不含 awake）
-- 静息心率 (20%)：年龄/性别调整高斯 — 参考值 ≈ 女 65 / 男 62 + 0.15×max(0, 年龄−40)
+- 步数 (28%)：sigmoid — `1 / (1 + exp(-(steps - 5500) / 1800))`（仅当 `steps > 0` 时使用；见步数为零说明）
+- 睡眠 (24%)：高斯峰值 ~7.25 h — 估计睡眠时长 `(深睡 + REM + 浅睡) / 60` 小时；**清醒阶段不计入睡眠时长**
+- 睡眠得分：`exp(-((hours - 7.25)^2) / (2 * 1.4^2))`
+- 静息心率 (20%)：年龄/性别调整高斯 — 参考值 = (男 ? 62 : 65) + 0.15 × max(0, 年龄−40)；得分 `exp(-((rhr - ref)^2) / (2 * 12^2))`
 - SpO₂ (16%)：logistic — `1 / (1 + exp(-(spo2 - 94) / 0.75))`
-- HRV (12%)：年龄调整 SDNN (ms) — `min(1, sdnn / ref_sdnn(age))`
-- 趋势（可选）：相对前 7 日 BHI 均值 ±3 分
+- HRV-SDNN (12%)：Apple Health `HeartRateVariabilitySDNN`（SDNN，单位 ms，**非 RMSSD**）
+- SDNN 参考：`ref_sdnn(age) = max(28, 50 - 0.45 * max(0, age - 30))`
+- SDNN 得分：`min(1, sdnn / ref_sdnn(age))`
+- 趋势（条件性）：当提供 `priorDays` 且 ≥3 个有效 prior BHI 时，`computeDayScore()` 调用 `computeBHIWithTrend()`（系数 0.12；调整限 ±3；最终 BHI [0,100]）。主基准提供 prior days — 评测含趋势调整路径。
 - 缺失数据：对可用分量重新归一化；中位数插补敏感性见 `missingDataSensitivity()`
 
 **API 字段：** `healthScore` = 行为健康指数（BHI）。字段名 healthScore 为向后兼容保留；数值为 BHI（行为健康指数），非经临床校准的疾病风险评分。
 
 实现：`server/services/behavioralHealthIndex.js → analyticsCore.computeDayScore()`
 
+**人口学后备参数：** 当年龄或生理性别元数据不可获得时，兼容路径使用年龄45岁和女性作为后备参数，并将人口学配置标记为推断值（`fallbackUsed: true`）。该后备参数仅用于软件兼容，不代表人群正常参考标准。
+
+**步数为零说明：** 当前实现中，步数为零视为 BHI 步数分量不可用（需 `steps > 0`）。 此路径无法区分真实零步数日与缺失的日步数记录。 步数分量被省略，其余 BHI 权重重新归一化。
+
 **局限：** 未在临床结局上校准；无合并症/用药调整；仅可穿戴代理信号。
+
+## 主基准范围（MedWear-Wearable-Analytics-Benchmark-v3）
+
+数据集：`MedWear-Wearable-Analytics-Benchmark-v3` · n=5000 · seed=42 · 产品引擎：`MedWear-AnalyticsCore-v1` · 参考：`independentSyntheticReference-v1` · 评测：engine-versus-reference-agreement。
+
+**评测内容：** 固定阈值告警输出；MAD 稳健异常输出；BHI 评分（提供 prior days 时含趋势调整）；BHI 关注分层。
+
+**不评测：** 领域加权 RuleEngine 研究信号整合输出；探索性队列/情景模拟模块；可选 ONNX 实验后端。
+
+独立合成参考标签为规则生成的合成参考标签，不构成临床 ground truth。
+
+±8 分 BHI 一致标准为预设的启发式基准容差，非经临床验证的等效界值。
 
 ## 告警 {#alerts}
 
@@ -86,7 +105,9 @@
 
 实现：`server/data/researchReferences.js → EVIDENCE_LEVEL_RULES + EVIDENCE_RATIONALE`
 
-## 规则引擎（筛查）
+## 规则引擎（研究信号整合 — 探索性）
+
+**探索性 — 不在稿件主范围。** 不在 MedWear-Wearable-Analytics-Benchmark-v3 主基准评测范围内 不属于稿件主要结论 非临床验证或经验证的筛查性能 非患者获益证据
 
 **领域权重为可配置占位符 — 非训练模型投票。** `engineType: evidence-weighted-rule-engine` · 版本：`MedWear-RuleEngine-v1`。置信度上限 0.85。
 
@@ -94,7 +115,7 @@
 |------|------|
 | cardiovascular | 28% |
 | vitals | 22% |
-| oncology screening | 18% |
+| oncology-related reference domain | 18% |
 | metabolic | 16% |
 | sleep | 16% |
 
@@ -106,7 +127,7 @@
 
 ## 可选 ONNX 推理后端
 
-**证据加权规则引擎（BHI + MAD + 筛查规则）为默认产品核心 — 除非显式开启，否则 ONNX 默认关闭。**
+**确定性规则化分析（BHI + MAD + 研究信号规则）为主要研究路径 — 除非显式开启，否则 ONNX 默认关闭。**
 
 | 项 | 说明 |
 |----|------|
@@ -114,13 +135,13 @@
 | 模型文件 | `server/ai/models/medwear_rf.onnx + medwear_rf.meta.json` |
 | 训练脚本 | `experiments/medwear/train.py (sklearn RandomForest → skl2onnx export)` |
 | 训练数据 | MedWear-Wearable-Analytics-Benchmark-v3 合成导出（n=5000, seed=42）→ scripts/export_features.js 生成 experiments/data/medwear/features_v1.csv |
-| 标签目标 | BHI 关注分层（low/moderate/high）— 仅实验性对比展示；不参与疾病筛查分数 |
+| 标签目标 | BHI 关注分层（low/moderate/high）— 仅 ONNX 开启时的实验性对比展示；不参与领域关注分数 |
 | 运行时 | onnxruntime-node via server/ai/onnxInference.js |
 | 用于 | runFullAnalysis() when MEDWEAR_ENABLE_ONNX=true — experimentalBhiTierComparison field only |
-| **不用于** | deriveConditionRisk / disease screening scores / npm run evaluate / MedWear-AnalyticsCore-v1 benchmark |
+| **不用于** | deriveConditionRisk / domain attention scores / npm run evaluate / MedWear-AnalyticsCore-v1 primary benchmark |
 | 回退 | `rule-engine-only (default) or feature-heuristic-fallback when enabled but load fails` — 默认关闭。开启后 ONNX 失败时静默跳过，仍用规则引擎 BHI — 不向调用方抛错。 |
 
-实现：`server/config/onnxConfig.js → server/ai/onnxInference.js → server/ai/engine.js`。需显式开启的实验性后端 — 仅 BHI 分层对比；未经临床验证；筛查信号仍由规则引擎生成。
+实现：`server/config/onnxConfig.js → server/ai/onnxInference.js → server/ai/engine.js`。可选实验性后端 — 默认关闭；不属于 MedWear-AnalyticsCore-v1 主基准；仅开启时做 BHI 分层对比；无疾病筛查或临床性能声明；确定性规则化分析仍为主要研究路径。
 
 ## 鲁棒性测试
 
@@ -133,9 +154,9 @@
 - 运动伪影（高活动日排除 MAD 基线）
 - 恢复/休息日（低步数）
 
-## 探索性队列情景模拟
+## 探索性队列情景模拟（不在稿件主范围）
 
-**结局高度依赖预设参数。仅用于方法论演示与敏感性分析 — 不可作为推断 p 值或已证实的临床获益。**
+**探索性模块，不在稿件主范围。结局高度依赖预设参数。仅用于方法论演示与敏感性分析 — 不可作为推断 p 值或已证实的临床获益。**
 
 公开参数：STAGE_DISTRIBUTION、TREATMENT_INITIATION_RATE、CHRONIC_CONTROL_RATE、TIME_TO_TREATMENT、computeRiskScore coefficients。  
 情景：conservative、neutral、optimistic（`GET /api/outcomes/scenarios`）。
@@ -144,7 +165,7 @@
 
 | 模式 | 数据 | 分析 | AI |
 |------|------|------|-----|
-| 演示 | 合成模拟 | BHI + MAD + 规则引擎 | 规则引擎 |
-| 真实 | Apple Health | BHI + MAD + 规则引擎 | 可选 LLM + 同一核心 |
+| 合成评测 | 合成基准队列（seed=42） | BHI + MAD + 规则引擎 | 规则引擎 |
+| 真实数据（local-first） | Apple Health 导入 | BHI + MAD + 规则引擎 | 可选 LLM + 同一核心 |
 
 详见 [EVALUATION.zh.md](./EVALUATION.zh.md)。
