@@ -107,7 +107,7 @@ function DataImport() {
   return (
     <Box>
       <Alert severity="success" sx={{ mb: 2 }} variant="outlined">
-        {t('真实模式专用 · 导入的数据仅保存在本机，与演示模式完全隔离', 'Real mode only · Imported data is stored locally and fully isolated from demo mode')}
+        {t('真实模式专用 · 本地优先处理 · 导入数据与合成评测路径在共享分析前分离', 'Real-data mode · Local-first primary processing path · input paths separated from synthetic evaluation before shared analytics')}
       </Alert>
       {!isReal && (
         <Alert severity="warning" sx={{ mb: 2 }}>

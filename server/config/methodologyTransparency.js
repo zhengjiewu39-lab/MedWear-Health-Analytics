@@ -146,7 +146,7 @@ const primaryBenchmark = {
   referenceEngine: 'independentSyntheticReference-v1',
   evaluationModel: 'engine-versus-reference-agreement',
   evaluates_en: [
-    'Fixed threshold alert outputs',
+    'Fixed threshold signal outputs',
     'MAD robust anomaly outputs',
     'BHI score (trend-adjusted when prior days supplied)',
     'BHI watch tier',
@@ -275,6 +275,21 @@ const robustnessTests = {
   expectation_zh: 'BHI 与异常管道返回有限分数/分层且不抛错；输出可优雅降级。',
 };
 
+const paperReproduction = {
+  label_en: 'One-click manuscript reproduction path',
+  label_zh: '一键稿件复现路径',
+  primaryPath_en:
+    'synthetic benchmark (seed=42) → BHI → fixed threshold signal flags → robust MAD anomaly → BHI watch tier → engine-versus-reference evaluation metrics',
+  primaryPath_zh:
+    '合成基准（seed=42）→ BHI → 固定阈值信号标记 → 稳健 MAD 异常 → BHI 关注分层 → engine-versus-reference 评测指标',
+  optionalExperimental_en:
+    'Optional appendix: ONNX BHI-tier comparison and transparent component charts (not primary benchmark endpoints).',
+  optionalExperimental_zh:
+    '可选附录：ONNX BHI 分层对比与透明分量图（非主基准端点）。',
+  notebook: 'notebooks/paper_reproduction.ipynb',
+  bridge: 'scripts/paper_reproduction_bridge.js',
+};
+
 const cohortSimulation = {
   kind: 'exploratory-scenario-simulation',
   label_en: 'Exploratory scenario simulation framework (not prospective validation)',
@@ -291,8 +306,20 @@ const cohortSimulation = {
     'TIME_TO_TREATMENT',
     'computeRiskScore coefficients',
   ],
-  disclaimer_en: 'Exploratory modules outside primary manuscript scope. Outcomes are highly parameter-driven. For methodology demonstration and sensitivity analysis only — do not report as inferential p-values or proven clinical benefit.',
-  disclaimer_zh: '探索性模块，不在稿件主范围。结局高度依赖预设参数。仅用于方法论演示与敏感性分析 — 不可作为推断 p 值或已证实的临床获益。',
+  outsidePrimaryManuscriptScope_en: [
+    'Outside the primary manuscript scope',
+    'Synthetic parameter-driven simulation — not prospective validation',
+    'Not used in MedWear-Wearable-Analytics-Benchmark-v3 primary benchmark',
+    'Not evidence of clinical benefit or validated screening performance',
+  ],
+  outsidePrimaryManuscriptScope_zh: [
+    '不在稿件主范围',
+    '合成、参数驱动模拟 — 非前瞻性验证',
+    '未用于 MedWear-Wearable-Analytics-Benchmark-v3 主基准',
+    '非临床获益或经验证筛查性能的证据',
+  ],
+  disclaimer_en: 'Outside the primary manuscript scope. Exploratory modules — synthetic, parameter-driven, not prospective validation, not used in primary benchmark, not evidence of clinical benefit.',
+  disclaimer_zh: '不在稿件主范围。探索性模块 — 合成、参数驱动、非前瞻性验证、未用于主基准、非临床获益证据。',
   limitations_en: [
     'Intervention advantage partially encoded in preset arm parameters',
     'Not independent validation of system performance',
@@ -316,6 +343,7 @@ function getMethodologyTransparency() {
     anomalyDetection,
     ruleEngine,
     optionalOnnxBackend,
+    paperReproduction,
     robustnessTests,
     cohortSimulation,
     ethicsLink: '/api/methodology/transparency',
@@ -334,6 +362,7 @@ function renderMethodsMarkdown(isEn = true) {
   const rb = t.robustnessTests;
   const pb = t.primaryBenchmark;
   const co = t.cohortSimulation;
+  const pr = t.paperReproduction;
 
   if (isEn) {
     return `# MedWear Analytics — Methods
@@ -469,6 +498,8 @@ ${rb.scenarios_en.map((s) => `- ${s}`).join('\n')}
 
 **${co.disclaimer_en}**
 
+${co.outsidePrimaryManuscriptScope_en.map((x) => `- ${x}`).join('\n')}
+
 Public parameters: ${co.publicParameters.join(', ')}.  
 Scenarios: ${co.scenarios.join(', ')} (via \`GET /api/outcomes/scenarios\`).
 
@@ -478,6 +509,14 @@ Scenarios: ${co.scenarios.join(', ')} (via \`GET /api/outcomes/scenarios\`).
 |------|------|-----------|-----|
 | Synthetic evaluation | Synthetic benchmark cohort (seed=42) | BHI + MAD + rule engine | Rule engine |
 | Real-data (local-first) | Apple Health import | BHI + MAD + rule engine | Optional LLM + same core |
+
+## One-click manuscript reproduction
+
+**Primary path:** ${pr.primaryPath_en}
+
+**Optional experimental appendix:** ${pr.optionalExperimental_en}
+
+Notebook: \`${pr.notebook}\` · Bridge: \`${pr.bridge}\`
 
 See [EVALUATION.md](./EVALUATION.md) for benchmark protocol.
 `;
@@ -616,6 +655,8 @@ ${rb.scenarios_zh.map((s) => `- ${s}`).join('\n')}
 
 **${co.disclaimer_zh}**
 
+${co.outsidePrimaryManuscriptScope_zh.map((x) => `- ${x}`).join('\n')}
+
 公开参数：${co.publicParameters.join('、')}。  
 情景：${co.scenarios.join('、')}（\`GET /api/outcomes/scenarios\`）。
 
@@ -625,6 +666,14 @@ ${rb.scenarios_zh.map((s) => `- ${s}`).join('\n')}
 |------|------|------|-----|
 | 合成评测 | 合成基准队列（seed=42） | BHI + MAD + 规则引擎 | 规则引擎 |
 | 真实数据（local-first） | Apple Health 导入 | BHI + MAD + 规则引擎 | 可选 LLM + 同一核心 |
+
+## 一键稿件复现
+
+**主路径：** ${pr.primaryPath_zh}
+
+**可选实验附录：** ${pr.optionalExperimental_zh}
+
+Notebook：\`${pr.notebook}\` · 桥接脚本：\`${pr.bridge}\`
 
 详见 [EVALUATION.zh.md](./EVALUATION.zh.md)。
 `;
@@ -652,4 +701,5 @@ module.exports = {
   ruleEngine,
   cohortSimulation,
   primaryBenchmark,
+  paperReproduction,
 };

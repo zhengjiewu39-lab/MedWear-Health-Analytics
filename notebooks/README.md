@@ -2,13 +2,21 @@
 
 ## One-click pipeline (`paper_reproduction.ipynb`)
 
-End-to-end reproducible flow (seed=42):
+### Primary manuscript path (seed=42)
 
 1. Generate synthetic benchmark cases (`npm run generate:benchmark`)
-2. Compute **BHI** (behavioral health index) + watch tier
-3. Trigger **MAD** robust anomaly heuristic
-4. **ONNX** local inference (`medwear_rf.onnx`)
-5. **XAI** charts (BHI components, MAD baseline, SHAP feature attribution)
+2. Compute **BHI** (behavioral health index) with trend when prior days supplied
+3. Evaluate **fixed threshold signal flags**
+4. Run **individualized robust MAD** anomaly detection
+5. Derive **BHI watch tier**
+6. Report **engine-versus-reference evaluation metrics** (`npm run evaluate`)
+
+### Optional experimental appendix (not primary benchmark)
+
+- **ONNX** local inference (`medwear_rf.onnx`) when explicitly enabled
+- **Transparent component charts** (BHI decomposition, MAD baseline, optional SHAP on fair 15-dim export)
+
+> BHI = behavioral health index (not disease risk). MAD = robust heuristic (not clinical validation). ONNX is disabled by default and not part of MedWear-AnalyticsCore-v1 primary benchmark.
 
 ### Prerequisites
 

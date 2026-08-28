@@ -30,4 +30,4 @@ MedWear screening and analytics cite evidence from:
 - **Local-first architecture** — Privacy-preserving health analytics
 - **Explainable heuristics** — Transparent rules vs black-box DL for regulatory acceptance
 
-Full citation objects with DOI are embedded in `server/data/researchReferences.js` and displayed in the Screening UI.
+Full citation objects with DOI are embedded in `server/data/researchReferences.js` and displayed in the research analytics interface.

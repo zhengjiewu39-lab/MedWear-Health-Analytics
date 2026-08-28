@@ -83,7 +83,7 @@ function DiseaseScreening() {
 
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 3, flexWrap: 'wrap', gap: 2 }}>
         <Box>
-          <Typography variant="h5" fontWeight={700}>{t('临床筛查中心', 'Clinical Screening Center')}</Typography>
+          <Typography variant="h5" fontWeight={700}>{t('研究信号整合', 'Research Signal Integration')}</Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
             {t(
               `6 大类 · ${totalItems} 项筛查（肿瘤/癌症/慢病/心脑血管/常见小病/呼吸）`,

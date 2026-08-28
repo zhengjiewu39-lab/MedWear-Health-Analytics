@@ -82,7 +82,7 @@ function AppRoutes() {
           <Route element={<ProtectedRoute />}>
             <Route path="/admin/patients" element={adminWrap(PatientManagement, '患者队列', false)} />
             <Route path="/import" element={wrap(DataImport, '数据导入', false)} />
-            <Route path="/screening" element={wrap(DiseaseScreening, '临床筛查', true)} />
+            <Route path="/screening" element={wrap(DiseaseScreening, '研究信号整合', true)} />
             <Route path="/appointments" element={wrap(ExamAppointment, '预约体检', true)} />
             <Route path="/doctor-report" element={wrap(DoctorReport, '医生报告', true)} />
             <Route path="/ai/anomaly" element={wrap(AnomalyDetection, '异常检测', false, true)} />

@@ -109,7 +109,7 @@ function PredictiveAnalytics() {
             : isReal && hasData
               ? t(
                   `已导入 ${meta?.parsedRecords?.toLocaleString() || '—'} 条记录（${meta?.dayCount || 0} 天）。若指标稳定，预测项可能较少；请查看「临床筛查」或「AI 干预」生成建议。`,
-                  `Imported ${meta?.parsedRecords?.toLocaleString() || '—'} records (${meta?.dayCount || 0} days). Fewer predictions if metrics are stable — check Clinical Screening or AI Intervention.`,
+                  `Imported ${meta?.parsedRecords?.toLocaleString() || '—'} records (${meta?.dayCount || 0} days). Fewer predictions if metrics are stable — check Research Signal Integration or AI Intervention.`,
                 )
               : t('暂无预测数据', 'No prediction data available')}
         </Alert>

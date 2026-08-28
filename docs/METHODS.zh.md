@@ -156,7 +156,12 @@
 
 ## 探索性队列情景模拟（不在稿件主范围）
 
-**探索性模块，不在稿件主范围。结局高度依赖预设参数。仅用于方法论演示与敏感性分析 — 不可作为推断 p 值或已证实的临床获益。**
+**不在稿件主范围。探索性模块 — 合成、参数驱动、非前瞻性验证、未用于主基准、非临床获益证据。**
+
+- 不在稿件主范围
+- 合成、参数驱动模拟 — 非前瞻性验证
+- 未用于 MedWear-Wearable-Analytics-Benchmark-v3 主基准
+- 非临床获益或经验证筛查性能的证据
 
 公开参数：STAGE_DISTRIBUTION、TREATMENT_INITIATION_RATE、CHRONIC_CONTROL_RATE、TIME_TO_TREATMENT、computeRiskScore coefficients。  
 情景：conservative、neutral、optimistic（`GET /api/outcomes/scenarios`）。
@@ -167,5 +172,13 @@
 |------|------|------|-----|
 | 合成评测 | 合成基准队列（seed=42） | BHI + MAD + 规则引擎 | 规则引擎 |
 | 真实数据（local-first） | Apple Health 导入 | BHI + MAD + 规则引擎 | 可选 LLM + 同一核心 |
+
+## 一键稿件复现
+
+**主路径：** 合成基准（seed=42）→ BHI → 固定阈值信号标记 → 稳健 MAD 异常 → BHI 关注分层 → engine-versus-reference 评测指标
+
+**可选实验附录：** 可选附录：ONNX BHI 分层对比与透明分量图（非主基准端点）。
+
+Notebook：`notebooks/paper_reproduction.ipynb` · 桥接脚本：`scripts/paper_reproduction_bridge.js`
 
 详见 [EVALUATION.zh.md](./EVALUATION.zh.md)。

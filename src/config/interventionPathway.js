@@ -4,7 +4,7 @@
  */
 
 export const PATHWAY_STEPS = [
-  { id: 'screening', text: '临床筛查', text_en: 'Clinical Screening', path: '/screening', step: 1, actor: 'ai' },
+  { id: 'screening', text: '研究信号整合', text_en: 'Research Signal Integration', path: '/screening', step: 1, actor: 'ai' },
   { id: 'anomaly', text: '异常检测', text_en: 'Anomaly Detection', path: '/ai/anomaly', step: 2, actor: 'ai' },
   { id: 'predictive', text: '预测性提示', text_en: 'Predictive signals', path: '/ai/predictive', step: 3, actor: 'ai' },
   { id: 'ai-intervention', text: 'AI 干预', text_en: 'AI Intervention', path: '/ai/intervention', step: 4, actor: 'ai-human' },

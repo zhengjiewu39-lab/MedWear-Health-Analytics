@@ -45,7 +45,7 @@ Implementation: `server/services/behavioralHealthIndex.js → analyticsCore.comp
 
 Dataset: `MedWear-Wearable-Analytics-Benchmark-v3` · n=5000 · seed=42 · Product engine: `MedWear-AnalyticsCore-v1` · Reference: `independentSyntheticReference-v1` · Evaluation: engine-versus-reference-agreement.
 
-**Evaluates:** Fixed threshold alert outputs; MAD robust anomaly outputs; BHI score (trend-adjusted when prior days supplied); BHI watch tier.
+**Evaluates:** Fixed threshold signal outputs; MAD robust anomaly outputs; BHI score (trend-adjusted when prior days supplied); BHI watch tier.
 
 **Does not evaluate:** Domain-weighted RuleEngine research-signal integration outputs; Exploratory cohort/scenario simulation modules; Optional ONNX experimental backend.
 
@@ -156,7 +156,12 @@ Implementation: `server/config/onnxConfig.js → server/ai/onnxInference.js → 
 
 ## Exploratory cohort scenario simulation (outside primary manuscript scope)
 
-**Exploratory modules outside primary manuscript scope. Outcomes are highly parameter-driven. For methodology demonstration and sensitivity analysis only — do not report as inferential p-values or proven clinical benefit.**
+**Outside the primary manuscript scope. Exploratory modules — synthetic, parameter-driven, not prospective validation, not used in primary benchmark, not evidence of clinical benefit.**
+
+- Outside the primary manuscript scope
+- Synthetic parameter-driven simulation — not prospective validation
+- Not used in MedWear-Wearable-Analytics-Benchmark-v3 primary benchmark
+- Not evidence of clinical benefit or validated screening performance
 
 Public parameters: STAGE_DISTRIBUTION, TREATMENT_INITIATION_RATE, CHRONIC_CONTROL_RATE, TIME_TO_TREATMENT, computeRiskScore coefficients.  
 Scenarios: conservative, neutral, optimistic (via `GET /api/outcomes/scenarios`).
@@ -167,5 +172,13 @@ Scenarios: conservative, neutral, optimistic (via `GET /api/outcomes/scenarios`)
 |------|------|-----------|-----|
 | Synthetic evaluation | Synthetic benchmark cohort (seed=42) | BHI + MAD + rule engine | Rule engine |
 | Real-data (local-first) | Apple Health import | BHI + MAD + rule engine | Optional LLM + same core |
+
+## One-click manuscript reproduction
+
+**Primary path:** synthetic benchmark (seed=42) → BHI → fixed threshold signal flags → robust MAD anomaly → BHI watch tier → engine-versus-reference evaluation metrics
+
+**Optional experimental appendix:** Optional appendix: ONNX BHI-tier comparison and transparent component charts (not primary benchmark endpoints).
+
+Notebook: `notebooks/paper_reproduction.ipynb` · Bridge: `scripts/paper_reproduction_bridge.js`
 
 See [EVALUATION.md](./EVALUATION.md) for benchmark protocol.

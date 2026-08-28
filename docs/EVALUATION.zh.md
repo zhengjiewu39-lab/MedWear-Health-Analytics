@@ -58,7 +58,7 @@ npm run evaluate
 
 **MedWear-Wearable-Analytics-Benchmark-v3** · n=5000 · seed=42 · 产品引擎：**MedWear-AnalyticsCore-v1** · 独立参考：**independentSyntheticReference-v1** · 评测：**engine-versus-reference agreement**。
 
-**直接评测：** 固定阈值告警、MAD 异常输出、BHI（提供 prior days 时含趋势调整）、BHI 关注分层。
+**直接评测：** 固定阈值信号输出、MAD 异常输出、BHI（提供 prior days 时含趋势调整）、BHI 关注分层。
 
 **不直接评测：** 领域加权 RuleEngine 研究信号整合输出；探索性队列/情景模拟模块；可选 ONNX 后端。
 
@@ -66,7 +66,7 @@ npm run evaluate
 
 ±8 分 BHI 一致标准为**预设的启发式基准容差**，非经临床验证的等效界值。
 
-探索性筛查/结局模拟模块见 [METHODS.zh.md](./METHODS.zh.md) 中“不在稿件主范围”说明。
+探索性队列/结局模拟模块**不在稿件主范围** — 合成、参数驱动、非前瞻性验证、未用于主基准、非临床获益证据。见 [METHODS.zh.md](./METHODS.zh.md)。
 
 ## 参考结果（v3.0，n=5000，seed=42，BHI + MAD 引擎）
 

@@ -57,7 +57,7 @@ Output: `benchmarks/results/latest.json`
 
 **MedWear-Wearable-Analytics-Benchmark-v3** · n=5000 · seed=42 · Product engine: **MedWear-AnalyticsCore-v1** · Independent reference: **independentSyntheticReference-v1** · Evaluation: **engine-versus-reference agreement**.
 
-**Directly evaluated:** fixed threshold alerts, MAD anomaly outputs, BHI (trend-adjusted when prior days supplied), BHI watch tier.
+**Directly evaluated:** fixed threshold signal outputs, MAD anomaly outputs, BHI (trend-adjusted when prior days supplied), BHI watch tier.
 
 **Not directly evaluated:** domain-weighted RuleEngine research-signal integration outputs; exploratory cohort/scenario simulation modules; optional ONNX backend.
 
@@ -65,7 +65,7 @@ Independent synthetic reference labels are **rule-generated synthetic reference 
 
 The ±8 BHI score-agreement criterion is a **prespecified heuristic benchmark tolerance**, not a clinically validated equivalence margin.
 
-Exploratory screening/outcome simulation modules are documented under “Exploratory modules outside primary manuscript scope” in [METHODS.md](./METHODS.md).
+Exploratory cohort/outcome simulation modules are **outside the primary manuscript scope** — synthetic, parameter-driven, not prospective validation, not used in the primary benchmark, not evidence of clinical benefit. See [METHODS.md](./METHODS.md).
 
 ## Reference Results (v3.0, n=5000, seed=42, BHI + MAD engine)
 

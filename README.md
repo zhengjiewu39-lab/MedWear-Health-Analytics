@@ -4,45 +4,46 @@
 
 > **Documentation (main):** English and Chinese methods docs are **auto-generated from the same source** (`server/config/methodologyTransparency.js`). Core analytics = **BHI** + **robust MAD heuristic** + **`MedWear-RuleEngine-v1`** (not legacy 2σ / discrete health score). Sync: `npm run docs:sync` · verify: `npm run docs:verify`.
 
-A full-stack **digital health analytics platform** — Apple Health import, transparent statistical analysis, research screening simulation, and reproducible benchmarks.
+A full-stack **wearable digital phenotyping research framework** — Apple Health local-first import, transparent statistical analysis, reproducible synthetic benchmarks, and exploratory outcome simulation (outside primary manuscript scope).
 
-**Positioning:** **Research-grade Digital Phenotyping & Simulation Benchmarking** — a transparent, local-first research prototype. **Not a clinical diagnostic medical device**; all outputs require professional review.
+**Positioning:** **Research-grade Digital Phenotyping & Simulation Benchmarking** — a transparent, local-first research prototype. **Not a clinical diagnostic medical device**; **not validated disease screening**; **not clinical risk prediction**.
 
-Connects consumer wearables to actionable health insights with **local-first privacy** and **explainable methods**.
+Connects consumer wearables to **interpretable wearable-derived research outputs** with **local-first privacy** and **transparent-by-design analytics**.
 
-**One-click paper reproduction:** [`notebooks/paper_reproduction.ipynb`](notebooks/paper_reproduction.ipynb) — synthetic data (seed=42) → BHI → MAD → ONNX → XAI charts. See [`notebooks/README.md`](notebooks/README.md).
+**One-click manuscript reproduction:** [`notebooks/paper_reproduction.ipynb`](notebooks/paper_reproduction.ipynb) — **primary path:** synthetic benchmark (seed=42) → BHI → threshold signal flags → MAD → BHI watch tier → evaluation metrics. **Optional appendix:** ONNX / transparent component charts. See [`notebooks/README.md`](notebooks/README.md).
 
 ---
 
 ## System architecture
 
-Data flows locally from ingestion through analytics to explainable outputs. Demo mode uses fixed-seed synthetic cohorts; real mode parses Apple Health exports on-device only.
+Data flows locally from ingestion through analytics to transparent outputs. **Synthetic evaluation** and **real-data** input paths are **separated before shared analytics**; real-data mode uses a **local-first primary processing path** for Apple Health exports.
 
 ```mermaid
 flowchart LR
   subgraph sources["Data sources"]
     A1[Apple Health ZIP/XML]
-    A2[Synthetic cohort seed=42]
+    A2[Synthetic benchmark seed=42]
   end
   subgraph ingest["Local ingest"]
     B[SAX streaming parser]
-    C[(SQLite / DuckDB store)]
+    C[(SQLite local store)]
   end
-  subgraph analytics["Analytics engine"]
+  subgraph analytics["MedWear-AnalyticsCore-v1"]
     D[BHI scoring]
-    E[MAD robust Z-score]
-    F[ONNX inference optional]
+    E[Threshold signal flags]
+    F[MAD robust anomaly]
   end
   subgraph output["Outputs"]
-    G[Screening UI]
-    H[XAI / benchmark charts]
+    G[Research analytics interface]
+    H[Benchmark / transparent charts]
   end
   A1 --> B --> C
   A2 -.-> C
   C --> D --> G
   C --> E --> G
-  D --> F --> H
-  E --> H
+  C --> F --> G
+  D --> H
+  F --> H
 ```
 
 **One-command Docker run:**
@@ -55,7 +56,7 @@ docker build -t medwear-api . && docker run --rm -p 3001:3001 \
 # Open http://localhost:3001 · or: docker compose up --build
 ```
 
-**System benchmarks (paper figures):** `npm run benchmark:system` → ONNX vs sklearn latency, SQLite vs DuckDB throughput, MAD F1 vs SNR curves.
+**System benchmarks (optional engineering figures):** `npm run benchmark:system` → latency/throughput curves (not primary manuscript endpoints).
 
 ---
 
@@ -63,10 +64,11 @@ docker build -t medwear-api . && docker run --rm -p 3001:3001 \
 
 | Capability | Description |
 |------------|-------------|
-| **Dual-mode architecture** | Demo (synthetic) vs Real (Apple Health) — fully isolated |
-| **Apple Health pipeline** | SAX streaming parser → SQLite local store → analytics |
-| **Transparent analytics** | BHI (behavioral health index), peak/single-reading alerts, robust MAD anomaly heuristic |
-| **Research screening simulation** | Exploratory signal review → exam booking → structured research report |
+| **Dual-mode architecture** | Synthetic evaluation vs real-data (Apple Health) — input paths separated before shared analytics |
+| **Apple Health pipeline** | SAX streaming parser → SQLite local store → transparent analytics |
+| **Primary manuscript analytics** | BHI, fixed threshold signal flags, individualized robust MAD anomaly, BHI watch tiers |
+| **Reproducible benchmark** | MedWear-Wearable-Analytics-Benchmark-v3 (n=5000, seed=42) with independent synthetic reference labels |
+| **Exploratory modules (outside primary manuscript scope)** | Parameter-driven cohort/outcome simulation; research signal integration UI — not primary benchmark endpoints |
 | **Analytics Lab** | In-app benchmark charts, methods transparency, evaluation metrics |
 | **Engineering quality** | Unit tests, CI, Docker, audit log, encrypted vault |
 
@@ -76,7 +78,7 @@ docker build -t medwear-api . && docker run --rm -p 3001:3001 \
 
 - **Frontend:** React 18, MUI 5, Recharts, React Router 6
 - **Backend:** Express 5, SAX XML parser, SQLite persistence (`better-sqlite3`)
-- **AI:** Rule engine (`MedWear-RuleEngine-v1`) + optional LLM (real mode) — not a trained ML ensemble
+- **AI:** Rule engine (`MedWear-RuleEngine-v1`) + optional LLM (real mode) — not a trained ML ensemble; ONNX disabled by default
 - **Security:** JWT auth, audit log, AES-256-GCM health vault
 
 ---
@@ -140,21 +142,23 @@ macOS 也可 **双击** 项目根目录下的 `启动 MedWear.command`。
 
 ---
 
-## Apple Health Import (Real Mode)
+## Apple Health Import (Real-Data Mode)
 
 1. iPhone **Health** App → Export All Health Data → `apple_health_export.zip`
 2. Switch to **真实模式** → **数据导入**
 3. Upload zip or drop into `health-import/` and scan
 
-Supported: HeartRate, OxygenSaturation, StepCount, SleepAnalysis, HRV, ActiveEnergyBurned, RespiratoryRate.
+Supported: HeartRate, OxygenSaturation, StepCount, SleepAnalysis, HRV (SDNN), ActiveEnergyBurned, RespiratoryRate.
 
-> Apple Health records are processed locally and persisted in **SQLite** (`data/medwear-health.db`). Encrypted vault snapshots are used for backup where enabled. Legacy `data/health-store.json` is migrated once on import only.
+> Apple Health records are processed on a **local-first primary processing path** and persisted in **SQLite** (`data/medwear-health.db`). Encrypted vault snapshots are used for backup where enabled. Legacy `data/health-store.json` is migrated once on import only.
 
 ---
 
 ## Evaluation & Reproducibility
 
 **Anti–self-test policy:** wearable benchmark labels come from `independentSyntheticReference-v1` (independent synthetic reference labels via rule-based reference labeling). Metrics measure **engine-versus-reference agreement** — not circular 100% self-scores.
+
+**Primary benchmark endpoints:** threshold signal outputs, MAD anomaly outputs, BHI, BHI watch tier. Domain-weighted RuleEngine outputs are **not** direct primary benchmark endpoints.
 
 ```bash
 npm run generate:benchmark   # random physiology + independent synthetic reference labels (n=5000)
@@ -196,8 +200,8 @@ npm run evaluate:supplement    # scenarios + FP burden + fair/oracle ML compare 
 | `/dashboard` | Health overview |
 | `/import` | Apple Health import |
 | `/research` | Analytics evaluation center |
-| `/screening` | Clinical screening with citations |
-| `/doctor-report` | Clinician report |
+| `/screening` | Exploratory research signal integration (outside primary manuscript scope) |
+| `/doctor-report` | Structured research report |
 | `/monitoring` | Real-time vitals |
 | `/ai/anomaly` | Anomaly detection |
 | `/ai/predictive` | Predictive analytics |
@@ -207,7 +211,7 @@ npm run evaluate:supplement    # scenarios + FP burden + fair/oracle ML compare 
 
 ## Disclaimer
 
-For demonstration, education, and **research-grade digital phenotyping / simulation benchmarking** — **not a medical device** and not intended for clinical diagnosis. Screening and AI outputs require professional clinical review. Automated tests and benchmarks use **synthetic data only** (`seed=42`); never commit real Apple Health exports or PHI to this repository.
+For demonstration, education, and **research-grade digital phenotyping / reproducible computational evaluation** — **not a medical device**, **not clinical diagnosis**, **not validated disease screening**, and **not clinical risk prediction**. Exploratory modules require professional review. Automated tests and benchmarks use **synthetic data only** (`seed=42`); never commit real Apple Health exports or PHI to this repository.
 
 ---
 
@@ -218,4 +222,3 @@ MIT — see [LICENSE](LICENSE).
 ## Security & contributing
 
 - [SECURITY.md](SECURITY.md) — vulnerability reporting
-- [CONTRIBUTING.md](CONTRIBUTING.md) — development workflow
