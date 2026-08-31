@@ -28,6 +28,14 @@ function sleepHours(sm = {}) {
   return (sm.deep + sm.rem + sm.light) / 60;
 }
 
+function agePresent(age) {
+  return age != null && Number.isFinite(age);
+}
+
+function sexPresent(sex) {
+  return sex === 'M' || sex === 'F';
+}
+
 /** Sigmoid-like activity score centred ~5500 steps/day. */
 function scoreSteps(steps) {
   return 1 / (1 + Math.exp(-(steps - 5500) / 1800));
@@ -50,23 +58,39 @@ function scoreSpo2(spo2) {
 }
 
 /** Age-adjusted HRV (SDNN, ms) — transparent cap vs reference (not RMSSD). */
-function sdnnReferenceMs(age = 45) {
+function sdnnReferenceMs(age) {
   return Math.max(28, 50 - Math.max(0, age - 30) * 0.45);
 }
 
-function scoreHrv(hrv, age = 45) {
+function scoreHrv(hrv, age) {
   const ref = sdnnReferenceMs(age);
   return Math.min(1, hrv / ref);
+}
+
+function rhrUnavailableReason({ age, sex, rhr }) {
+  const hasAge = agePresent(age);
+  const hasSex = sexPresent(sex);
+  const hasRhr = rhr != null && rhr > 0;
+  if (!hasRhr) return 'missing_rhr';
+  if (!hasAge && !hasSex) return 'missing_age_and_sex';
+  if (!hasAge) return 'missing_age';
+  if (!hasSex) return 'missing_sex';
+  return null;
+}
+
+function hrvUnavailableReason({ age, hrv }) {
+  const hasHrv = Boolean(hrv);
+  if (!hasHrv) return 'missing_sdnn';
+  if (!agePresent(age)) return 'missing_age';
+  return null;
 }
 
 function computeBehavioralHealthIndex(dayData, opts = {}) {
   const age = opts.age;
   const sex = opts.sex;
-  if (age == null || sex == null) {
-    throw new Error('BHI requires explicit age and sex (parse Apple Health Me or benchmark case demographics)');
-  }
   const components = {};
   const missing = [];
+  const unavailable = {};
   let weighted = 0;
   let totalW = 0;
 
@@ -84,11 +108,15 @@ function computeBehavioralHealthIndex(dayData, opts = {}) {
   } else missing.push('sleep');
 
   const rhr = dayData.restingHeartRate;
-  if (rhr != null && rhr > 0) {
+  const rhrReason = rhrUnavailableReason({ age, sex, rhr });
+  if (rhrReason) {
+    missing.push('rhr');
+    unavailable.rhr = rhrReason;
+  } else {
     components.rhr = +scoreRhr(rhr, age, sex).toFixed(3);
     weighted += components.rhr * WEIGHTS.rhr;
     totalW += WEIGHTS.rhr;
-  } else missing.push('rhr');
+  }
 
   const spo2 = avg(dayData.spo2);
   if (spo2) {
@@ -98,11 +126,15 @@ function computeBehavioralHealthIndex(dayData, opts = {}) {
   } else missing.push('spo2');
 
   const hrv = avg(dayData.hrv);
-  if (hrv) {
+  const hrvReason = hrvUnavailableReason({ age, hrv });
+  if (hrvReason) {
+    missing.push('hrv');
+    unavailable.hrv = hrvReason;
+  } else {
     components.hrv = +scoreHrv(hrv, age).toFixed(3);
     weighted += components.hrv * WEIGHTS.hrv;
     totalW += WEIGHTS.hrv;
-  } else missing.push('hrv');
+  }
 
   const raw = totalW > 0 ? Math.round((weighted / totalW) * 100) : null;
 
@@ -114,6 +146,7 @@ function computeBehavioralHealthIndex(dayData, opts = {}) {
     weights: WEIGHTS,
     components,
     missing,
+    unavailable,
     coverage: totalW > 0 ? +(totalW).toFixed(2) : 0,
     maxCoverage: Object.values(WEIGHTS).reduce((a, b) => a + b, 0),
     renormalized: missing.length > 0,
@@ -158,6 +191,7 @@ function missingDataSensitivity(dayData, opts = {}) {
     imputedAtMedian: imputed.score,
     delta: base.score != null && imputed.score != null ? imputed.score - base.score : null,
     missing: base.missing,
+    unavailable: base.unavailable,
   };
 }
 
@@ -175,4 +209,6 @@ module.exports = {
   scoreHrv,
   scoreSleep,
   sdnnReferenceMs,
+  rhrUnavailableReason,
+  hrvUnavailableReason,
 };

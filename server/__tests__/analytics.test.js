@@ -11,6 +11,14 @@ const {
 
 const BHI_DEMO = { age: 42, sex: 'F' };
 
+const FULL_DAY = {
+  steps: 8000,
+  restingHeartRate: 62,
+  spo2: [97],
+  hrv: [45],
+  sleepMinutes: { deep: 60, rem: 60, light: 120, awake: 0 },
+};
+
 describe('behavioral health index', () => {
   test('BHI weights unchanged', () => {
     const { WEIGHTS } = require('../services/behavioralHealthIndex');
@@ -53,14 +61,88 @@ describe('behavioral health index', () => {
     assert.notEqual(withRhr.score, withoutRhr.score);
   });
 
-  test('demographic fallback marked inferred with fallbackUsed', () => {
+  test('resolveBhiDemographics returns null age/sex without fallback imputation', () => {
     const { resolveBhiDemographics } = require('../services/demographics');
     const d = resolveBhiDemographics({});
-    assert.equal(d.age, 45);
-    assert.equal(d.sex, 'F');
-    assert.equal(d.inferred, true);
-    assert.equal(d.fallbackUsed, true);
-    assert.equal(d.demographicsSource, 'fallback');
+    assert.equal(d.age, null);
+    assert.equal(d.sex, null);
+    assert.equal(d.ageMissing, true);
+    assert.equal(d.sexMissing, true);
+    assert.equal(d.demographicsSource, 'missing');
+    assert.equal(d.inferred, false);
+    assert.equal(d.fallbackUsed, false);
+  });
+
+  describe('demographic missingness propagation', () => {
+    test('Case 1: age + sex + RHR + SDNN present — RHR and HRV calculated', () => {
+      const { computeBehavioralHealthIndex } = require('../services/behavioralHealthIndex');
+      const detail = computeBehavioralHealthIndex(FULL_DAY, { age: 42, sex: 'F' });
+      assert.ok(detail.components.rhr != null);
+      assert.ok(detail.components.hrv != null);
+      assert.equal(detail.unavailable.rhr, undefined);
+      assert.equal(detail.unavailable.hrv, undefined);
+    });
+
+    test('Case 2: age present + sex missing — RHR unavailable, SDNN calculated, weights renormalized', () => {
+      const { computeBehavioralHealthIndex } = require('../services/behavioralHealthIndex');
+      const detail = computeBehavioralHealthIndex(FULL_DAY, { age: 42, sex: null });
+      assert.equal(detail.unavailable.rhr, 'missing_sex');
+      assert.ok(detail.components.hrv != null);
+      assert.ok(detail.missing.includes('rhr'));
+      assert.ok(detail.renormalized);
+      assert.ok(detail.coverage < 1);
+    });
+
+    test('Case 3: age missing + sex present — RHR and SDNN unavailable, other components usable', () => {
+      const { computeBehavioralHealthIndex } = require('../services/behavioralHealthIndex');
+      const detail = computeBehavioralHealthIndex(FULL_DAY, { age: null, sex: 'M' });
+      assert.equal(detail.unavailable.rhr, 'missing_age');
+      assert.equal(detail.unavailable.hrv, 'missing_age');
+      assert.ok(detail.components.steps != null);
+      assert.ok(detail.components.spo2 != null);
+      assert.ok(detail.score != null);
+    });
+
+    test('Case 4: age and sex missing — no demographic fallback, non-demographic components continue', () => {
+      const { computeBehavioralHealthIndex } = require('../services/behavioralHealthIndex');
+      const detail = computeBehavioralHealthIndex(FULL_DAY, {});
+      assert.equal(detail.unavailable.rhr, 'missing_age_and_sex');
+      assert.equal(detail.unavailable.hrv, 'missing_age');
+      assert.ok(detail.components.steps != null);
+      assert.ok(detail.components.sleep != null);
+      assert.ok(detail.score != null);
+    });
+
+    test('Case 5: age and sex present but RHR missing — RHR unavailable (missing_rhr), no HR mean substitution', () => {
+      const { computeBehavioralHealthIndex } = require('../services/behavioralHealthIndex');
+      const detail = computeBehavioralHealthIndex({
+        ...FULL_DAY,
+        restingHeartRate: null,
+        heartRate: [90, 95],
+      }, { age: 42, sex: 'F' });
+      assert.equal(detail.unavailable.rhr, 'missing_rhr');
+      assert.ok(detail.components.hrv != null);
+    });
+
+    test('Case 6: age present, sex missing, SDNN present — SDNN still calculated', () => {
+      const { computeBehavioralHealthIndex } = require('../services/behavioralHealthIndex');
+      const detail = computeBehavioralHealthIndex(FULL_DAY, { age: 50, sex: null });
+      assert.ok(detail.components.hrv != null);
+      assert.equal(detail.unavailable.hrv, undefined);
+    });
+
+    test('regression: missing metadata never inject age=45 or sex=F into primary BHI path', () => {
+      const { computeDayScoreDetail } = require('../services/analyticsCore');
+      const { resolveBhiDemographics } = require('../services/demographics');
+      const demo = resolveBhiDemographics({});
+      assert.notEqual(demo.age, 45);
+      assert.notEqual(demo.sex, 'F');
+      const detail = computeDayScoreDetail(FULL_DAY, demo);
+      assert.equal(detail.unavailable.rhr, 'missing_age_and_sex');
+      assert.equal(detail.unavailable.hrv, 'missing_age');
+      assert.equal(detail.components.rhr, undefined);
+      assert.equal(detail.components.hrv, undefined);
+    });
   });
 
   test('computeDayScore applies trend when >=3 prior days supplied', () => {

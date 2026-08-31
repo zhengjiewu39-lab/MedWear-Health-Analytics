@@ -8,9 +8,13 @@ function bhiOpts(opts = {}) {
   return {
     age: demo.age,
     sex: demo.sex,
-    demographicsInferred: demo.inferred,
-    fallbackUsed: demo.fallbackUsed,
+    ageMissing: demo.ageMissing,
+    sexMissing: demo.sexMissing,
     demographicsSource: demo.demographicsSource,
+    /** @deprecated always false — demographic fallback removed */
+    demographicsInferred: false,
+    /** @deprecated always false — demographic fallback removed */
+    fallbackUsed: false,
   };
 }
 

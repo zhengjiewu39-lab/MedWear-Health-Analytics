@@ -1,6 +1,7 @@
 /**
  * Demographics helpers for age/sex-adjusted BHI scoring.
  * Real mode: parsed from Apple Health <Me> metadata (birth date, biological sex).
+ * No compatibility fallback values — missing metadata propagate as null.
  */
 
 function parseAppleBiologicalSex(raw) {
@@ -23,25 +24,34 @@ function ageFromBirthDate(birthDateStr, refDate = new Date()) {
   return age >= 0 && age <= 120 ? age : null;
 }
 
-/** Resolve BHI demographics from store meta, benchmark case, or explicit opts. */
+function isValidBiologicalSex(sex) {
+  return sex === 'M' || sex === 'F';
+}
+
+/** Resolve BHI demographics from store meta, benchmark case, or explicit opts — no imputation. */
 function resolveBhiDemographics(source = {}) {
   const meta = source.meta || source;
   const ageRaw = source.age ?? meta.age ?? null;
   const sexRaw = source.sex ?? meta.sex ?? null;
   const ageMissing = ageRaw == null;
-  const sexMissing = sexRaw == null;
-  const inferred = ageMissing || sexMissing;
+  const sexMissing = sexRaw == null || !isValidBiologicalSex(sexRaw);
+
   let demographicsSource = 'provided';
-  if (ageMissing && sexMissing) demographicsSource = 'fallback';
-  else if (inferred) demographicsSource = 'partial-fallback';
+  if (ageMissing && sexMissing) demographicsSource = 'missing';
+  else if (ageMissing) demographicsSource = 'age-missing';
+  else if (sexMissing) demographicsSource = 'sex-missing';
 
   return {
-    age: ageRaw ?? 45,
-    sex: sexRaw ?? 'F',
-    inferred,
-    fallbackUsed: inferred,
+    age: ageMissing ? null : ageRaw,
+    sex: sexMissing ? null : sexRaw,
+    ageMissing,
+    sexMissing,
     demographicsSource,
     birthDate: meta.birthDate ?? null,
+    /** @deprecated always false — demographic fallback removed */
+    inferred: false,
+    /** @deprecated always false — demographic fallback removed */
+    fallbackUsed: false,
   };
 }
 
@@ -52,6 +62,7 @@ function demographicsFromMeta(meta = {}) {
 module.exports = {
   parseAppleBiologicalSex,
   ageFromBirthDate,
+  isValidBiologicalSex,
   resolveBhiDemographics,
   demographicsFromMeta,
 };

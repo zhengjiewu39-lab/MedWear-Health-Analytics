@@ -35,7 +35,7 @@
 
 实现：`server/services/behavioralHealthIndex.js → analyticsCore.computeDayScore()`
 
-**人口学后备参数：** 当年龄或生理性别元数据不可获得时，兼容路径使用年龄45岁和女性作为后备参数，并将人口学配置标记为推断值（`fallbackUsed: true`）。该后备参数仅用于软件兼容，不代表人群正常参考标准。
+**人口学缺失处理（无插补）：** 人口学依赖型 BHI 分量仅在其所需元数据可用时参与计算。 RHR 分量需要有效年龄、生理性别（M/F）及静息心率测量值。 HRV-SDNN 分量需要有效年龄及 SDNN 测量值；不要求性别。 所需元数据缺失时，该分量从当日 BHI 聚合中排除，其余有效分量权重重新归一化。 不使用年龄/性别插补、中性分数或兼容后备值。 分量不可用原因 — RHR：missing_age、missing_sex、missing_age_and_sex、missing_rhr；HRV-SDNN：missing_age、missing_sdnn。
 
 **步数为零说明：** 当前实现中，步数为零视为 BHI 步数分量不可用（需 `steps > 0`）。 此路径无法区分真实零步数日与缺失的日步数记录。 步数分量被省略，其余 BHI 权重重新归一化。
 

@@ -47,10 +47,24 @@ const healthScore = {
     '趋势（主日评分路径）：当存在 prior 数据且至少 3 个有效 prior BHI 时，`computeDayScore()` 相对 prior 七日均值（调用方最多提供 7 个 prior 日）应用预设趋势调整，系数 0.12，调整限 ±3 分，最终 BHI [0,100]。主合成基准提供 prior days，因此评测该条件性趋势调整 BHI 路径。',
     '缺失数据：对可用分量重新归一化；中位数插补敏感性见 `missingDataSensitivity()`',
   ],
-  demographicsFallback_en:
-    'When age or biological-sex metadata are unavailable, the compatibility path uses age 45 and female as fallback values and marks the demographic configuration as inferred (`fallbackUsed: true`). These fallback values are software compatibility defaults and are not population reference standards.',
-  demographicsFallback_zh:
-    '当年龄或生理性别元数据不可获得时，兼容路径使用年龄45岁和女性作为后备参数，并将人口学配置标记为推断值（`fallbackUsed: true`）。该后备参数仅用于软件兼容，不代表人群正常参考标准。',
+  demographicsMissingness_en: [
+    'Demographic-dependent BHI components are evaluated only when their required metadata are available.',
+    'RHR component requires valid age AND biological sex (M/F) AND resting heart rate measurement.',
+    'HRV-SDNN component requires valid age AND SDNN measurement; sex is not required.',
+    'When required metadata are missing, the component is excluded from daily BHI aggregation and remaining valid component weights are renormalized.',
+    'No age/sex imputation, neutral scores, or compatibility fallback values are applied.',
+  ],
+  demographicsMissingness_zh: [
+    '人口学依赖型 BHI 分量仅在其所需元数据可用时参与计算。',
+    'RHR 分量需要有效年龄、生理性别（M/F）及静息心率测量值。',
+    'HRV-SDNN 分量需要有效年龄及 SDNN 测量值；不要求性别。',
+    '所需元数据缺失时，该分量从当日 BHI 聚合中排除，其余有效分量权重重新归一化。',
+    '不使用年龄/性别插补、中性分数或兼容后备值。',
+  ],
+  componentUnavailableReasons: {
+    rhr: ['missing_age', 'missing_sex', 'missing_age_and_sex', 'missing_rhr'],
+    hrv: ['missing_age', 'missing_sdnn'],
+  },
   stepZeroLimitation_en: [
     'Zero step count is currently treated as unavailable for BHI component scoring (`steps > 0` required).',
     'The implementation cannot distinguish a true zero-step day from an absent daily step record in this path.',
@@ -389,7 +403,7 @@ ${hs.formulas_en.map((f) => `- ${f}`).join('\n')}
 
 Implementation: \`${hs.implementation}\`
 
-**Demographics fallback:** ${hs.demographicsFallback_en}
+**Demographic missingness (no imputation):** ${hs.demographicsMissingness_en.join(' ')} Component unavailable reasons — RHR: ${hs.componentUnavailableReasons.rhr.join(', ')}; HRV-SDNN: ${hs.componentUnavailableReasons.hrv.join(', ')}.
 
 **Step-zero limitation:** ${hs.stepZeroLimitation_en.join(' ')}
 
@@ -546,7 +560,7 @@ ${hs.formulas_zh.map((f) => `- ${f}`).join('\n')}
 
 实现：\`${hs.implementation}\`
 
-**人口学后备参数：** ${hs.demographicsFallback_zh}
+**人口学缺失处理（无插补）：** ${hs.demographicsMissingness_zh.join(' ')} 分量不可用原因 — RHR：${hs.componentUnavailableReasons.rhr.join('、')}；HRV-SDNN：${hs.componentUnavailableReasons.hrv.join('、')}。
 
 **步数为零说明：** ${hs.stepZeroLimitation_zh.join(' ')}
 

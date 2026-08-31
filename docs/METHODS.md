@@ -35,7 +35,7 @@ Transparent, reproducible pipeline for real mode and benchmark evaluation. **No 
 
 Implementation: `server/services/behavioralHealthIndex.js → analyticsCore.computeDayScore()`
 
-**Demographics fallback:** When age or biological-sex metadata are unavailable, the compatibility path uses age 45 and female as fallback values and marks the demographic configuration as inferred (`fallbackUsed: true`). These fallback values are software compatibility defaults and are not population reference standards.
+**Demographic missingness (no imputation):** Demographic-dependent BHI components are evaluated only when their required metadata are available. RHR component requires valid age AND biological sex (M/F) AND resting heart rate measurement. HRV-SDNN component requires valid age AND SDNN measurement; sex is not required. When required metadata are missing, the component is excluded from daily BHI aggregation and remaining valid component weights are renormalized. No age/sex imputation, neutral scores, or compatibility fallback values are applied. Component unavailable reasons — RHR: missing_age, missing_sex, missing_age_and_sex, missing_rhr; HRV-SDNN: missing_age, missing_sdnn.
 
 **Step-zero limitation:** Zero step count is currently treated as unavailable for BHI component scoring (`steps > 0` required). The implementation cannot distinguish a true zero-step day from an absent daily step record in this path. The steps component is omitted and remaining BHI weights are renormalized.
 
