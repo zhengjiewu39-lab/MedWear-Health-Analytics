@@ -224,7 +224,6 @@ app.get('/api/methodology', (req, res) => {
       benchmark_name: wearablePolicy.dataset,
       benchmark_name_zh: wearablePolicy.dataset,
       benchmark_n: wearablePolicy.n,
-      benchmark_supersedes: wearablePolicy.superseded || 'MedWear-Wearable-Analytics-Clinical-v2',
       evaluation_type: 'Engine vs independent synthetic reference (not self-test)',
       evaluation_type_zh: '产品引擎 vs 独立合成参考（非自评）',
       layers: [

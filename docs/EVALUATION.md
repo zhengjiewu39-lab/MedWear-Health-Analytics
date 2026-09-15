@@ -39,9 +39,16 @@ npm run generate:benchmark
 ```bash
 npm run test:server
 npm run evaluate
+npm run analyze:manuscript-secondary
 ```
 
 Output: `benchmarks/results/latest.json`
+
+Frozen manuscript secondary-analysis output: `benchmarks/results/manuscript-secondary-v1.2.json`.
+The secondary script deterministically reproduces BHI tolerance sensitivity at ±5/±8/±10/±12 points,
+MAE, median absolute difference and IQR, descriptive Bland–Altman summaries, score-dependent difference
+diagnostics, and the rule-path audit of reference-positive/MedWear-negative MAD cases. These analyses are
+descriptive computational comparisons and do not establish clinical validity or interchangeability.
 
 ## Metrics
 

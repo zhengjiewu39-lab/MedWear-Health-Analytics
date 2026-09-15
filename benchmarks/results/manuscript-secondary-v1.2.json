@@ -1,0 +1,103 @@
+{
+  "analysisProtocol": "MedWear-Manuscript-Secondary-v1.2",
+  "dataset": "MedWear-Wearable-Analytics-Benchmark-v3",
+  "datasetVersion": "3.0.0",
+  "n": 5000,
+  "seed": 42,
+  "productEngine": "MedWear-AnalyticsCore-v1",
+  "reference": "independentSyntheticReference-v1",
+  "interpretation": "descriptive deterministic computational agreement; not clinical validation or interchangeability",
+  "continuousBhi": {
+    "nPairs": 5000,
+    "toleranceSensitivity": {
+      "plusMinus5": {
+        "tolerance": 5,
+        "count": 2716,
+        "proportion": 0.5432
+      },
+      "plusMinus8": {
+        "tolerance": 8,
+        "count": 3503,
+        "proportion": 0.7006
+      },
+      "plusMinus10": {
+        "tolerance": 10,
+        "count": 3872,
+        "proportion": 0.7744
+      },
+      "plusMinus12": {
+        "tolerance": 12,
+        "count": 4181,
+        "proportion": 0.8362
+      }
+    },
+    "meanDifferenceMedWearMinusReference": -4.8202,
+    "meanAbsoluteDifference": 6.4174,
+    "medianAbsoluteDifference": 5,
+    "absoluteDifferenceIqr": [
+      2,
+      10
+    ],
+    "descriptiveBlandAltman": {
+      "differenceSd": 6.7908390541236985,
+      "lowerLimitOfAgreement": -18.130244546082448,
+      "upperLimitOfAgreement": 8.489844546082448,
+      "note": "Descriptive summary of paired deterministic scores; not a clinical interchangeability test."
+    },
+    "scoreDependentDifferenceDiagnostics": {
+      "pearsonDifferenceVsPairwiseMean": 0.6290837722582623,
+      "pearsonAbsoluteDifferenceVsPairwiseMean": -0.6479767101314073,
+      "spearmanAbsoluteDifferenceVsPairwiseMean": -0.5222150745110927,
+      "bins": [
+        {
+          "pairwiseMeanRange": "[0, 40)",
+          "n": 432,
+          "meanDifference": -15.243055555555555,
+          "differenceSd": 4.08820360786566,
+          "meanAbsoluteDifference": 15.243055555555555
+        },
+        {
+          "pairwiseMeanRange": "[40, 60)",
+          "n": 667,
+          "meanDifference": -9.869565217391305,
+          "differenceSd": 5.987932330484714,
+          "meanAbsoluteDifference": 10.184407796101949
+        },
+        {
+          "pairwiseMeanRange": "[60, 80)",
+          "n": 1235,
+          "meanDifference": -5.8785425101214575,
+          "differenceSd": 6.002280858783044,
+          "meanAbsoluteDifference": 6.908502024291498
+        },
+        {
+          "pairwiseMeanRange": "[80, 100)",
+          "n": 2666,
+          "meanDifference": -1.3777194298574644,
+          "differenceSd": 4.66822867098732,
+          "meanAbsoluteDifference": 3.8173293323330832
+        }
+      ],
+      "interpretation": "Differences are more negative at lower score means and their spread varies across the score range; constant limits should be interpreted cautiously."
+    }
+  },
+  "madRulePathAudit": {
+    "referencePositiveMedWearNegative": 1494,
+    "stoppedByMinimumHrBaselineGate": 1166,
+    "stoppedByMinimumHrBaselineGateProportion": 0.7804551539491299,
+    "passedMinimumHrBaselineGate": 328,
+    "referenceMechanismsAmongGatePassersNonExclusive": {
+      "sleep_deprivation": 263,
+      "spo2_events": 109,
+      "hr_variability": 62,
+      "sedentary_target": 70
+    },
+    "referenceMechanismsAmongAllFalseNegativesNonExclusive": {
+      "spo2_events": 160,
+      "sedentary_target": 367,
+      "hr_variability": 862,
+      "sleep_deprivation": 366
+    },
+    "note": "Mechanism counts are non-exclusive because one case can trigger multiple independent-reference rules."
+  }
+}

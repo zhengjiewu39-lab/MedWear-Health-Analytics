@@ -11,7 +11,6 @@ const FILES = {
   mlComparison: 'benchmarks/results/ml-comparison-fair-latest.json',
   mlComparisonOracle: 'benchmarks/results/ml-comparison-oracle-latest.json',
   mlComparisonVsReference: 'benchmarks/results/ml-comparison-vs-reference-latest.json',
-  mlComparisonVsGold: 'benchmarks/results/ml-comparison-vs-gold-latest.json',
   sensitivityOutcomes: 'benchmarks/results/sensitivity-outcomes-latest.json',
   externalDescriptive: 'benchmarks/results/external-descriptive-latest.json',
 };
@@ -33,7 +32,7 @@ function getEvaluationSupplement() {
     fpBurden: readJson(FILES.fpBurden),
     mlComparison: readJson(FILES.mlComparison),
     mlComparisonOracle: readJson(FILES.mlComparisonOracle),
-    mlComparisonVsReference: readJson(FILES.mlComparisonVsReference) || readJson(FILES.mlComparisonVsGold),
+    mlComparisonVsReference: readJson(FILES.mlComparisonVsReference),
     sensitivityOutcomes: readJson(FILES.sensitivityOutcomes),
     externalDescriptive: readJson(FILES.externalDescriptive),
     regenerate: {

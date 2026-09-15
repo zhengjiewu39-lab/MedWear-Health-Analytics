@@ -4,6 +4,8 @@
 
 > **Documentation (main):** English and Chinese methods docs are **auto-generated from the same source** (`server/config/methodologyTransparency.js`). Core analytics = **BHI** + **robust MAD heuristic** + **`MedWear-RuleEngine-v1`** (not legacy 2σ / discrete health score). Sync: `npm run docs:sync` · verify: `npm run docs:verify`.
 
+Manuscript v1.2 frozen analysis and secondary-result reproduction: [`docs/MANUSCRIPT-V1.2.md`](docs/MANUSCRIPT-V1.2.md).
+
 A full-stack **wearable digital phenotyping research framework** — Apple Health local-first import, transparent statistical analysis, reproducible synthetic benchmarks, and exploratory outcome simulation (outside primary manuscript scope).
 
 **Positioning:** **Research software framework** for **wearable digital phenotyping** — transparent-by-design analytics, **local-first primary data-processing path**, and a **reproducible computational benchmark**. **Not a clinical diagnostic system**; **not validated disease screening**; **not a calibrated disease-risk model**; **not prospective clinical validation**.

@@ -40,7 +40,13 @@ npm run generate:benchmark
 ```bash
 npm run test:server
 npm run evaluate
+npm run analyze:manuscript-secondary
 ```
+
+稿件冻结的次要分析输出为 `benchmarks/results/manuscript-secondary-v1.2.json`。该脚本确定性复现
+BHI ±5/±8/±10/±12 分容差敏感性、MAE、绝对差中位数与四分位距、描述性 Bland–Altman 汇总、
+评分依赖差异诊断，以及参考阳性/MedWear 阴性 MAD 病例的规则路径审计。这些分析仅用于描述
+计算实现差异，不构成临床有效性或可互换性证据。
 
 输出：`benchmarks/results/latest.json`
 

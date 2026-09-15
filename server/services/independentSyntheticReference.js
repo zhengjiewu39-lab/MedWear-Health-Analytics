@@ -5,10 +5,6 @@
  */
 
 const INDEPENDENT_SYNTHETIC_REFERENCE = 'independentSyntheticReference-v1';
-/** @deprecated Use INDEPENDENT_SYNTHETIC_REFERENCE */
-const INDEPENDENT_REFERENCE = INDEPENDENT_SYNTHETIC_REFERENCE;
-/** @deprecated Use INDEPENDENT_SYNTHETIC_REFERENCE */
-const LEGACY_GOLD_STANDARD = 'clinicalGoldStandard-v1';
 
 const EXPERT_THRESHOLDS = {
   heartRateMax: 95,
@@ -155,15 +151,12 @@ function adjudicateCase(caseData) {
     referenceScore: refScore,
     adjudication: INDEPENDENT_SYNTHETIC_REFERENCE,
     referenceStandard: INDEPENDENT_SYNTHETIC_REFERENCE,
-    legacyAlias: LEGACY_GOLD_STANDARD,
   };
 }
 
 module.exports = {
   EXPERT_THRESHOLDS,
   INDEPENDENT_SYNTHETIC_REFERENCE,
-  INDEPENDENT_REFERENCE,
-  LEGACY_GOLD_STANDARD,
   referenceHealthScore,
   adjudicateCase,
 };

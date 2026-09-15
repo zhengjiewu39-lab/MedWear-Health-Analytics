@@ -4,9 +4,7 @@
   "license": "CC-BY-4.0",
   "description": "Synthetic multi-day wearable cases with per-case age/sex demographics. Labels: independentSyntheticReference-v1 rule-based reference labeling (NOT the product analytics engine).",
   "labelSource": "independent-synthetic-reference-v1",
-  "legacyLabelSource": "clinical-gold-standard-v1",
-  "superseded": "MedWear-Wearable-Analytics-Mini-v1",
-  "generatedAt": "2026-08-24T19:21:47.280Z",
+  "generatedAt": "2026-09-15T23:27:29.241Z",
   "seed": 42,
   "rng": "mulberry32",
   "n": 5000,
@@ -981250,6 +981248,5 @@
         "adjudication": "independentSyntheticReference-v1"
       }
     }
-  ],
-  "legacyDataset": "MedWear-Wearable-Analytics-Clinical-v2"
+  ]
 }

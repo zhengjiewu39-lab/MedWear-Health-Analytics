@@ -11,7 +11,6 @@ const { RAW_FEATURE_NAMES, extractRawFeatures, extractReferenceBhiTierLabel } = 
 const { loadCases } = require('./export_features');
 
 const OUT = path.join(__dirname, '../benchmarks/results/ml-comparison-vs-reference-latest.json');
-const OUT_LEGACY = path.join(__dirname, '../benchmarks/results/ml-comparison-vs-gold-latest.json');
 const FEATURES = path.join(__dirname, '../experiments/data/medwear/features_vs_reference_v1.csv');
 const DATASET = path.join(__dirname, '../benchmarks/wearable-analytics-dataset.json');
 const TRAIN = path.join(__dirname, '../experiments/medwear/train.py');
@@ -133,7 +132,6 @@ function main() {
 
   fs.mkdirSync(path.dirname(OUT), { recursive: true });
   fs.writeFileSync(OUT, JSON.stringify(payload, null, 2));
-  fs.writeFileSync(OUT_LEGACY, JSON.stringify(payload, null, 2));
   console.log(`Reference-tier ML comparison → ${OUT} (n=${n}, synthetic reference label target)`);
 }
 

@@ -271,7 +271,7 @@ describe('benchmark dataset integrity', () => {
     assert.ok(ds.cases.length >= 100, `expected n≥100 for clinical estimation, got ${ds.cases.length}`);
     assert.ok(ds.n >= 100 || ds.cases.length >= 100);
     assert.ok(
-      ['independent-synthetic-reference-v1', 'independent-reference-v1', 'clinical-gold-standard-v1'].includes(ds.labelSource),
+      ['independent-synthetic-reference-v1', 'independent-reference-v1'].includes(ds.labelSource),
       'expected independent synthetic reference label source',
     );
     assert.ok(ds.clinicalCharacteristics?.targetDayVitals, 'expected clinical cohort summary');

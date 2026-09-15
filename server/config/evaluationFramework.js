@@ -7,15 +7,12 @@ const { SCORE_FIELD } = require('../services/behavioralHealthIndex');
 
 const PRODUCT_ENGINE = 'MedWear-AnalyticsCore-v1';
 const INDEPENDENT_SYNTHETIC_REFERENCE = 'independentSyntheticReference-v1';
-/** @deprecated aliases — use INDEPENDENT_SYNTHETIC_REFERENCE in new docs/UI */
+/** Short compatibility alias without clinical/gold-standard semantics. */
 const INDEPENDENT_REFERENCE = INDEPENDENT_SYNTHETIC_REFERENCE;
-const GOLD_STANDARD = INDEPENDENT_SYNTHETIC_REFERENCE;
-const LEGACY_GOLD_STANDARD = 'clinicalGoldStandard-v1';
 const CIRCULAR_THRESHOLD = 0.98;
 
 const wearable = {
   dataset: 'MedWear-Wearable-Analytics-Benchmark-v3',
-  legacyDataset: 'MedWear-Wearable-Analytics-Clinical-v2',
   version: '3.0.0',
   n: 5000,
   seed: 42,
@@ -29,8 +26,6 @@ const wearable = {
   referenceLabeling: 'independent rule-based reference labeling with contextual suppression',
   productEngine: PRODUCT_ENGINE,
   referenceStandard: INDEPENDENT_SYNTHETIC_REFERENCE,
-  /** @deprecated API alias — use referenceStandard */
-  goldStandard: INDEPENDENT_SYNTHETIC_REFERENCE,
   evaluationModel: 'engine-versus-reference-agreement',
   scoreAgreementTolerance: 8,
   circularThreshold: CIRCULAR_THRESHOLD,
@@ -82,7 +77,6 @@ function summarizeWearableResults(raw) {
     n: raw.n,
     engine: raw.engine,
     referenceStandard: INDEPENDENT_SYNTHETIC_REFERENCE,
-    legacyReferenceStandard: LEGACY_GOLD_STANDARD,
     metrics: raw.metrics,
     alertMetrics: {
       f1: alerts.f1,
@@ -102,8 +96,6 @@ module.exports = {
   PRODUCT_ENGINE,
   INDEPENDENT_SYNTHETIC_REFERENCE,
   INDEPENDENT_REFERENCE,
-  GOLD_STANDARD,
-  LEGACY_GOLD_STANDARD,
   CIRCULAR_THRESHOLD,
   wearable,
   screening,

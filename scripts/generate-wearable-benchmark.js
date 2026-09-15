@@ -13,7 +13,7 @@
 const fs = require('fs');
 const path = require('path');
 const { evaluateCase } = require('../server/services/analyticsCore');
-const { adjudicateCase } = require('../server/services/clinicalGoldStandard');
+const { adjudicateCase } = require('../server/services/independentSyntheticReference');
 const {
   buildClinicalRandomDays,
   enforceClinicalPlausibility,
@@ -410,9 +410,6 @@ function main() {
     license: 'CC-BY-4.0',
     description: 'Synthetic multi-day wearable cases with per-case age/sex demographics. Labels: independentSyntheticReference-v1 rule-based reference labeling (NOT the product analytics engine).',
     labelSource: 'independent-synthetic-reference-v1',
-    legacyLabelSource: 'clinical-gold-standard-v1',
-    legacyDataset: 'MedWear-Wearable-Analytics-Clinical-v2',
-    superseded: 'MedWear-Wearable-Analytics-Clinical-v2',
     generatedAt: new Date().toISOString(),
     seed: opts.seed,
     rng: 'mulberry32',

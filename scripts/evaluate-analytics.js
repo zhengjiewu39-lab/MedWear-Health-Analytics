@@ -134,7 +134,6 @@ function run() {
     results.integrity = 'independent-reference';
   }
   results.referenceStandard = wearablePolicy.referenceStandard;
-  results.goldStandard = wearablePolicy.referenceStandard;
   results.evaluationModel = wearablePolicy.evaluationModel;
 
   return results;

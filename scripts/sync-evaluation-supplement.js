@@ -12,7 +12,7 @@ const steps = [
   'sensitivity-outcomes.js',
   'experiment-compare-fair.js',
   'experiment-compare-oracle.js',
-  'experiment-compare-vs-gold.js',
+  'experiment-compare-vs-reference.js',
 ];
 
 for (const s of steps) {
