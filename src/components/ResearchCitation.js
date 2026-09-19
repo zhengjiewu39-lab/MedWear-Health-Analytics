@@ -60,7 +60,7 @@ export function ReferenceDialog({ item, open, onClose }) {
               证据依据：{item.evidenceRationale}
             </Typography>
           )}
-          {item.confidence && <Chip label={`置信度 ${(item.confidence * 100).toFixed(1)}%`} size="small" />}
+          {item.confidence && <Chip label={`证据权重 ${(item.confidence * 100).toFixed(1)}%`} size="small" variant="outlined" />}
         </Box>
       </DialogTitle>
       <DialogContent dividers>

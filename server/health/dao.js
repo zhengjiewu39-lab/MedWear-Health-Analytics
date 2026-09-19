@@ -98,11 +98,18 @@ function assembleStore() {
   const metaRow = db.prepare('SELECT value FROM store_meta WHERE key = ?').get('meta');
   const meta = metaRow ? JSON.parse(metaRow.value) : null;
 
+  const stepRecordDays = new Set(
+    db.prepare("SELECT DISTINCT day FROM recent WHERE bucket = 'steps'").all().map((row) => row.day),
+  );
   const dailyRows = db.prepare('SELECT * FROM daily ORDER BY day').all();
   const daily = {};
   dailyRows.forEach((r) => {
+    const steps = r.steps || 0;
+    const stepsRecorded = stepRecordDays.has(r.day) || steps > 0;
     daily[r.day] = {
-      steps: r.steps || 0,
+      steps,
+      stepsRecorded,
+      stepsMissing: !stepsRecorded,
       activeEnergy: r.active_energy || 0,
       distance: r.distance || 0,
       restingHeartRate: r.resting_hr,

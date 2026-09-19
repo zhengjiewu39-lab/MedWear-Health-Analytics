@@ -1,4 +1,4 @@
-/** 临床筛查项目库 — 演示/真实模式共用结构 */
+/** 探索性研究信号类目 — 演示/真实模式共用结构（非临床筛查诊断） */
 
 const EXTRA_TREND_KEYS = ['tumor', 'chronic', 'cardio', 'cancer', 'common', 'respiratory'];
 
@@ -107,6 +107,28 @@ function getExtendedCategories() {
       ],
     },
   ];
+  return applyExploratoryDomainLabels(categories);
+}
+
+function applyExploratoryDomainLabels(categories) {
+  return categories.map((cat) => {
+    const meta = REAL_EXPLORATORY_DOMAINS[cat.id];
+    return {
+      ...cat,
+      ...(meta ? {
+        name: meta.name,
+        name_en: meta.name_en,
+        description: meta.description,
+        description_en: meta.description_en,
+      } : {}),
+      moduleScope: 'exploratory-research-signal',
+      items: (cat.items || []).map((it) => ({
+        ...it,
+        attentionScore: it.attentionScore ?? it.risk,
+        signalLevel: it.signalLevel ?? it.level,
+      })),
+    };
+  });
 }
 
 function getDemoTrendData() {
@@ -194,8 +216,8 @@ function buildRealScreeningCategories(store, stats, anomalies) {
       description: '基于真实 Apple Health 心率、血氧、活动量评估肿瘤相关间接风险。',
       description_en: 'Assesses tumor-related indirect risk based on real Apple Health heart rate, SpO₂, and activity.',
       items: [
-        { name: '肺结节/肺癌', name_en: 'Pulmonary nodule / Lung cancer', risk: lowSpo2 ? 28 : 10, level: lowSpo2 ? 'moderate' : 'low', indicators: [`血氧 ${stats.spo2 ?? '—'}%`, `步数 ${stats.steps}`], indicators_en: [`SpO₂ ${stats.spo2 ?? '—'}%`, `Steps ${stats.steps}`], recommendation: '异常血氧请胸科/低剂量 CT 排查', recommendation_en: 'Abnormal SpO₂ warrants pulmonology / low-dose CT workup' },
-        { name: '结直肠肿瘤', name_en: 'Colorectal tumor', risk: lowActivity ? 22 : 11, level: lowActivity ? 'moderate' : 'low', indicators: [`日均步数 ${stats.steps}`], indicators_en: [`Daily steps ${stats.steps}`], recommendation: '45 岁起 FIT 或肠镜筛查', recommendation_en: 'FIT or colonoscopy screening from age 45' },
+        { name: 'SpO₂ 域探索性提示', name_en: 'SpO₂ domain exploratory prompt', risk: lowSpo2 ? 28 : 10, level: lowSpo2 ? 'moderate' : 'low', indicators: [`血氧 ${stats.spo2 ?? '—'}%`, `步数 ${stats.steps}`], indicators_en: [`SpO₂ ${stats.spo2 ?? '—'}%`, `Steps ${stats.steps}`], recommendation: '低血氧需临床进一步评估（非诊断）', recommendation_en: 'Low SpO₂ warrants clinical follow-up (not a diagnosis)' },
+        { name: '活动量域探索性提示', name_en: 'Activity domain exploratory prompt', risk: lowActivity ? 22 : 11, level: lowActivity ? 'moderate' : 'low', indicators: [`日均步数 ${stats.steps}`], indicators_en: [`Daily steps ${stats.steps}`], recommendation: '持续低活动可讨论生活方式与常规体检', recommendation_en: 'Sustained low activity — discuss lifestyle and routine checkups' },
       ],
     },
     {
@@ -205,8 +227,8 @@ function buildRealScreeningCategories(store, stats, anomalies) {
       description: '结合真实行为数据的高发癌种风险初筛（需影像/病理确诊）。',
       description_en: 'Initial screening for high-incidence cancers using real behavior data (requires imaging/pathology for diagnosis).',
       items: [
-        { name: '胃癌', name_en: 'Gastric cancer', risk: lowSleep ? 20 : 12, level: lowSleep ? 'moderate' : 'low', indicators: [`睡眠 ${stats.sleepHours ?? '—'}h`], indicators_en: [`Sleep ${stats.sleepHours ?? '—'}h`], recommendation: '消化不适持续请胃镜检查', recommendation_en: 'Gastroscopy if digestive discomfort persists' },
-        { name: '肝癌', name_en: 'Liver cancer', risk: 10, level: 'low', indicators: ['活动代谢来自真实记录'], indicators_en: ['Activity metabolism from real records'], recommendation: '高危人群 AFP + 超声', recommendation_en: 'AFP + ultrasound for high-risk groups' },
+        { name: '睡眠节律域提示', name_en: 'Sleep rhythm domain prompt', risk: lowSleep ? 20 : 12, level: lowSleep ? 'moderate' : 'low', indicators: [`睡眠 ${stats.sleepHours ?? '—'}h`], indicators_en: [`Sleep ${stats.sleepHours ?? '—'}h`], recommendation: '睡眠不足时关注作息与常规评估', recommendation_en: 'Short sleep — review sleep hygiene and routine care' },
+        { name: '活动代谢域提示', name_en: 'Activity metabolism domain prompt', risk: 10, level: 'low', indicators: ['活动代谢来自真实记录'], indicators_en: ['Activity metabolism from real records'], recommendation: '结合实验室/影像由临床判断', recommendation_en: 'Combine with labs/imaging per clinical judgment' },
       ],
     },
     {
@@ -217,9 +239,9 @@ function buildRealScreeningCategories(store, stats, anomalies) {
       description: '真实 wearable 数据驱动的慢病趋势分析。',
       description_en: 'Chronic disease trend analysis driven by real wearable data.',
       items: [
-        { name: '高血压', name_en: 'Hypertension', risk: hrElevated ? 35 : 18, level: hrElevated ? 'moderate' : 'low', indicators: [`静息心率 ${stats.restingHR ?? '—'} bpm`], indicators_en: [`Resting HR ${stats.restingHR ?? '—'} bpm`], recommendation: '建议动态血压监测', recommendation_en: 'Ambulatory blood pressure monitoring advised' },
-        { name: '2 型糖尿病', name_en: 'Type 2 diabetes', risk: lowActivity ? 25 : 12, level: lowActivity ? 'moderate' : 'low', indicators: [`步数 ${stats.steps}`], indicators_en: [`Steps ${stats.steps}`], recommendation: '活动不足者查空腹血糖', recommendation_en: 'Check fasting glucose if activity is insufficient' },
-        { name: '睡眠呼吸暂停', name_en: 'Sleep apnea', risk: lowSpo2 || lowSleep ? 24 : 14, level: lowSpo2 ? 'moderate' : 'low', indicators: [`SpO2 ${stats.spo2 ?? '—'}%`, `睡眠 ${stats.sleepHours ?? '—'}h`], indicators_en: [`SpO₂ ${stats.spo2 ?? '—'}%`, `Sleep ${stats.sleepHours ?? '—'}h`], recommendation: '打鼾或低氧做多导睡眠监测', recommendation_en: 'Polysomnography for snoring or hypoxia' },
+        { name: '静息心率域提示', name_en: 'Resting HR domain prompt', risk: hrElevated ? 35 : 18, level: hrElevated ? 'moderate' : 'low', indicators: [`静息心率 ${stats.restingHR ?? '—'} bpm`], indicators_en: [`Resting HR ${stats.restingHR ?? '—'} bpm`], recommendation: '心率持续偏高建议血压/心电评估', recommendation_en: 'Persistently elevated HR — consider BP/ECG evaluation' },
+        { name: '活动不足域提示', name_en: 'Low-activity domain prompt', risk: lowActivity ? 25 : 12, level: lowActivity ? 'moderate' : 'low', indicators: [`步数 ${stats.steps}`], indicators_en: [`Steps ${stats.steps}`], recommendation: '低活动可讨论代谢相关常规检查', recommendation_en: 'Low activity — discuss routine metabolic labs if indicated' },
+        { name: '睡眠/血氧域提示', name_en: 'Sleep / SpO₂ domain prompt', risk: lowSpo2 || lowSleep ? 24 : 14, level: lowSpo2 ? 'moderate' : 'low', indicators: [`SpO2 ${stats.spo2 ?? '—'}%`, `睡眠 ${stats.sleepHours ?? '—'}h`], indicators_en: [`SpO₂ ${stats.spo2 ?? '—'}%`, `Sleep ${stats.sleepHours ?? '—'}h`], recommendation: '夜间低氧或短睡眠需睡眠医学评估', recommendation_en: 'Nocturnal hypoxia or short sleep — sleep medicine evaluation if indicated' },
       ],
     },
     {
@@ -229,8 +251,8 @@ function buildRealScreeningCategories(store, stats, anomalies) {
       description: '真实 HRV、静息心率评估心血管事件风险。',
       description_en: 'Assesses cardiovascular event risk using real HRV and resting heart rate.',
       items: [
-        { name: '冠心病/心梗', name_en: 'Coronary heart disease / Myocardial infarction', risk: hrElevated ? 28 : 12, level: hrElevated ? 'moderate' : 'low', indicators: [`HR ${stats.heartRate}`, `HRV ${stats.hrv}`], indicators_en: [`HR ${stats.heartRate}`, `HRV ${stats.hrv}`], recommendation: '持续异常请心内科评估', recommendation_en: 'Persistent abnormalities warrant cardiology evaluation' },
-        { name: '心律失常', name_en: 'Arrhythmia', risk: lowHrv ? 26 : 11, level: lowHrv ? 'moderate' : 'low', indicators: [`HRV ${stats.hrv ?? '—'} ms`], indicators_en: [`HRV ${stats.hrv ?? '—'} ms`], recommendation: '佩戴 ECG 持续监测', recommendation_en: 'Continuous ECG monitoring' },
+        { name: 'HR/HRV autonomic 域提示', name_en: 'HR/HRV autonomic domain prompt', risk: hrElevated ? 28 : 12, level: hrElevated ? 'moderate' : 'low', indicators: [`HR ${stats.heartRate}`, `HRV ${stats.hrv}`], indicators_en: [`HR ${stats.heartRate}`, `HRV ${stats.hrv}`], recommendation: '自主神经指标异常时心内科进一步评估', recommendation_en: 'Autonomic proxy abnormalities — cardiology follow-up if indicated' },
+        { name: 'HRV 波动域提示', name_en: 'HRV variability domain prompt', risk: lowHrv ? 26 : 11, level: lowHrv ? 'moderate' : 'low', indicators: [`HRV ${stats.hrv ?? '—'} ms`], indicators_en: [`HRV ${stats.hrv ?? '—'} ms`], recommendation: '可结合 ECG/Holter 由临床判断', recommendation_en: 'Consider ECG/Holter per clinical judgment' },
       ],
     },
     {
@@ -241,10 +263,10 @@ function buildRealScreeningCategories(store, stats, anomalies) {
       description: '活动骤降、HRV 波动等提示感冒、流感等急性病倾向（非诊断）。',
       description_en: 'Activity drops and HRV fluctuations suggest tendency toward colds, flu, and other acute illnesses (not a diagnosis).',
       items: [
-        { name: '普通感冒', name_en: 'Common cold', risk: recentActivityDrop ? 32 : 16, level: recentActivityDrop ? 'moderate' : 'low', indicators: [`今日步数 ${stats.steps}`, recentActivityDrop ? '活动量明显下降' : '活动正常'], indicators_en: [`Today's steps ${stats.steps}`, recentActivityDrop ? 'Marked activity decline' : 'Normal activity'], recommendation: '休息补水，3 天未缓解就医', recommendation_en: 'Rest and hydrate; seek care if not relieved in 3 days' },
-        { name: '流行性感冒', name_en: 'Influenza', risk: recentActivityDrop && lowHrv ? 30 : 14, level: recentActivityDrop ? 'moderate' : 'low', indicators: [`HRV ${stats.hrv ?? '—'}`], indicators_en: [`HRV ${stats.hrv ?? '—'}`], recommendation: '高热肌肉酸痛请发热门诊', recommendation_en: 'Visit fever clinic for high fever and muscle aches' },
-        { name: '急性上呼吸道感染', name_en: 'Acute upper respiratory infection', risk: lowSpo2 ? 28 : 18, level: lowSpo2 ? 'moderate' : 'low', indicators: [`血氧 ${stats.spo2 ?? '—'}%`], indicators_en: [`SpO₂ ${stats.spo2 ?? '—'}%`], recommendation: '血氧下降请呼吸科评估', recommendation_en: 'SpO₂ drop warrants pulmonology evaluation' },
-        { name: '病毒性发热倾向', name_en: 'Viral fever tendency', risk: hrElevated && recentActivityDrop ? 35 : 15, level: hrElevated && recentActivityDrop ? 'moderate' : 'low', indicators: [`静息 HR ${stats.restingHR}`], indicators_en: [`Resting HR ${stats.restingHR}`], recommendation: '发热伴气促立即就医', recommendation_en: 'Seek immediate care for fever with shortness of breath' },
+        { name: '活动骤降提示', name_en: 'Activity drop prompt', risk: recentActivityDrop ? 32 : 16, level: recentActivityDrop ? 'moderate' : 'low', indicators: [`今日步数 ${stats.steps}`, recentActivityDrop ? '活动量明显下降' : '活动正常'], indicators_en: [`Today's steps ${stats.steps}`, recentActivityDrop ? 'Marked activity decline' : 'Normal activity'], recommendation: '非特异性信号 — 结合症状决定是否就医', recommendation_en: 'Non-specific signal — seek care based on symptoms' },
+        { name: 'HRV 下降提示', name_en: 'HRV dip prompt', risk: recentActivityDrop && lowHrv ? 30 : 14, level: recentActivityDrop ? 'moderate' : 'low', indicators: [`HRV ${stats.hrv ?? '—'}`], indicators_en: [`HRV ${stats.hrv ?? '—'}`], recommendation: '非诊断性 — 观察或常规评估', recommendation_en: 'Non-diagnostic — observe or routine evaluation' },
+        { name: '血氧波动提示', name_en: 'SpO₂ fluctuation prompt', risk: lowSpo2 ? 28 : 18, level: lowSpo2 ? 'moderate' : 'low', indicators: [`血氧 ${stats.spo2 ?? '—'}%`], indicators_en: [`SpO₂ ${stats.spo2 ?? '—'}%`], recommendation: 'SpO₂ 偏低需临床复核', recommendation_en: 'Low SpO₂ — confirm with clinical measurement' },
+        { name: 'HR+活动复合提示', name_en: 'HR + activity composite prompt', risk: hrElevated && recentActivityDrop ? 35 : 15, level: hrElevated && recentActivityDrop ? 'moderate' : 'low', indicators: [`静息 HR ${stats.restingHR}`], indicators_en: [`Resting HR ${stats.restingHR}`], recommendation: '复合 wearable 信号 — 非急性诊断', recommendation_en: 'Composite wearable signal — not an acute diagnosis' },
       ],
     },
     {
@@ -254,8 +276,8 @@ function buildRealScreeningCategories(store, stats, anomalies) {
       description: '真实血氧与活动耐量评估呼吸系统风险。',
       description_en: 'Assesses respiratory risk using real SpO₂ and exercise tolerance.',
       items: [
-        { name: '社区获得性肺炎', name_en: 'Community-acquired pneumonia', risk: lowSpo2 ? 30 : 12, level: lowSpo2 ? 'moderate' : 'low', indicators: [`SpO2 ${stats.spo2 ?? '—'}%`], indicators_en: [`SpO₂ ${stats.spo2 ?? '—'}%`], recommendation: '咳嗽发热胸痛请胸片', recommendation_en: 'Chest X-ray for cough, fever, or chest pain' },
-        { name: '支气管哮喘', name_en: 'Bronchial asthma', risk: lowSpo2 ? 25 : 18, level: lowSpo2 ? 'moderate' : 'low', indicators: ['呼吸相关 wearable 指标'], indicators_en: ['Respiratory-related wearable metrics'], recommendation: '喘息发作查肺功能', recommendation_en: 'Spirometry for wheezing episodes' },
+        { name: '血氧/耐量域提示', name_en: 'SpO₂ / tolerance domain prompt', risk: lowSpo2 ? 30 : 12, level: lowSpo2 ? 'moderate' : 'low', indicators: [`SpO2 ${stats.spo2 ?? '—'}%`], indicators_en: [`SpO₂ ${stats.spo2 ?? '—'}%`], recommendation: '有呼吸道症状时临床影像/实验室评估', recommendation_en: 'With respiratory symptoms — clinical imaging/labs as indicated' },
+        { name: '呼吸 wearable 域提示', name_en: 'Respiratory wearable domain prompt', risk: lowSpo2 ? 25 : 18, level: lowSpo2 ? 'moderate' : 'low', indicators: ['呼吸相关 wearable 指标'], indicators_en: ['Respiratory-related wearable metrics'], recommendation: '探索性信号 — 肺功能等由临床决定', recommendation_en: 'Exploratory signal — spirometry per clinical judgment' },
       ],
     },
   ];

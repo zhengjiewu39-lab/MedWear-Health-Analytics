@@ -12,6 +12,7 @@ import PageHeader from '../components/PageHeader';
 import SystemStackBanner from '../components/SystemStackBanner';
 import { settingsApi, securityApi, systemApi } from '../services/api';
 import { useLang } from '../contexts/LanguageContext';
+import { useAuth } from '../contexts/AuthContext';
 
 const PROVIDER_COLORS = {
   openai: '#10a37f',
@@ -39,11 +40,15 @@ function SettingsPage() {
   const [drafts, setDrafts] = useState({});
   const [savingId, setSavingId] = useState(null);
   const [stack, setStack] = useState(null);
+  const [thresholdDraft, setThresholdDraft] = useState(null);
+  const [savingThresholds, setSavingThresholds] = useState(false);
   const { t, isEn, lang, setLang } = useLang();
+  const { isAdmin } = useAuth();
 
   const refresh = () => {
     settingsApi.get().then((res) => {
       setSettings(res.data);
+      setThresholdDraft(res.data.alertThresholds || null);
       const next = {};
       (res.data.aiProviders || []).forEach((p) => {
         next[p.id] = { model: p.selectedModel || p.defaultModel, apiKey: '' };
@@ -308,15 +313,54 @@ function SettingsPage() {
               <NotificationsActive color="warning" />
               <Typography variant="h6">{t('告警阈值', 'Alert thresholds')}</Typography>
             </Stack>
-            {[
-              { label: t('心率上限 (bpm)', 'HR max (bpm)'), value: settings.alertThresholds.heartRateMax },
-              { label: t('心率下限 (bpm)', 'HR min (bpm)'), value: settings.alertThresholds.heartRateMin },
-              { label: t('血氧下限 (%)', 'SpO₂ min (%)'), value: settings.alertThresholds.spo2Min },
-              { label: t('血糖上限 (mmol/L)', 'Glucose max'), value: settings.alertThresholds.glucoseMax },
+            <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1.5 }}>
+              {settings.alertThresholdsSource || 'alertThresholds.js'}
+              {settings.alertThresholdsReadOnly
+                ? t(' · 与引擎同步（只读）', ' · synced with engine (read-only)')
+                : t(' · 管理员可写入 runtime-settings.json', ' · admin can persist to runtime-settings.json')}
+            </Typography>
+            {thresholdDraft && [
+              { key: 'heartRateMax', label: t('心率上限 (bpm)', 'HR max (bpm)') },
+              { key: 'heartRateMin', label: t('心率下限 (bpm)', 'HR min (bpm)') },
+              { key: 'spo2Min', label: t('血氧下限 (%)', 'SpO₂ min (%)') },
+              { key: 'glucoseMax', label: t('血糖上限 (mmol/L)', 'Glucose max') },
             ].map((item) => (
-              <TextField key={item.label} fullWidth label={item.label} defaultValue={item.value}
-                type="number" size="small" sx={{ mb: 2 }} />
+              <TextField
+                key={item.key}
+                fullWidth
+                label={item.label}
+                value={thresholdDraft[item.key] ?? ''}
+                onChange={(e) => setThresholdDraft((prev) => ({ ...prev, [item.key]: Number(e.target.value) }))}
+                type="number"
+                size="small"
+                sx={{ mb: 2 }}
+                disabled={settings.alertThresholdsReadOnly}
+              />
             ))}
+            {isAdmin && !settings.alertThresholdsReadOnly && (
+              <Button
+                variant="contained"
+                size="small"
+                startIcon={<Save />}
+                disabled={savingThresholds}
+                onClick={async () => {
+                  setSavingThresholds(true);
+                  try {
+                    await settingsApi.saveThresholds(thresholdDraft);
+                    setActionSeverity('success');
+                    setActionMsg(t('阈值已保存并同步到分析引擎', 'Thresholds saved and applied to analytics engine'));
+                    refresh();
+                  } catch (err) {
+                    setActionSeverity('error');
+                    setActionMsg(err.response?.data?.message || t('保存失败', 'Save failed'));
+                  } finally {
+                    setSavingThresholds(false);
+                  }
+                }}
+              >
+                {t('保存阈值', 'Save thresholds')}
+              </Button>
+            )}
           </Paper>
         </Grid>
 

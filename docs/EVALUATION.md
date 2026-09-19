@@ -61,6 +61,8 @@ Output: `benchmarks/results/latest.json`
 
 **Alert F1 (0.854) measures threshold signal agreement only** — not MedWear-RuleEngine-v1 domain-weighted research-signal integration outputs.
 
+**Threshold sources (do not conflate):** Primary metrics from `npm run evaluate` use **`benchmarks/wearable-analytics-dataset.json` → `thresholds`** plus code defaults in `server/config/alertThresholds.js` (SpO₂ min 93%). They **do not** read local `runtime-settings.json`. Real-mode UI / imported-data analytics may apply **`loadRuntimeSettings()`** overrides after an admin saves thresholds in Settings — that affects live engine behavior only, not the frozen primary benchmark table.
+
 **Not directly evaluated:** domain-weighted RuleEngine research-signal integration outputs; exploratory cohort/scenario simulation modules; optional ONNX backend.
 
 Independent synthetic reference labels are **rule-generated synthetic reference labels** — they do **not** constitute clinical ground truth.

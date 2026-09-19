@@ -80,7 +80,7 @@ function PredictiveAnalytics() {
   const chartData = filtered.map(p => ({
     name: p.risk.length > 12 ? `${p.risk.slice(0, 12)}…` : p.risk,
     fullName: p.risk,
-    probability: p.heuristicWeight ?? p.probability,
+    heuristicWeight: p.heuristicWeight ?? p.probability,
     fill: (p.heuristicWeight ?? p.probability) >= 60 ? '#C62828' : (p.heuristicWeight ?? p.probability) >= 40 ? '#EF6C00' : '#2E7D32',
   }));
 
@@ -153,7 +153,7 @@ function PredictiveAnalytics() {
                 <XAxis type="number" domain={[0, 100]} unit="%" />
                 <YAxis type="category" dataKey="name" width={100} tick={{ fontSize: 11 }} />
                 <Tooltip formatter={(v, _n, props) => [`${v}%`, props.payload.fullName || props.payload.name]} />
-                <Bar dataKey="probability" name={t('信号强度', 'Signal strength')} radius={[0, 4, 4, 0]}>
+                <Bar dataKey="heuristicWeight" name={t('信号强度', 'Signal strength')} radius={[0, 4, 4, 0]}>
                   {chartData.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
                 </Bar>
               </BarChart>

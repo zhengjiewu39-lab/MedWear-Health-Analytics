@@ -48,6 +48,7 @@
     "test:ai": "node scripts/test-ai.js",
     "test:server": "node --test server/__tests__/*.test.js",
     "evaluate": "node scripts/evaluate-analytics.js",
+    "analyze:manuscript-secondary": "node scripts/analyze-manuscript-secondary.js",
     "docs:sync": "node scripts/sync-methods-docs.js",
     "docs:verify": "node scripts/verify-docs-sync.js && node scripts/verify-evaluation-terminology.js",
     "freeze:scenarios": "node scripts/freeze-scenario-results.js",

@@ -413,7 +413,7 @@ function OutcomesComparison() {
           sx={{ mb: 2 }}
           action={
             <Button color="inherit" size="small" onClick={() => navigate('/research#validation')}>
-              {t('查看临床验证', 'View clinical validation')}
+              {t('查看探索性模拟', 'View exploratory simulation')}
             </Button>
           }
         >

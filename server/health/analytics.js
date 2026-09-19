@@ -2,6 +2,7 @@ const { SCORE_FIELD } = require('../services/behavioralHealthIndex');
 const { demographicsFromMeta } = require('../services/demographics');
 const { classifyBHIWatchTier } = require('../config/bhiWatchTier');
 const { DEFAULT_ALERT_THRESHOLDS } = require('../config/alertThresholds');
+const { loadRuntimeSettings } = require('../config/runtimeSettings');
 const { resolveBhiFromDay } = require('./bhiDisplay');
 const { enrichScreeningData } = require('../ai/engine');
 const { getStore, hasData } = require('./store');
@@ -988,10 +989,10 @@ function buildRealDoctorReport(store) {
   };
 }
 
-function getAllAnalytics(thresholds = DEFAULT_ALERT_THRESHOLDS) {
+function getAllAnalytics(thresholds = loadRuntimeSettings().alertThresholds) {
   const store = getStore();
   if (!hasData()) return getEmptyAnalytics();
-  const alertThresholds = { ...DEFAULT_ALERT_THRESHOLDS, ...thresholds };
+  const alertThresholds = { ...loadRuntimeSettings().alertThresholds, ...thresholds };
   return {
     hasData: true,
     meta: store.meta,

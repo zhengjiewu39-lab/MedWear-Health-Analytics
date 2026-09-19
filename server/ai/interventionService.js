@@ -65,6 +65,7 @@ function buildItem(patientId, {
     rationale_en,
     aiModel,
     confidence: +confidence.toFixed(1),
+    heuristicStrength: +confidence.toFixed(1),
     priority,
     horizon: horizon || null,
     patientId,

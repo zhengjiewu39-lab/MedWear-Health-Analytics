@@ -95,6 +95,7 @@ export const interventionApi = {
 export const settingsApi = {
   get: () => api.get('/settings'),
   saveAi: (data) => api.post('/settings/ai', data),
+  saveThresholds: (data) => api.post('/settings/thresholds', data),
   getProviders: () => api.get('/settings').then((r) => r.data.aiProviders || []),
 };
 

@@ -33,6 +33,7 @@ data/real-appointments.json
 data/ai-config.json
 data/health-vault.enc
 data/audit-log.json
+data/runtime-settings.json
 data/medwear-health.db
 data/medwear-health.db-*
 data/*.db

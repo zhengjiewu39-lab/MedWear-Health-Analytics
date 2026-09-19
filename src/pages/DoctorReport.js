@@ -29,7 +29,7 @@ const SOURCE_LABEL = {
   composite: { zh: '综合', en: 'Composite' },
   demographics: { zh: '人口学', en: 'Demographics' },
   wearable: { zh: '可穿戴', en: 'Wearable' },
-  screening: { zh: 'AI筛查', en: 'AI screening' },
+  screening: { zh: '研究信号', en: 'Research signal' },
   anomaly: { zh: '异常检测', en: 'Anomaly' },
   prediction: { zh: '预测性提示', en: 'Predictive signal' },
   lifestyle: { zh: '行为', en: 'Behavior' },
@@ -319,7 +319,7 @@ function DoctorReport() {
               <Paper sx={{ p: 3, height: '100%' }}>
                 <Typography variant="h6" fontWeight={600} gutterBottom>{t('需进一步评估的信号', 'Signals requiring further evaluation')}</Typography>
                 <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1.5 }}>
-                  {t('融合人口学、可穿戴、AI 筛查、异常检测与预测性提示 · 非诊断性输出', 'Demographics, wearables, AI screening, anomalies & predictive signals — non-diagnostic')}
+                  {t('融合人口学、可穿戴、研究信号、MAD 异常与预测性提示 · 非诊断性输出', 'Demographics, wearables, research signals, MAD anomalies & predictive hints — non-diagnostic')}
                 </Typography>
                 {report.riskFactors.map((r, i) => (
                   <Box
@@ -422,7 +422,7 @@ function DoctorReport() {
 
       <Paper sx={{ p: 3, mb: 3 }}>
         <Typography variant="h6" fontWeight={600} gutterBottom>
-          {t('AI 筛查结论', 'AI screening conclusions')}
+          {t('研究信号摘要', 'Research signal summary')}
         </Typography>
         <Grid container spacing={2} sx={{ mb: 2 }}>
           {report.screeningSummary.map(s => (
@@ -480,7 +480,7 @@ function DoctorReport() {
                 <Chip size="small" color="success" label={t('已批准', 'Approved')} />
               </Box>
               <Typography variant="body2">{isEn ? iv.action_en : iv.action}</Typography>
-              <Typography variant="caption" color="text.secondary">{iv.referenceDomainLabel || iv.aiModel} · {iv.confidence}% · {iv.reviewedBy}</Typography>
+              <Typography variant="caption" color="text.secondary">{iv.referenceDomainLabel || iv.aiModel} · {t('信号强度', 'Signal strength')} {iv.heuristicStrength ?? iv.confidence}% · {iv.reviewedBy}</Typography>
             </Box>
           ))
         )}

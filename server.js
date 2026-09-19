@@ -47,6 +47,7 @@ const {
 } = require('./server/reports/doctorReportService');
 const { getDemoPatientData, getDemoPatientSummary, searchDemoPatients } = require('./server/mock/demoPatientRegistry');
 const { hasData } = require('./server/health/store');
+const { loadRuntimeSettings, saveAlertThresholds } = require('./server/config/runtimeSettings');
 const { getSystemStack } = require('./server/config/systemStack');
 const { isModelLoaded, loadModel, getModelInfo } = require('./server/ai/onnxInference');
 const { isOnnxEnabled } = require('./server/config/onnxConfig');
@@ -750,8 +751,8 @@ app.get('/api/outcomes/patient-comparison', (req, res) => {
 // ── Settings & AI Config ──
 app.get('/api/settings', (req, res) => {
   const aiConfig = loadConfig();
-  const { hasData } = require('./server/health/store');
   const { DEFAULT_ALERT_THRESHOLDS } = require('./server/config/alertThresholds');
+  const runtime = loadRuntimeSettings();
   const modeHeaderMismatch = req.dataMode === 'demo' && hasData();
   res.json({
     aiEnabled: true,
@@ -762,7 +763,9 @@ app.get('/api/settings', (req, res) => {
     aiProviders: aiConfig.availableProviders,
     confidenceThreshold: 85,
     aiModels: aiConfig.availableProviders.find((p) => p.id === aiConfig.provider)?.models || [],
-    alertThresholds: { ...DEFAULT_ALERT_THRESHOLDS },
+    alertThresholds: runtime.alertThresholds,
+    alertThresholdsSource: 'runtime-settings.json (fallback: alertThresholds.js defaults)',
+    alertThresholdsReadOnly: req.user?.role !== 'admin',
     modeHeaderMismatch,
     modeMismatchWarning: modeHeaderMismatch
       ? {
@@ -782,6 +785,17 @@ app.get('/api/settings', (req, res) => {
     realAiAvailable: aiConfig.apiKeySet,
     securityLevel: 'enhanced-v2',
   });
+});
+
+app.post('/api/settings/thresholds', adminOnly, (req, res) => {
+  const { heartRateMax, heartRateMin, spo2Min, glucoseMax } = req.body || {};
+  const next = saveAlertThresholds({
+    ...(heartRateMax != null ? { heartRateMax: Number(heartRateMax) } : {}),
+    ...(heartRateMin != null ? { heartRateMin: Number(heartRateMin) } : {}),
+    ...(spo2Min != null ? { spo2Min: Number(spo2Min) } : {}),
+    ...(glucoseMax != null ? { glucoseMax: Number(glucoseMax) } : {}),
+  });
+  res.json({ success: true, alertThresholds: next });
 });
 
 app.post('/api/settings/ai', adminOnly, async (req, res) => {
@@ -866,7 +880,8 @@ if (fs.existsSync(path.join(buildDir, 'index.html'))) {
   });
 }
 
-const httpServer = app.listen(port, bindHost, () => {
+function startServer() {
+  const httpServer = app.listen(port, bindHost, () => {
   const hasUi = fs.existsSync(path.join(buildDir, 'index.html'));
   const bindLabel = bindHost === '0.0.0.0' ? 'all interfaces' : bindHost;
   console.log(`MedWear API http://localhost:${port} (bind ${bindLabel}) [双模式 · 真实AI · IP定位医院]`);
@@ -894,15 +909,22 @@ const httpServer = app.listen(port, bindHost, () => {
   if (ALLOW_DEMO) {
     console.log('  管理员账号: admin/admin123 (仅 DEV / ALLOW_DEMO_AUTH)');
   }
-});
-
-httpServer.on('error', (err) => {
-  if (err.code === 'EADDRINUSE') {
-    console.error(`\n[MedWear] 端口 ${port} 已被占用 — AI 请求会出现 fetch failed。`);
-    console.error('[MedWear] 请先运行: npm run stop');
-    console.error('[MedWear] 然后重新: npm run app\n');
+  });
+  httpServer.on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+      console.error(`\n[MedWear] 端口 ${port} 已被占用 — AI 请求会出现 fetch failed。`);
+      console.error('[MedWear] 请先运行: npm run stop');
+      console.error('[MedWear] 然后重新: npm run app\n');
+      process.exit(1);
+    }
+    console.error('[MedWear] 服务启动失败:', err.message);
     process.exit(1);
-  }
-  console.error('[MedWear] 服务启动失败:', err.message);
-  process.exit(1);
-});
+  });
+  return httpServer;
+}
+
+if (require.main === module) {
+  startServer();
+}
+
+module.exports = { app, startServer, port, bindHost };

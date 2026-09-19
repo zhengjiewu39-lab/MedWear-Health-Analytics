@@ -35,6 +35,7 @@ const ICONS = {
   '研究评价': Science,
   '研究评价中心': Science,
   '临床验证': Gavel,
+  '探索性模拟': Gavel,
   '结局对比': CompareArrows,
   '方法学文档': MenuBook,
   '患者队列': Groups,

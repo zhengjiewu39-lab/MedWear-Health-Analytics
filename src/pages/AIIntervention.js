@@ -213,7 +213,7 @@ function AIIntervention() {
                   </Typography>
                   <Stack direction="row" spacing={0.5} flexWrap="wrap" sx={{ mb: 1.5 }}>
                     <Chip size="small" icon={<Psychology />} label={item.referenceDomainLabel || item.aiModel} variant="outlined" />
-                    <Chip size="small" label={`${t('置信度', 'Confidence')} ${item.confidence}%`} />
+                    <Chip size="small" label={`${t('信号强度', 'Signal strength')} ${item.heuristicStrength ?? item.confidence}%`} />
                     {item.horizon && <Chip size="small" label={item.horizon} variant="outlined" />}
                     {item.patientId && <Chip size="small" label={item.patientId} variant="outlined" />}
                   </Stack>

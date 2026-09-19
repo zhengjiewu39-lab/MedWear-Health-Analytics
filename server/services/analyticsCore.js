@@ -36,6 +36,8 @@ function emptySleep() {
 function normalizeDay(raw = {}) {
   return {
     steps: raw.steps || 0,
+    stepsRecorded: raw.stepsRecorded != null ? Boolean(raw.stepsRecorded) : raw.steps > 0,
+    stepsMissing: Boolean(raw.stepsMissing),
     activeEnergy: raw.activeEnergy || 0,
     heartRate: raw.heartRate || [],
     restingHeartRate: raw.restingHeartRate || null,

@@ -113,6 +113,27 @@ describe('behavioral health index', () => {
       assert.ok(detail.score != null);
     });
 
+    test('stepsMissing skips steps component (distinct from zero steps day)', () => {
+      const { computeBehavioralHealthIndex } = require('../services/behavioralHealthIndex');
+      const missing = computeBehavioralHealthIndex({
+        ...FULL_DAY,
+        steps: 0,
+        stepsMissing: true,
+        stepsRecorded: false,
+      }, { age: 42, sex: 'F' });
+      assert.equal(missing.unavailable.steps, 'missing_steps_record');
+      assert.equal(missing.components.steps, undefined);
+
+      const zeroDay = computeBehavioralHealthIndex({
+        ...FULL_DAY,
+        steps: 0,
+        stepsMissing: false,
+        stepsRecorded: true,
+      }, { age: 42, sex: 'F' });
+      assert.equal(zeroDay.unavailable.steps, 'zero_steps_day');
+      assert.ok(zeroDay.components.steps != null);
+    });
+
     test('Case 5: age and sex present but RHR missing — RHR unavailable (missing_rhr), no HR mean substitution', () => {
       const { computeBehavioralHealthIndex } = require('../services/behavioralHealthIndex');
       const detail = computeBehavioralHealthIndex({

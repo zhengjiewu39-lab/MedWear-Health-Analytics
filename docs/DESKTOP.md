@@ -39,6 +39,17 @@ npm run desktop:win
 3. **不要直接双击图标** — 若提示「文件已损坏」，见下方 **macOS 安全提示**
 4. 登录：`admin` / `admin123` 或 `demo` / `demo123`
 
+**安全说明：** 默认仅监听 `127.0.0.1`；敏感 API（Research 重算、设置、审计导出、干预审批）需 **admin** 角色。详见 [docs/SECURITY.md](SECURITY.md)。
+
+**复现命令（主文 + 次要分析）：**
+
+```bash
+npm run test:server              # 87 server tests (incl. HTTP RBAC + outcomes guard)
+npm run evaluate                 # primary benchmark metrics
+npm run analyze:manuscript-secondary   # Bland–Altman / tolerance / MAD audit JSON
+npm run docs:verify
+```
+
 ### 安全说明（桌面 / 演示）
 
 - 桌面版内置 **`ALLOW_DEMO_AUTH=true`** 与固定演示密钥，仅适合 **本机演示**，勿将 API 端口暴露到公网或不可信 Wi‑Fi。

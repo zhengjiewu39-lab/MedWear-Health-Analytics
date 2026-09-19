@@ -14,7 +14,7 @@ const {
   buildRealDoctorReport,
 } = require('../health/analytics');
 const { hasData, getStore } = require('../health/store');
-const { DEFAULT_ALERT_THRESHOLDS } = require('../config/alertThresholds');
+const { loadRuntimeSettings } = require('../config/runtimeSettings');
 const { STANDARDS } = require('../mock/clinicalData');
 const { getExamSlots } = require('../mock/clinicalData');
 const fs = require('fs');
@@ -23,14 +23,15 @@ const { getDataDir, ensureDataDir } = require('../paths');
 
 const REAL_APPT_FILE = path.join(getDataDir(), 'real-appointments.json');
 
-const REAL_EXAM_PACKAGES = [
-  { id: 'real-tumor', name: 'Apple Health 肿瘤早筛', category: 'tumor', price: 2680, duration: '半天', includesWearableReport: true, items: ['低剂量 CT', '肿瘤标志物', '甲状腺 B 超', 'MedWear 真实数据报告'] },
-  { id: 'real-cancer', name: '癌症专项筛查', category: 'cancer', price: 3280, duration: '1天', includesWearableReport: true, items: ['HPV/TCT', '胃镜', '肠镜', 'AFP/PSA', '数据融合解读'] },
-  { id: 'real-chronic', name: '慢病筛查套餐', category: 'chronic', price: 1280, duration: '2h', includesWearableReport: true, items: ['动态血压', '血糖+HbA1c', '血脂', '心电图'] },
-  { id: 'real-common', name: '常见小病 · 呼吸套餐', category: 'common', price: 680, duration: '1.5h', includesWearableReport: true, items: ['血常规', 'CRP', '胸片', '流感抗原', '过敏原检测'] },
-  { id: 'real-resp', name: '呼吸系统专项', category: 'respiratory', price: 980, duration: '2h', includesWearableReport: true, items: ['肺功能', 'FeNO', '胸部 CT'] },
-  { id: 'real-full', name: 'MedWear 真实数据全检', category: 'full', price: 3580, duration: '1天', includesWearableReport: true, items: ['全项基础检查', '真实 wearable 报告', '医生问诊 15 分钟'], highlight: true },
+const EXPLORATORY_EXAM_PACKAGES = [
+  { id: 'real-tumor', name: 'Wearable-informed checkup · cardio-respiratory (exploratory)', name_zh: '可穿戴提示 · 心肺血氧域（探索性）', category: 'tumor', price: 2680, duration: '半天', includesWearableReport: true, items: ['低剂量 CT', '肿瘤标志物', '甲状腺 B 超', 'MedWear 真实数据报告'] },
+  { id: 'real-cancer', name: 'Wearable-informed checkup · metabolic/sleep (exploratory)', name_zh: '可穿戴提示 · 代谢睡眠域（探索性）', category: 'cancer', price: 3280, duration: '1天', includesWearableReport: true, items: ['HPV/TCT', '胃镜', '肠镜', 'AFP/PSA', '数据融合解读'] },
+  { id: 'real-chronic', name: 'Chronic-condition follow-up (exploratory)', name_zh: '慢病相关复查（探索性）', category: 'chronic', price: 1280, duration: '2h', includesWearableReport: true, items: ['动态血压', '血糖+HbA1c', '血脂', '心电图'] },
+  { id: 'real-common', name: 'Acute tendency workup (exploratory)', name_zh: '急性倾向相关检查（探索性）', category: 'common', price: 680, duration: '1.5h', includesWearableReport: true, items: ['血常规', 'CRP', '胸片', '流感抗原', '过敏原检测'] },
+  { id: 'real-resp', name: 'Respiratory wearable follow-up (exploratory)', name_zh: '呼吸域 wearable 复查（探索性）', category: 'respiratory', price: 980, duration: '2h', includesWearableReport: true, items: ['肺功能', 'FeNO', '胸部 CT'] },
+  { id: 'real-full', name: 'MedWear real-data wellness bundle (exploratory)', name_zh: 'MedWear 真实数据综合包（探索性）', category: 'full', price: 3580, duration: '1天', includesWearableReport: true, items: ['全项基础检查', '真实 wearable 报告', '医生问诊 15 分钟'], highlight: true },
 ];
+const REAL_EXAM_PACKAGES = EXPLORATORY_EXAM_PACKAGES;
 
 function loadRealAppointments() {
   try {
@@ -45,7 +46,7 @@ function saveRealAppointments(list) {
   fs.writeFileSync(REAL_APPT_FILE, JSON.stringify(list, null, 2));
 }
 
-function realAnalytics(thresholds = DEFAULT_ALERT_THRESHOLDS) {
+function realAnalytics(thresholds = loadRuntimeSettings().alertThresholds) {
   return hasData() ? getAllAnalytics(thresholds) : getEmptyAnalytics();
 }
 

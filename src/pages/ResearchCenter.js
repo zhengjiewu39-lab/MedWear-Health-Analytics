@@ -281,7 +281,7 @@ function ResearchCenter() {
           {t('查看结局对比', 'View outcome comparison')}
         </Button>
         <Button variant="outlined" color="secondary" startIcon={<Gavel />} onClick={runValidation} disabled={validating}>
-          {validating ? t('验证中…', 'Validating…') : t('临床队列验证', 'Clinical validation')}
+          {validating ? t('模拟中…', 'Simulating…') : t('探索性队列模拟', 'Exploratory cohort simulation')}
         </Button>
         <Button variant="outlined" color="secondary" startIcon={<Refresh />} onClick={runSupplementRegenerate} disabled={supplementRegenerating}>
           {supplementRegenerating ? t('生成中…', 'Generating…') : t('刷新评测补充', 'Refresh eval supplement')}
@@ -295,7 +295,7 @@ function ResearchCenter() {
         <Paper sx={{ p: 2, mb: 2, borderLeft: 4, borderColor: 'success.main', bgcolor: 'success.50' }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 1, mb: 1.5 }}>
             <Typography variant="subtitle1" fontWeight={700}>
-              {t('临床队列验证', 'Clinical cohort validation')} · SEER / NLST / 中国肿瘤登记
+              {t('探索性模拟 vs 公开登记子集', 'Exploratory simulation vs published registry subsets')} · SEER / NLST / 中国肿瘤登记
             </Typography>
             <Button size="small" onClick={() => setTab(5)}>{t('查看详情', 'View details')}</Button>
           </Box>
@@ -324,7 +324,7 @@ function ResearchCenter() {
           <Tab label={t('评测结果', 'Results')} />
           <Tab label={t('分析方法', 'Methods')} />
           <Tab label={t('队列样本', 'Cohort sample')} />
-          <Tab label={t('临床验证', 'Clinical validation')} />
+          <Tab label={t('探索性模拟', 'Exploratory simulation')} />
           <Tab label={t('合规说明', 'Compliance')} />
         </Tabs>
         <Box sx={{ p: 2.5 }}>
@@ -613,8 +613,8 @@ function ResearchCenter() {
               </>
             ) : (
               <Alert severity="info" action={<Button onClick={runValidation}>{t('运行验证', 'Run validation')}</Button>}>
-                {t('对照 SEER/NLST/中国肿瘤登记参考子集，验证早诊率、治疗延迟、存活改善及敏感性/特异性/PPV/AUC',
-                  'Validate against SEER/NLST/China NCCR subsets: early dx, treatment delay, survival gain, sensitivity/specificity/PPV/AUC')}
+                {t('对照 SEER/NLST/中国肿瘤登记参考子集的可探索性参数化模拟（非临床诊断性能；与主文 Table 3 可穿戴基准隔离）',
+                  'Parametric exploratory simulation against SEER/NLST/China NCCR subset references — not clinical diagnostic performance; isolated from primary wearable benchmark (Table 3)')}
               </Alert>
             )}
           </TabPanel>

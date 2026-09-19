@@ -20,9 +20,9 @@ const steps = [
 ];
 
 function DataImport() {
-  const { t } = useLang();
+  const { t, isEn } = useLang();
   const { refresh } = useHealthData();
-  const { isReal } = useDataMode();
+  const { isReal, setMode } = useDataMode();
   const [status, setStatus] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(null);
@@ -44,7 +44,8 @@ function DataImport() {
         clearInterval(timer);
         setUploading(false);
         if (res.data.status === 'done') {
-          setSuccess(t('数据导入成功！所有页面现已使用您的真实健康数据。', 'Data imported successfully! All pages now use your real health data.'));
+          setSuccess(t('数据导入成功！已切换到真实模式。', 'Import complete — switched to real mode.'));
+          setMode('real');
           window.dispatchEvent(new CustomEvent('medwear-health-import'));
           refreshStatus();
         } else {
@@ -75,8 +76,13 @@ function DataImport() {
       pollProgress();
     } catch (err) {
       setUploading(false);
-      const msg = err.response?.data?.message || err.message;
-      setError(msg || t('导入失败', 'Import failed'));
+      const data = err.response?.data;
+      if (err.response?.status === 409) {
+        setError(isEn ? (data?.message_en || data?.message) : (data?.message || '已有导入任务进行中，请等待完成后再试。'));
+      } else {
+        const msg = isEn ? (data?.message_en || data?.message) : data?.message;
+        setError(msg || err.message || t('导入失败', 'Import failed'));
+      }
     }
     e.target.value = '';
   };

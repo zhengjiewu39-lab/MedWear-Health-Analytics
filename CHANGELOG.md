@@ -13,7 +13,7 @@ All notable methodology and documentation changes for MedWear Health Analytics.
 
 ### Evaluation
 
-- Wearable benchmark expanded to **n=5000** with independent `clinicalGoldStandard-v1` labels.
+- Wearable benchmark expanded to **n=5000** with independent **`independentSyntheticReference-v1`** labels (engine-versus-reference agreement; not clinical ground truth).
 - Realistic alert false positives (v2.5): alert F1 **~0.844**, precision **~0.758**, anomaly accuracy **~0.700**, BHI agreement **~0.760** (seed=42).
 - Added **false-positive burden** scenario (`npm run analyze:fp-burden`).
 - Frozen **scenario sensitivity** conservative/neutral/optimistic (`npm run freeze:scenarios`).

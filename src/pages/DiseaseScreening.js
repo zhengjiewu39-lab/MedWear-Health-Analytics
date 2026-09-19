@@ -30,12 +30,12 @@ const riskChip = { low: 'success', moderate: 'warning', high: 'error', unknown: 
 const insightIcon = { positive: <CheckCircle color="success" />, warning: <Warning color="warning" />, info: <Info color="info" /> };
 
 const TREND_LINES = [
-  { key: 'tumor', name: '肿瘤', name_en: 'Tumor', color: CHART.category.tumor },
-  { key: 'cancer', name: '癌症', name_en: 'Cancer', color: CHART.category.cancer },
-  { key: 'chronic', name: '慢病', name_en: 'Chronic Disease', color: CHART.category.chronic },
-  { key: 'cardio', name: '心脑血管', name_en: 'Cardio-Cerebrovascular', color: CHART.category.cardio },
-  { key: 'common', name: '常见小病', name_en: 'Common Ailments', color: CHART.category.common },
-  { key: 'respiratory', name: '呼吸系统', name_en: 'Respiratory', color: CHART.category.respiratory },
+  { key: 'tumor', name: '心肺血氧域', name_en: 'Cardio-resp / SpO₂', color: CHART.category.tumor },
+  { key: 'cancer', name: '代谢睡眠域', name_en: 'Metabolic / sleep', color: CHART.category.cancer },
+  { key: 'chronic', name: '慢病 wearable 域', name_en: 'Chronic wearable', color: CHART.category.chronic },
+  { key: 'cardio', name: 'Autonomic 域', name_en: 'Autonomic', color: CHART.category.cardio },
+  { key: 'common', name: '活动/HRV 域', name_en: 'Activity / HRV', color: CHART.category.common },
+  { key: 'respiratory', name: '呼吸域', name_en: 'Respiratory', color: CHART.category.respiratory },
 ];
 
 function DiseaseScreening() {
@@ -86,8 +86,8 @@ function DiseaseScreening() {
           <Typography variant="h5" fontWeight={700}>{t('研究信号整合', 'Research Signal Integration')}</Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
             {t(
-              `6 大类 · ${totalItems} 项筛查（肿瘤/癌症/慢病/心脑血管/常见小病/呼吸）`,
-              `6 categories · ${totalItems} screening items (Tumor / Cancer / Chronic / Cardio-Cerebrovascular / Common Ailments / Respiratory)`,
+              `6 个探索性 domain · ${totalItems} 条 attentionScore 提示（非主文基准 · 非诊断）`,
+              `6 exploratory domains · ${totalItems} attentionScore prompts (outside primary benchmark · non-diagnostic)`,
             )}
             {' · '}{t(`${data.dataCoverage?.days || 0} 天数据`, `${data.dataCoverage?.days || 0} days of data`)}
             {' · '}{data.aiVersion || 'MedWear-RuleEngine-v1'}
@@ -108,7 +108,7 @@ function DiseaseScreening() {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Biotech sx={{ fontSize: 48 }} />
               <Box>
-                <Typography variant="h6" fontWeight={600}>{t('筛查导向决策支持', 'Screening-oriented decision support')} · {bhiTierLabel(data.overallBhiTier ?? data.overallRisk, isEn) || t('评估中', 'Evaluating')}</Typography>
+                <Typography variant="h6" fontWeight={600}>{t('研究信号摘要', 'Research signal summary')} · {bhiTierLabel(data.overallBhiTier ?? data.overallRisk, isEn) || t('评估中', 'Evaluating')}</Typography>
                 <Typography variant="caption" sx={{ display: 'block', mt: 0.5, opacity: 0.85 }}>
                   {t('非诊断性输出，需专业人员审核', 'Non-diagnostic output — requires professional review')}
                 </Typography>
@@ -138,15 +138,15 @@ function DiseaseScreening() {
         {data.categories.map((cat, i) => (
           <Grid item xs={12} sm={6} md={4} lg={2} key={cat.id || cat.name}>
             <Card
-              sx={{ cursor: 'pointer', height: '100%', borderTop: 4, borderColor: riskColor[cat.riskLevel] || riskColor.low, outline: tab === i ? 2 : 0, outlineColor: 'primary.main' }}
+              sx={{ cursor: 'pointer', height: '100%', borderTop: 4, borderColor: riskColor[cat.signalLevel ?? cat.riskLevel] || riskColor.low, outline: tab === i ? 2 : 0, outlineColor: 'primary.main' }}
               onClick={() => setTab(i)}
             >
               <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
                   <Typography variant="subtitle2" fontWeight={600}>{pick(cat, 'name')}</Typography>
-                  <Chip label={bhiTierShort(cat.riskLevel, isEn)} size="small" color={riskChip[cat.riskLevel]} sx={{ height: 20, fontSize: '0.65rem' }} />
+                  <Chip label={bhiTierShort(cat.signalLevel ?? cat.riskLevel, isEn)} size="small" color={riskChip[cat.signalLevel ?? cat.riskLevel]} sx={{ height: 20, fontSize: '0.65rem' }} />
                 </Box>
-                <Typography variant="h5" fontWeight={700} color={riskColor[cat.riskLevel]}>
+                <Typography variant="h5" fontWeight={700} color={riskColor[cat.signalLevel ?? cat.riskLevel]}>
                   {cat.healthScore ?? (data.overallScoreType === 'health' || data.mode === 'real' ? Math.max(55, 100 - (cat.score || 0)) : cat.score)}
                 </Typography>
                 <Typography variant="caption" color="text.secondary" display="block">
@@ -225,7 +225,7 @@ function DiseaseScreening() {
             </ChartContainer>
           </Paper>
           <Paper sx={{ p: 3 }}>
-            <Typography variant="h6" gutterBottom fontWeight={600}>{t('AI 筛查洞察', 'AI Screening Insights')}</Typography>
+            <Typography variant="h6" gutterBottom fontWeight={600}>{t('规则引擎洞察', 'Rule-engine insights')}</Typography>
             <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 2 }}>
               {t('基于当前患者可穿戴融合数据与 6 大类筛查模型的个体化解读', 'Personalized interpretation from fused wearable data and six screening model categories for the active patient')}
             </Typography>

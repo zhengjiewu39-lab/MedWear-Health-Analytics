@@ -94,11 +94,22 @@ function computeBehavioralHealthIndex(dayData, opts = {}) {
   let weighted = 0;
   let totalW = 0;
 
-  if (dayData.steps > 0) {
+  if (dayData.stepsMissing) {
+    missing.push('steps');
+    unavailable.steps = 'missing_steps_record';
+  } else if (dayData.steps > 0) {
     components.steps = +scoreSteps(dayData.steps).toFixed(3);
     weighted += components.steps * WEIGHTS.steps;
     totalW += WEIGHTS.steps;
-  } else missing.push('steps');
+  } else if (dayData.stepsRecorded) {
+    missing.push('steps');
+    unavailable.steps = 'zero_steps_day';
+    components.steps = +scoreSteps(0).toFixed(3);
+    weighted += components.steps * WEIGHTS.steps;
+    totalW += WEIGHTS.steps;
+  } else {
+    missing.push('steps');
+  }
 
   const sh = sleepHours(dayData.sleepMinutes || {});
   if (sh > 0) {
