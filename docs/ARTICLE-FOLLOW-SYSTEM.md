@@ -2,7 +2,7 @@
 
 > **原则：** 以本仓库 **代码 + `npm run evaluate` 输出** 为唯一事实来源。更新 Word/LaTeX 时 **只从本文与 JSON 抄数字与表述**，不要为迁就旧稿反改系统或主基准公式。
 >
-> Generated: `2026-09-19T23:28:53.407Z` · Commit: [`0228f44945e2dd500b7a44036ecdf613b5314ae5`](https://github.com/zhengjiewu39-lab/MedWear-Health-Analytics/commit/0228f44945e2dd500b7a44036ecdf613b5314ae5)
+> Generated: `2026-09-19T23:29:00.997Z` · Commit: [`b21e9bbe60e49654b9a1461cc0f73002fe46ed3b`](https://github.com/zhengjiewu39-lab/MedWear-Health-Analytics/commit/b21e9bbe60e49654b9a1461cc0f73002fe46ed3b)
 
 ---
 
@@ -10,7 +10,7 @@
 
 ```text
 Repository: https://github.com/zhengjiewu39-lab/MedWear-Health-Analytics
-Freeze commit: 0228f44945e2dd500b7a44036ecdf613b5314ae5
+Freeze commit: b21e9bbe60e49654b9a1461cc0f73002fe46ed3b
 Recommended tag: medwear-manuscript-v1.2.1 (points to this commit after tagging)
 
 Primary reproduction:
@@ -29,7 +29,7 @@ Note: runtime-settings.json affects live UI only; npm run evaluate does NOT read
 
 ## Data availability（中文摘要）
 
-- 仓库：https://github.com/zhengjiewu39-lab/MedWear-Health-Analytics，冻结 commit `0228f44945e2dd500b7a44036ecdf613b5314ae5`
+- 仓库：https://github.com/zhengjiewu39-lab/MedWear-Health-Analytics，冻结 commit `b21e9bbe60e49654b9a1461cc0f73002fe46ed3b`
 - 主基准：合成队列 n=5000、seed=42；引擎 **MedWear-AnalyticsCore-v1** vs 参考 **independentSyntheticReference-v1**
 - 主结果数字来源：`npm run evaluate` → `benchmarks/results/latest.json`
 - 次要分析（Bland–Altman、±5/8/10/12、MAD 路径审计）：`npm run analyze:manuscript-secondary` → `manuscript-secondary.json`
@@ -85,7 +85,7 @@ Note: runtime-settings.json affects live UI only; npm run evaluate does NOT read
 
 ## 改稿工作流（你不再「改系统迁就文章」）
 
-1. `git checkout 0228f44945e2dd500b7a44036ecdf613b5314ae5`（或 tag `medwear-manuscript-v1.2.1`）
+1. `git checkout b21e9bbe60e49654b9a1461cc0f73002fe46ed3b`（或 tag `medwear-manuscript-v1.2.1`）
 2. `npm run docs:manuscript-sync` — 刷新本文
 3. `npm run evaluate` + `npm run analyze:manuscript-secondary` — 若需重算 JSON
 4. 在 Word/LaTeX 中 **替换** Results 数字、Data availability、探索性模块措辞 → 以本文为准
