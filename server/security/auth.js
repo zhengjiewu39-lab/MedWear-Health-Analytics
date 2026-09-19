@@ -22,10 +22,15 @@ function getUsers() {
   }
   if (!ALLOW_DEMO) return {};
   const plain = process.env.MEDWEAR_ADMIN_PASSWORD || 'admin123';
+  const demoPlain = process.env.MEDWEAR_DEMO_PASSWORD || 'demo123';
   return {
     admin: {
       password: process.env.MEDWEAR_ADMIN_PASSWORD_HASH || hashPassword(plain),
       user: { id: 1, username: 'admin', name: '系统管理员', role: 'admin' },
+    },
+    demo: {
+      password: process.env.MEDWEAR_DEMO_PASSWORD_HASH || hashPassword(demoPlain),
+      user: { id: 2, username: 'demo', name: '演示用户', role: 'viewer' },
     },
   };
 }
@@ -90,6 +95,23 @@ function authMiddleware(req, res, next) {
   return next();
 }
 
+/** Require authenticated user with one of the given roles (after authMiddleware). */
+function requireRole(...roles) {
+  const allowed = new Set(roles);
+  return (req, res, next) => {
+    const role = req.user?.role;
+    if (!role || !allowed.has(role)) {
+      return res.status(403).json({
+        success: false,
+        message: '权限不足，需要管理员权限',
+        message_en: 'Forbidden — administrator role required',
+        requiredRoles: [...allowed],
+      });
+    }
+    return next();
+  };
+}
+
 function authenticate(username, password, req) {
   const ip = req?.ip || 'unknown';
   if (isLoginLocked(ip)) {
@@ -109,6 +131,7 @@ module.exports = {
   signToken,
   verifyToken,
   authMiddleware,
+  requireRole,
   authenticate,
   validateApiKey,
   getApiKeys,

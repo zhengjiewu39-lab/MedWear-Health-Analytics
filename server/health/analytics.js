@@ -1,5 +1,9 @@
 const { SCORE_FIELD } = require('../services/behavioralHealthIndex');
 const { demographicsFromMeta } = require('../services/demographics');
+const { classifyBHIWatchTier } = require('../config/bhiWatchTier');
+const { DEFAULT_ALERT_THRESHOLDS } = require('../config/alertThresholds');
+const { resolveBhiFromDay } = require('./bhiDisplay');
+const { enrichScreeningData } = require('../ai/engine');
 const { getStore, hasData } = require('./store');
 const { CATEGORY_META } = require('../data/predictionsCatalog');
 const {
@@ -64,15 +68,15 @@ function getTodayOrLatest(store) {
   return getLatestDay(store);
 }
 
-function detectAlerts(store, thresholds) {
+function detectAlerts(store, thresholds = DEFAULT_ALERT_THRESHOLDS) {
   const day = getTodayOrLatest(store);
   if (!day) return [];
   const d = store.daily[day];
   const patient = store.meta?.userLabel || '我';
   const { evaluateDayAlerts } = require('../services/analyticsCore');
-  const hrMax = thresholds?.heartRateMax || 100;
-  const hrMin = thresholds?.heartRateMin || 50;
-  const spo2Min = thresholds?.spo2Min || 93;
+  const hrMax = thresholds.heartRateMax ?? DEFAULT_ALERT_THRESHOLDS.heartRateMax;
+  const hrMin = thresholds.heartRateMin ?? DEFAULT_ALERT_THRESHOLDS.heartRateMin;
+  const spo2Min = thresholds.spo2Min ?? DEFAULT_ALERT_THRESHOLDS.spo2Min;
   const hrAvg = avg(d.heartRate);
   const hrPeak = d.heartRate?.length ? Math.max(...d.heartRate) : null;
   const hrNadir = d.heartRate?.length ? Math.min(...d.heartRate) : null;
@@ -141,6 +145,8 @@ function detectAnomalies(store) {
     patient,
     type: a.type,
     type_en: a.type === '心率异常波动' ? 'Abnormal heart rate fluctuation' : 'Low blood oxygen events',
+    heuristicStrength: Math.min(88, Math.round(55 + (a.spikeCount || a.lowCount || 2) * 4)),
+    /** @deprecated not statistical confidence */
     confidence: Math.min(88, Math.round(55 + (a.spikeCount || a.lowCount || 2) * 4)),
     detectedAt: a.day,
     pattern: a.type === '心率异常波动'
@@ -158,13 +164,26 @@ function detectAnomalies(store) {
   })).slice(-10);
 }
 
+function attachHeuristicPredictionFields(p) {
+  const heuristicWeight = p.heuristicWeight ?? p.probability ?? 0;
+  return {
+    ...p,
+    heuristicWeight,
+    attentionScore: heuristicWeight,
+    /** @deprecated use heuristicWeight — not calibrated probability */
+    probability: heuristicWeight,
+  };
+}
+
 function buildPredictions(store) {
   const predictions = [];
   const days = lastNDays(store, 30);
   const stats = buildUiDashboardStats(store);
   const patient = store.meta?.userLabel || '我';
   let id = 1;
-  const add = (p) => predictions.push({ id: id++, dataSource: 'real', model: 'MedWear-RuleEngine (predictive-heuristic)', ...p });
+  const add = (p) => predictions.push(attachHeuristicPredictionFields({
+    id: id++, dataSource: 'real', model: 'MedWear-RuleEngine (predictive-heuristic)', ...p,
+  }));
   const cat = (key) => {
     const m = CATEGORY_META[key] || {};
     return { category: key, categoryLabel: m.label || key, categoryLabel_en: m.label_en || m.label };
@@ -173,8 +192,8 @@ function buildPredictions(store) {
   if (days.length < 1) return predictions;
 
   const addBaselineFromStats = () => {
-    const score = stats.healthScore || 0;
-    if (score > 0 && score < 80) {
+    const score = stats.healthScore;
+    if (score != null && score > 0 && score < 80) {
       add({
         ...cat('training'),
         patient, risk: 'BHI 偏低', risk_en: 'Low BHI (behavioral health index)',
@@ -474,7 +493,7 @@ function buildDevices(store) {
 function buildPatients(store) {
   const day = getTodayOrLatest(store);
   const d = day ? store.daily[day] : null;
-  const score = d ? computeDayScoreLocal(d, bhiOptsFromStore(store)) : null;
+  const bhi = resolveBhiFromDay(d, bhiOptsFromStore(store));
   const alerts = detectAlerts(store);
   return [{
     id: 1,
@@ -482,11 +501,14 @@ function buildPatients(store) {
     gender: '—',
     age: null,
     phone: '—',
-    healthScore: score || 0,
+    healthScore: bhi.healthScore,
+    bhiWatchTier: bhi.bhiWatchTier,
+    bhiUnavailable: bhi.bhiUnavailable,
     devices: (store.meta?.sourceList || []).length,
     conditions: alerts.filter(a => a.severity === 'high' || a.severity === 'critical').map(a => a.type).slice(0, 3),
     lastActive: day || '—',
-    riskLevel: score >= 80 ? 'low' : score >= 60 ? 'medium' : 'high',
+    /** @deprecated use bhiWatchTier */
+    riskLevel: bhi.bhiWatchTier === 'low' ? 'low' : bhi.bhiWatchTier === 'moderate' ? 'medium' : bhi.bhiWatchTier === 'high' ? 'high' : 'unknown',
     dataSource: 'real',
   }];
 }
@@ -701,6 +723,7 @@ function getEmptyAnalytics() {
 const DAY_NAMES = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
 function gradeFromScore(score) {
+  if (score == null) return '—';
   if (!score) return '—';
   if (score >= 90) return 'A';
   if (score >= 80) return 'B+';
@@ -713,7 +736,8 @@ function buildUiDashboardStats(store) {
   const day = getTodayOrLatest(store);
   const d = day ? store.daily[day] : null;
   if (!d) return getEmptyAnalytics().dashboard.stats;
-  const score = computeDayScoreLocal(d, bhiOptsFromStore(store)) || 0;
+  const bhi = resolveBhiFromDay(d, bhiOptsFromStore(store));
+  const score = bhi.healthScore;
   const hr = avg(d.heartRate);
   const rhr = d.restingHeartRate;
   const spo2 = avg(d.spo2);
@@ -724,6 +748,11 @@ function buildUiDashboardStats(store) {
   return {
     hasData: true,
     healthScore: score,
+    bhiWatchTier: bhi.bhiWatchTier,
+    bhiUnavailable: bhi.bhiUnavailable,
+    bhiUnavailableReason: bhi.bhiUnavailableReason,
+    bhiCoverage: bhi.bhiCoverage,
+    bhiMissing: bhi.bhiMissing,
     scoreKind: SCORE_FIELD.kind,
     scoreLabel: SCORE_FIELD.label_en,
     scoreFieldNote: SCORE_FIELD.note_en,
@@ -755,7 +784,7 @@ function buildWeekTrend(store) {
     return {
       day: DAY_NAMES[date.getDay()],
       date: dayKey,
-      healthScore: computeDayScoreLocal(d, bhiOptsFromStore(store)) || 0,
+      healthScore: resolveBhiFromDay(d, bhiOptsFromStore(store)).healthScore,
       steps: Math.round(d.steps),
       sleep: +((d.sleepMinutes.deep + d.sleepMinutes.rem + d.sleepMinutes.light) / 60).toFixed(1),
       heartRate: d.restingHeartRate ? Math.round(d.restingHeartRate) : Math.round(avg(d.heartRate) || 0),
@@ -840,10 +869,8 @@ function buildRealScreening(store) {
   const anomalies = detectAnomalies(store);
   const predictions = buildPredictions(store);
   const dayCount = store.meta?.dayCount || Object.keys(store.daily || {}).length;
-  const overallScore = stats.healthScore ?? 0;
-  const overallBhiTier = !dayCount || stats.healthScore == null
-    ? 'unknown'
-    : overallScore >= 80 ? 'low' : overallScore >= 60 ? 'moderate' : 'high';
+  const overallScore = stats.healthScore;
+  const overallBhiTier = stats.bhiWatchTier ?? (stats.bhiUnavailable || stats.healthScore == null ? 'unknown' : classifyBHIWatchTier(stats.healthScore));
   const biomarkers = [
     { name: '静息心率', name_en: 'Resting heart rate', value: stats.restingHR, unit: 'bpm', source: 'Apple Health 真实', source_en: 'Apple Health (real)', ref: '60-80', status: stats.restingHR > 85 ? 'watch' : 'normal' },
     { name: '血氧饱和度', name_en: 'Blood oxygen saturation', value: stats.spo2, unit: '%', source: 'Apple Health 真实', source_en: 'Apple Health (real)', ref: '≥95', status: stats.spo2 && stats.spo2 < 95 ? 'watch' : 'normal' },
@@ -863,17 +890,20 @@ function buildRealScreening(store) {
       devices: Object.keys(store.sources || {}).length,
       quality: stats.dataQuality,
     },
-    summary: `基于您 ${store.meta?.dayCount || 0} 天 Apple Health 真实数据的全品类 AI 筛查（肿瘤/癌症/慢病/心脑血管/常见小病/呼吸），非模拟数据。`,
-    summary_en: `Full-category AI screening based on your ${store.meta?.dayCount || 0} days of real Apple Health data (tumor / cancer / chronic disease / cardio-cerebrovascular / common ailments / respiratory), not simulated data.`,
+    summary: `探索性研究信号整合：基于 ${store.meta?.dayCount || 0} 天 Apple Health 真实 wearable 数据的领域加权关注提示（非主文 v1.1 基准，非疾病概率）。`,
+    summary_en: `Exploratory research signal integration: domain-weighted attention prompts from ${store.meta?.dayCount || 0} days of real Apple Health wearables (outside primary v1.1 benchmark — not disease probability).`,
+    moduleScope: 'exploratory-research-signals',
+    moduleScope_en: 'Exploratory — Research Signal Integration (not primary benchmark)',
     overallBhiTier,
-    overallRisk: overallBhiTier,
     overallScore,
+    bhiUnavailable: stats.bhiUnavailable,
     overallScoreType: 'health',
+    deprecatedFields: ['overallRisk', 'overallRiskTier', 'overallRiskScore', 'riskLevel'],
     biomarkers,
     categories: buildRealScreeningCategories(store, stats, anomalies),
     trendData: buildRealTrendData(store),
     aiInsights: [
-      { type: 'info', text: `已覆盖 6 大类 ${buildRealScreeningCategories(store, stats, anomalies).reduce((n, c) => n + c.items.length, 0)} 项筛查（含感冒/流感等常见小病预警）`, text_en: `Covers 6 categories and ${buildRealScreeningCategories(store, stats, anomalies).reduce((n, c) => n + c.items.length, 0)} screening items (including common ailment alerts such as cold/flu)` },
+      { type: 'info', text: `探索性研究信号：${buildRealScreeningCategories(store, stats, anomalies).reduce((n, c) => n + c.items.length, 0)} 条 attentionScore 提示（非主文基准）`, text_en: `Exploratory research signals: ${buildRealScreeningCategories(store, stats, anomalies).reduce((n, c) => n + c.items.length, 0)} attentionScore prompts (outside primary benchmark)` },
       { type: anomalies.length ? 'warning' : 'positive', text: anomalies.length ? `检测到 ${anomalies.length} 项统计异常，建议关注` : '当前无重大异常信号', text_en: anomalies.length ? `Detected ${anomalies.length} statistical anomalies; attention advised` : 'No significant abnormal signals at present' },
     ],
     anomalies: anomalies.slice(0, 5),
@@ -893,7 +923,7 @@ function buildRealDoctorReport(store) {
     };
   }
   const stats = buildUiDashboardStats(store);
-  const screening = buildRealScreening(store);
+  const screening = enrichScreeningData(buildRealScreening(store), store);
   return {
     hasData: true,
     mode: 'real',
@@ -910,9 +940,9 @@ function buildRealDoctorReport(store) {
     },
     physicianSummary: `【真实 Apple Health 数据】${buildAiSummary(store)}`,
     physicianSummary_en: `[Real Apple Health data] ${screening.summary_en}`,
-    overallBhiTier: screening.overallBhiTier ?? screening.overallRisk,
-    overallRisk: screening.overallRisk ?? screening.overallBhiTier,
+    overallBhiTier: screening.overallBhiTier,
     overallScore: screening.overallScore,
+    bhiUnavailable: screening.bhiUnavailable ?? stats.bhiUnavailable,
     vitalsSnapshot: [
       { label: '静息心率', label_en: 'Resting HR', value: stats.restingHR, unit: 'bpm', ref: '60-80', flag: stats.restingHR > 85 || stats.restingHR < 50 ? 'watch' : 'normal' },
       { label: '当前心率', label_en: 'Current HR', value: stats.heartRate, unit: 'bpm', ref: '60-100', flag: 'normal' },
@@ -923,14 +953,17 @@ function buildRealDoctorReport(store) {
     ],
     weekTrend: buildWeekTrend(store),
     screeningHighlights: screening.categories.flatMap(c =>
-      c.items.filter(i => i.level !== 'low').map(i => ({
-        category: c.name, category_en: c.name_en, name: i.name, name_en: i.name_en, risk: i.risk, level: i.level, recommendation: i.recommendation, recommendation_en: i.recommendation_en,
+      c.items.filter(i => (i.signalLevel ?? i.level) !== 'low').map(i => ({
+        category: c.name, category_en: c.name_en, name: i.name, name_en: i.name_en,
+        attentionScore: i.attentionScore ?? i.risk,
+        signalLevel: i.signalLevel ?? i.level,
+        recommendation: i.recommendation, recommendation_en: i.recommendation_en,
       }))
     ),
     screeningSummary: screening.categories.map(c => ({
-      name: c.name, name_en: c.name_en, riskLevel: c.riskLevel,
-      score: c.score, healthScore: c.healthScore ?? Math.max(55, 100 - (c.score || 0)),
-      topItems: c.items.map(i => `${i.name} ${i.risk}%`),
+      name: c.name, name_en: c.name_en, bhiWatchTier: c.riskLevel,
+      score: c.score, domainAttentionScore: c.healthScore ?? Math.max(55, 100 - (c.score || 0)),
+      topItems: c.items.map(i => `${i.name} ${i.attentionScore ?? i.risk}%`),
     })),
     overallScoreType: screening.overallScoreType || 'health',
     dataCoverage: screening.dataCoverage,
@@ -942,22 +975,23 @@ function buildRealDoctorReport(store) {
     recommendedExams: screening.recommendedExams,
     recommendedExams_en: screening.recommendedExams_en,
     clinicalNotes: [
-      '本报告基于本地导入的 Apple Health 真实数据生成，不含任何模拟/demo 数据',
-      '风险评估不能替代病理学或影像学诊断',
+      '本报告基于本地导入的 Apple Health 真实数据生成，不含 5000 人演示队列',
+      'BHI 为行为健康指数；研究信号为探索性关注提示，非校准疾病风险',
       '数据日期范围：' + (store.meta?.dateRange?.start || '?') + ' ~ ' + (store.meta?.dateRange?.end || '?'),
     ],
     clinicalNotes_en: [
-      'This report is generated from locally imported real Apple Health data and contains no simulated/demo data',
-      'Risk assessment cannot replace pathological or imaging diagnosis',
+      'This report uses locally imported Apple Health data — not the n=5000 demo cohort',
+      'BHI is a behavioral health index; research signals are exploratory attention prompts, not calibrated disease risk',
       'Data date range: ' + (store.meta?.dateRange?.start || '?') + ' ~ ' + (store.meta?.dateRange?.end || '?'),
     ],
     qrCode: 'MEDWEAR-REAL-REPORT',
   };
 }
 
-function getAllAnalytics(thresholds) {
+function getAllAnalytics(thresholds = DEFAULT_ALERT_THRESHOLDS) {
   const store = getStore();
   if (!hasData()) return getEmptyAnalytics();
+  const alertThresholds = { ...DEFAULT_ALERT_THRESHOLDS, ...thresholds };
   return {
     hasData: true,
     meta: store.meta,
@@ -968,11 +1002,12 @@ function getAllAnalytics(thresholds) {
       organScores: buildOrganScores(store),
       deviceDistribution: buildDeviceDistribution(store),
       healthScoreTrend: buildHealthScoreTrend(store),
-      recentAlerts: detectAlerts(store, thresholds),
+      recentAlerts: detectAlerts(store, alertThresholds),
+      alertThresholds,
     },
     devices: buildDevices(store),
     patients: buildPatients(store),
-    alerts: detectAlerts(store, thresholds),
+    alerts: detectAlerts(store, alertThresholds),
     vitals: buildRealtimeVitals(store),
     anomalies: detectAnomalies(store),
     predictions: buildPredictions(store),

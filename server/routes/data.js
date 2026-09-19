@@ -22,6 +22,17 @@ const upload = multer({
 });
 
 let importProgress = { status: 'idle', message: '', percent: 0 };
+let importInProgress = false;
+
+function tryBeginImport() {
+  if (importInProgress) return false;
+  importInProgress = true;
+  return true;
+}
+
+function endImport() {
+  importInProgress = false;
+}
 
 function handleUpload(req, res, next) {
   upload.single('file')(req, res, (err) => {
@@ -42,11 +53,19 @@ function registerDataRoutes(app, resolveUser) {
   });
 
   app.get('/api/data/import/progress', (_, res) => {
-    res.json(importProgress);
+    res.json({ ...importProgress, inProgress: importInProgress });
   });
 
   app.post('/api/data/import', handleUpload, async (req, res) => {
+    if (!tryBeginImport()) {
+      return res.status(409).json({
+        success: false,
+        message: '已有导入任务进行中，请等待完成后再试',
+        message_en: 'Another import is already in progress',
+      });
+    }
     if (!req.file) {
+      endImport();
       return res.status(400).json({ success: false, message: '请选择 apple_health_export.zip 文件' });
     }
     importProgress = { status: 'processing', message: '解析 Apple Health 数据…', percent: 10 };
@@ -69,12 +88,22 @@ function registerDataRoutes(app, resolveUser) {
     } catch (err) {
       importProgress = { status: 'error', message: err.message, percent: 0 };
       res.status(500).json({ success: false, message: err.message });
+    } finally {
+      endImport();
     }
   });
 
   app.post('/api/data/import/scan', async (_, res) => {
+    if (!tryBeginImport()) {
+      return res.status(409).json({
+        success: false,
+        message: '已有导入任务进行中，请等待完成后再试',
+        message_en: 'Another import is already in progress',
+      });
+    }
     const files = fs.readdirSync(IMPORT_DIR).filter((f) => /\.(zip|xml)$/i.test(f) && !f.startsWith('.'));
     if (!files.length) {
+      endImport();
       return res.status(404).json({
         success: false,
         message: 'health-import 文件夹中无 zip/xml。请将 apple_health_export.zip 放入该文件夹',
@@ -91,6 +120,8 @@ function registerDataRoutes(app, resolveUser) {
     } catch (err) {
       importProgress = { status: 'error', message: err.message, percent: 0 };
       res.status(500).json({ success: false, message: err.message });
+    } finally {
+      endImport();
     }
   });
 
@@ -112,4 +143,11 @@ function registerDataRoutes(app, resolveUser) {
   });
 }
 
-module.exports = { registerDataRoutes, upload, IMPORT_DIR, MAX_IMPORT_MB };
+module.exports = {
+  registerDataRoutes,
+  upload,
+  IMPORT_DIR,
+  MAX_IMPORT_MB,
+  tryBeginImport,
+  endImport,
+};

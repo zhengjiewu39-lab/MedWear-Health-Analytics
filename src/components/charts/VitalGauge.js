@@ -43,11 +43,13 @@ export function ActivityRing({ label, value, target, color, size = 80 }) {
   );
 }
 
-export function ScoreRing({ score, size = 120, label = '健康评分' }) {
-  const color = score >= 80 ? '#2E7D32' : score >= 60 ? '#EF6C00' : '#C62828';
+export function ScoreRing({ score, size = 120, label = '健康评分', unavailable = false, unavailableLabel = '数据不足' }) {
+  const missing = unavailable || score == null;
+  const displayScore = missing ? null : score;
+  const color = missing ? '#64748b' : displayScore >= 80 ? '#2E7D32' : displayScore >= 60 ? '#EF6C00' : '#C62828';
   const r = (size - 10) / 2;
   const circ = 2 * Math.PI * r;
-  const offset = circ - (score / 100) * circ;
+  const offset = missing ? circ : circ - (displayScore / 100) * circ;
 
   return (
     <Box sx={{ textAlign: 'center' }}>
@@ -58,8 +60,10 @@ export function ScoreRing({ score, size = 120, label = '健康评分' }) {
             strokeDasharray={circ} strokeDashoffset={offset} strokeLinecap="round" />
         </svg>
         <Box sx={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-          <Typography variant="h4" fontWeight={800} color={color}>{score}</Typography>
-          <Typography variant="caption" color="text.secondary">分</Typography>
+          <Typography variant={missing ? 'body1' : 'h4'} fontWeight={800} color={color} sx={{ px: 1, textAlign: 'center', lineHeight: 1.2 }}>
+            {missing ? unavailableLabel : displayScore}
+          </Typography>
+          {!missing && <Typography variant="caption" color="text.secondary">分</Typography>}
         </Box>
       </Box>
       <Typography variant="body2" fontWeight={600} sx={{ mt: 1 }}>{label}</Typography>

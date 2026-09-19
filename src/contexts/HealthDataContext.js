@@ -10,16 +10,22 @@ export function HealthDataProvider({ children }) {
   const { isReal } = useDataMode();
 
   const refresh = useCallback(async () => {
-    if (!isReal) {
-      setStatus({ hasData: true, meta: null, primarySource: '演示患者数据' });
-      setLoading(false);
-      return;
-    }
     try {
       const res = await dataApi.getStatus();
-      setStatus(res.data);
+      const imported = Boolean(res.data?.hasData);
+      setStatus({
+        ...res.data,
+        hasData: isReal ? imported : true,
+        realDataImported: imported,
+        primarySource: isReal ? res.data?.primarySource : (res.data?.primarySource || '演示患者数据'),
+      });
     } catch {
-      setStatus({ hasData: false, meta: null, primarySource: null });
+      setStatus({
+        hasData: !isReal,
+        realDataImported: false,
+        meta: null,
+        primarySource: isReal ? null : '演示患者数据',
+      });
     } finally {
       setLoading(false);
     }

@@ -1,5 +1,20 @@
 const express = require('express');
+const rateLimit = require('express-rate-limit');
 const fs = require('fs');
+const { requireRole } = require('../security/auth');
+
+const adminOnly = requireRole('admin');
+const researchComputeLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: Number(process.env.RESEARCH_COMPUTE_LIMIT || 5),
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: '研究计算接口触发过于频繁，请稍后再试',
+    message_en: 'Research compute rate limit exceeded — try again later',
+  },
+});
 const path = require('path');
 const { getOutcomeSummary, getFunnel, getCohort } = require('../screening/outcomeModel');
 const { getAllReferences } = require('../ai/engine');
@@ -148,7 +163,7 @@ router.get('/wearable/results', (_, res) => {
   res.json(attachScoreMeta({ ...summarizeWearableResults(raw), rawMetrics: raw.metrics }, 'en'));
 });
 
-router.post('/wearable/evaluate', (_, res) => {
+router.post('/wearable/evaluate', adminOnly, researchComputeLimiter, (_, res) => {
   const { run } = require('../../scripts/evaluate-analytics');
   const results = run();
   fs.mkdirSync(path.dirname(WEARABLE_RESULTS_PATH), { recursive: true });
@@ -250,7 +265,7 @@ router.get('/validate', (_, res) => {
   });
 });
 
-router.post('/validate', (_, res) => {
+router.post('/validate', adminOnly, researchComputeLimiter, (_, res) => {
   const report = runClinicalValidation();
   fs.mkdirSync(path.dirname(VALIDATION_PATH), { recursive: true });
   fs.writeFileSync(VALIDATION_PATH, JSON.stringify(report, null, 2));
@@ -265,12 +280,12 @@ router.get('/references', (_, res) => {
   res.json(getAllReferences());
 });
 
-router.post('/evaluate', (_, res) => {
+router.post('/evaluate', adminOnly, researchComputeLimiter, (_, res) => {
   const results = runOutcomeEval();
   res.json(results);
 });
 
-router.post('/analyze', (req, res) => {
+router.post('/analyze', adminOnly, researchComputeLimiter, (req, res) => {
   const { days, targetDay, thresholds } = req.body;
   if (!days || !Object.keys(days).length) {
     return res.status(400).json({ message: 'Provide days object with wearable metrics' });
@@ -289,7 +304,7 @@ router.get('/evaluation-supplement', (_, res) => {
   res.json(getEvaluationSupplement());
 });
 
-router.post('/evaluation-supplement/regenerate', (_, res) => {
+router.post('/evaluation-supplement/regenerate', adminOnly, researchComputeLimiter, (_, res) => {
   const { spawnSync } = require('child_process');
   const script = path.join(__dirname, '../../scripts/sync-evaluation-supplement.js');
   const r = spawnSync(process.execPath, [script], { cwd: path.join(__dirname, '../..'), encoding: 'utf8' });

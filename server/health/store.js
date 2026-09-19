@@ -18,7 +18,13 @@ const {
   parseAppleDate,
   normalizeAppleDateString,
 } = require('./dao');
-const { dbPath } = require('./db');
+const {
+  dbPath,
+  beginImportDatabase,
+  commitImportDatabase,
+  rollbackImportDatabase,
+  isImportDatabaseActive,
+} = require('./db');
 const { getDataDir } = require('../paths');
 
 const DATA_DIR = getDataDir();
@@ -64,4 +70,8 @@ module.exports = {
   parseAppleDate,
   normalizeAppleDateString,
   EMPTY_STORE,
+  beginImportDatabase,
+  commitImportDatabase,
+  rollbackImportDatabase,
+  isImportDatabaseActive,
 };

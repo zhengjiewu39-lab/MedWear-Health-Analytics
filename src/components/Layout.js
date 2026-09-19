@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import {
   AppBar, Box, CssBaseline, Drawer, IconButton, List, ListItemIcon,
   ListItemText, Toolbar, Typography, Avatar, Menu, MenuItem, Divider,
-  Collapse, ListItemButton, Chip, Tooltip, alpha,
+  Collapse, ListItemButton, Chip, Tooltip, alpha, Alert,
 } from '@mui/material';
 import {
   Menu as MenuIcon, Logout, KeyboardArrowDown, KeyboardArrowUp,
@@ -61,7 +61,7 @@ export function Layout({ children }) {
   const { user, logout, isAdmin } = useAuth();
   const { toggleMode, isDemo, isReal } = useDataMode();
   const { current: demoPatient } = useDemoPatient();
-  const { hasData } = useHealthData();
+  const { hasData, realDataImported } = useHealthData();
   const { t, lang, toggle: toggleLang, isEn } = useLang();
 
   const tl = (zh, en) => t(zh, en ?? enLabel(zh));
@@ -359,7 +359,19 @@ export function Layout({ children }) {
           mt: '64px',
         }}
       >
-        <ContentContainer>{children}</ContentContainer>
+        <ContentContainer>
+          {isDemo && realDataImported && (
+            <Alert severity="warning" sx={{ mb: 2 }} action={
+              <Chip label={t('切到真实模式', 'Switch to real mode')} size="small" onClick={toggleMode} sx={{ cursor: 'pointer' }} />
+            }>
+              {t(
+                '本机已导入 Apple Health，但当前为演示模式 — 界面显示 5000 人队列，非您的个人数据。',
+                'Apple Health is imported on this device, but demo mode is active — the UI shows the n=5000 cohort, not your personal records.',
+              )}
+            </Alert>
+          )}
+          {children}
+        </ContentContainer>
       </Box>
     </Box>
   );

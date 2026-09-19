@@ -1,6 +1,8 @@
 const { describe, it } = require('node:test');
 const assert = require('node:assert/strict');
-const { signToken, verifyToken, authenticate, isPublicPath, getUsers } = require('../security/auth');
+const {
+  signToken, verifyToken, authenticate, isPublicPath, getUsers, requireRole,
+} = require('../security/auth');
 
 describe('MedWear auth', () => {
   it('authenticates admin user', () => {
@@ -14,9 +16,12 @@ describe('MedWear auth', () => {
     assert.equal(authenticate('admin', 'wrong'), null);
   });
 
-  it('no longer exposes separate demo account', () => {
-    assert.equal(getUsers().demo, undefined);
-    assert.equal(authenticate('demo', 'demo123'), null);
+  it('authenticates demo account when ALLOW_DEMO is enabled', () => {
+    assert.ok(getUsers().demo);
+    const result = authenticate('demo', 'demo123');
+    assert.ok(result);
+    assert.equal(result.user.username, 'demo');
+    assert.equal(result.user.role, 'viewer');
   });
 
   it('signs and verifies JWT', () => {
@@ -28,5 +33,26 @@ describe('MedWear auth', () => {
   it('public paths include health and login', () => {
     assert.equal(isPublicPath('/api/health'), true);
     assert.equal(isPublicPath('/api/dashboard/stats'), false);
+  });
+
+  it('requireRole allows admin and blocks viewer', () => {
+    let statusCode;
+    const res = {
+      status(code) {
+        statusCode = code;
+        return this;
+      },
+      json() {},
+    };
+    const next = () => { nextCalled = true; };
+    let nextCalled = false;
+
+    requireRole('admin')({ user: { role: 'admin' } }, res, next);
+    assert.equal(nextCalled, true);
+
+    nextCalled = false;
+    requireRole('admin')({ user: { role: 'viewer' } }, res, () => { nextCalled = true; });
+    assert.equal(nextCalled, false);
+    assert.equal(statusCode, 403);
   });
 });

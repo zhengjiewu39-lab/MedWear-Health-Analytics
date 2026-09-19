@@ -430,7 +430,7 @@ function DoctorReport() {
               <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 2, height: '100%' }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                   <Typography fontWeight={600}>{pick(s, 'name')}</Typography>
-                  <Chip label={rl(s.riskLevel)} size="small" color={riskChip[s.riskLevel]} />
+                  <Chip label={rl(s.bhiWatchTier ?? s.riskLevel)} size="small" color={riskChip[s.bhiWatchTier ?? s.riskLevel]} />
                 </Box>
                 <Typography variant="h5" fontWeight={700}>
                   {s.healthScore ?? s.score}
@@ -517,7 +517,7 @@ function DoctorReport() {
             <Typography variant="h6" fontWeight={600} gutterBottom>{t('异常事件 & 预警', 'Anomaly events & alerts')}</Typography>
             {(report.anomalies || []).map(a => (
               <Box key={a.id} sx={{ mb: 1.5, p: 1.5, border: 1, borderColor: 'divider', borderRadius: 1 }}>
-                <Typography variant="body2" fontWeight={600}>{pick(a, 'type')} · {t('置信度', 'confidence')} {a.confidence}%</Typography>
+                <Typography variant="body2" fontWeight={600}>{pick(a, 'type')} · {t('信号强度', 'Signal strength')} {a.heuristicStrength ?? a.confidence}%</Typography>
                 <Typography variant="caption" color="text.secondary">{a.detectedAt}</Typography>
                 <Typography variant="body2">{pick(a, 'pattern')}</Typography>
               </Box>

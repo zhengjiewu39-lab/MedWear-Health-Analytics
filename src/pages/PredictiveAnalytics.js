@@ -68,10 +68,10 @@ function PredictiveAnalytics() {
 
   const stats = useMemo(() => ({
     total: predictions.length,
-    high: predictions.filter(p => p.level === 'high' || p.probability >= 60).length,
-    medium: predictions.filter(p => p.level === 'medium' || (p.probability >= 40 && p.probability < 60)).length,
+    high: predictions.filter(p => p.level === 'high' || (p.heuristicWeight ?? p.probability) >= 60).length,
+    medium: predictions.filter(p => p.level === 'medium' || ((p.heuristicWeight ?? p.probability) >= 40 && (p.heuristicWeight ?? p.probability) < 60)).length,
     avgProb: predictions.length
-      ? Math.round(predictions.reduce((s, p) => s + p.probability, 0) / predictions.length)
+      ? Math.round(predictions.reduce((s, p) => s + (p.heuristicWeight ?? p.probability), 0) / predictions.length)
       : 0,
   }), [predictions]);
 
@@ -80,8 +80,8 @@ function PredictiveAnalytics() {
   const chartData = filtered.map(p => ({
     name: p.risk.length > 12 ? `${p.risk.slice(0, 12)}…` : p.risk,
     fullName: p.risk,
-    probability: p.probability,
-    fill: p.probability >= 60 ? '#C62828' : p.probability >= 40 ? '#EF6C00' : '#2E7D32',
+    probability: p.heuristicWeight ?? p.probability,
+    fill: (p.heuristicWeight ?? p.probability) >= 60 ? '#C62828' : (p.heuristicWeight ?? p.probability) >= 40 ? '#EF6C00' : '#2E7D32',
   }));
 
   return (
@@ -166,7 +166,7 @@ function PredictiveAnalytics() {
                 <Card sx={{
                   height: '100%',
                   borderTop: 4,
-                  borderColor: pred.probability >= 60 ? 'error.main' : pred.probability >= 40 ? 'warning.main' : 'success.main',
+                  borderColor: (pred.heuristicWeight ?? pred.probability) >= 60 ? 'error.main' : (pred.heuristicWeight ?? pred.probability) >= 40 ? 'warning.main' : 'success.main',
                 }}>
                   <CardContent>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1, gap: 1, flexWrap: 'wrap' }}>
@@ -183,13 +183,13 @@ function PredictiveAnalytics() {
                       </Box>
                     </Box>
                     <Typography variant="body1" fontWeight={600} color={`${LEVEL_COLOR[pred.level] || 'success'}.main`} gutterBottom>
-                      {t(LEVEL_LABEL[pred.level] || '评估中', LEVEL_LABEL_EN[pred.level] || 'Assessing')} · {pred.probability}%
+                      {t(LEVEL_LABEL[pred.level] || '评估中', LEVEL_LABEL_EN[pred.level] || 'Assessing')} · {pred.heuristicWeight ?? pred.probability}%
                     </Typography>
                     <Box sx={{ mb: 2 }}>
                       <LinearProgress
                         variant="determinate"
-                        value={pred.probability}
-                        color={pred.probability >= 60 ? 'error' : pred.probability >= 40 ? 'warning' : 'success'}
+                        value={pred.heuristicWeight ?? pred.probability}
+                        color={(pred.heuristicWeight ?? pred.probability) >= 60 ? 'error' : (pred.heuristicWeight ?? pred.probability) >= 40 ? 'warning' : 'success'}
                         sx={{ height: 8, borderRadius: 4 }}
                       />
                     </Box>

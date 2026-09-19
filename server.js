@@ -12,7 +12,7 @@ const { buildClinicalContext } = require('./server/ai/contextBuilder');
 const { loadConfig, saveConfig, isAiConfigured, getApiKey } = require('./server/ai/config');
 const { getProvider: getAiProvider } = require('./server/ai/providers');
 const { testAiConnection } = require('./server/ai/llm');
-const { authenticate, verifyToken, authMiddleware, ALLOW_DEMO } = require('./server/security/auth');
+const { authenticate, verifyToken, authMiddleware, requireRole, ALLOW_DEMO, IS_PROD } = require('./server/security/auth');
 const { requestIdMiddleware, securityHeadersMiddleware } = require('./server/security/hardening');
 const { audit, auditMiddleware, getAuditLog } = require('./server/security/audit');
 const { saveVault, loadVault, anonymizeProfile, ALGO } = require('./server/security/crypto');
@@ -53,6 +53,9 @@ const { isOnnxEnabled } = require('./server/config/onnxConfig');
 
 const app = express();
 const port = process.env.PORT || 3001;
+/** Default localhost — set MEDWEAR_BIND_HOST=0.0.0.0 for Docker/LAN (not recommended for demo builds). */
+const bindHost = process.env.MEDWEAR_BIND_HOST || process.env.HOST || '127.0.0.1';
+const adminOnly = requireRole('admin');
 
 app.set('trust proxy', 1);
 app.use(helmet({ contentSecurityPolicy: false }));
@@ -365,7 +368,7 @@ app.get('/api/ai/interventions', (req, res) => {
   });
   res.json({ total: list.length, interventions: list, patientId: scope.patientId });
 });
-app.post('/api/ai/interventions/generate', (req, res) => {
+app.post('/api/ai/interventions/generate', adminOnly, (req, res) => {
   const scope = interventionScope(req);
   if (!guardInterventionImport(req, res, scope)) return;
   resetStore(scope.patientId);
@@ -381,7 +384,7 @@ app.post('/api/ai/interventions/generate', (req, res) => {
     });
   }
 });
-app.post('/api/ai/interventions/:id/approve', (req, res) => {
+app.post('/api/ai/interventions/:id/approve', adminOnly, (req, res) => {
   const scope = interventionScope(req);
   if (!guardInterventionImport(req, res, scope)) return;
   const item = approveIntervention(req.params.id, {
@@ -395,7 +398,7 @@ app.post('/api/ai/interventions/:id/approve', (req, res) => {
   audit('AI_INTERVENTION_APPROVE', { user: resolveUser(req)?.username, detail: item.id });
   res.json({ success: true, intervention: item });
 });
-app.post('/api/ai/interventions/:id/reject', (req, res) => {
+app.post('/api/ai/interventions/:id/reject', adminOnly, (req, res) => {
   const scope = interventionScope(req);
   if (!guardInterventionImport(req, res, scope)) return;
   const item = rejectIntervention(req.params.id, {
@@ -731,27 +734,12 @@ app.get('/api/outcomes/cohort', (req, res) => {
 });
 app.get('/api/outcomes/patient-comparison', (req, res) => {
   if (isRealMode(req)) {
-    const { hasData, getStore } = require('./server/health/store');
-    const { buildUiDashboardStats } = require('./server/health/analytics');
-    if (!hasData()) {
-      return res.status(403).json({
-        needsImport: true,
-        message: '真实模式：请先导入 Apple Health 数据后再查看个体结局对比',
-        message_en: 'Real mode: import Apple Health data before viewing individual outcome comparison',
-      });
-    }
-    const store = getStore();
-    const stats = buildUiDashboardStats(store);
-    const demoProfile = getProfile('real');
-    return res.json(getPatientOutcomeComparison('REAL-001', {
-      mode: 'real',
-      realProfile: {
-        name: demoProfile.name || store.meta?.userLabel || 'Apple Health 用户',
-        age: demoProfile.age,
-        healthScore: stats.healthScore,
-        category: stats.healthScore >= 80 ? 'healthy' : undefined,
-      },
-    }));
+    return res.status(404).json({
+      exploratoryDisabled: true,
+      syntheticProjection: true,
+      message: '真实模式不提供个体 SEER/NLST 风格结局投影；请在演示/队列模式查看探索性反事实模块。',
+      message_en: 'Individual SEER/NLST-style outcome projection is disabled in real-data mode. Use demo/cohort mode for this exploratory counterfactual module.',
+    });
   }
   const patientId = resolveCohortDemoId(req.demoPatientId);
   const result = getPatientOutcomeComparison(patientId);
@@ -762,6 +750,9 @@ app.get('/api/outcomes/patient-comparison', (req, res) => {
 // ── Settings & AI Config ──
 app.get('/api/settings', (req, res) => {
   const aiConfig = loadConfig();
+  const { hasData } = require('./server/health/store');
+  const { DEFAULT_ALERT_THRESHOLDS } = require('./server/config/alertThresholds');
+  const modeHeaderMismatch = req.dataMode === 'demo' && hasData();
   res.json({
     aiEnabled: true,
     aiProvider: aiConfig.provider,
@@ -771,7 +762,14 @@ app.get('/api/settings', (req, res) => {
     aiProviders: aiConfig.availableProviders,
     confidenceThreshold: 85,
     aiModels: aiConfig.availableProviders.find((p) => p.id === aiConfig.provider)?.models || [],
-    alertThresholds: { heartRateMax: 100, heartRateMin: 50, spo2Min: 95, glucoseMax: 11.1 },
+    alertThresholds: { ...DEFAULT_ALERT_THRESHOLDS },
+    modeHeaderMismatch,
+    modeMismatchWarning: modeHeaderMismatch
+      ? {
+        message: '已导入真实 Apple Health 数据，但请求头仍为演示模式 — UI 可能显示 5000 人队列而非您的数据。',
+        message_en: 'Real Apple Health data is imported but the client still sends demo mode — the UI may show the n=5000 cohort instead of your records.',
+      }
+      : null,
     realtimeEnabled: true,
     autoSync: true,
     refreshInterval: 5,
@@ -786,7 +784,7 @@ app.get('/api/settings', (req, res) => {
   });
 });
 
-app.post('/api/settings/ai', async (req, res) => {
+app.post('/api/settings/ai', adminOnly, async (req, res) => {
   try {
     const { apiKey, model, baseUrl, provider, setActive, skipTest } = req.body;
     const providerId = provider || loadConfig().provider;
@@ -835,7 +833,7 @@ app.post('/api/settings/ai', async (req, res) => {
   }
 });
 
-app.get('/api/security/audit', (req, res) => res.json(getAuditLog(Number(req.query.limit) || 50)));
+app.get('/api/security/audit', adminOnly, (req, res) => res.json(getAuditLog(Number(req.query.limit) || 50)));
 app.post('/api/security/vault/sync', (req, res) => {
   const p = provider(req);
   const snapshot = { profile: p.getProfile(), vitals: p.getVitals(), screening: p.getScreening(), syncedAt: new Date().toISOString(), mode: req.dataMode };
@@ -847,7 +845,7 @@ app.get('/api/security/vault/status', (_, res) => {
   const vault = loadVault();
   res.json({ encrypted: Boolean(vault), algorithm: ALGO, lastSync: vault?.syncedAt || null, mode: vault?.mode });
 });
-app.get('/api/security/export', (req, res) => {
+app.get('/api/security/export', adminOnly, (req, res) => {
   const p = provider(req);
   const anonymize = req.query.anonymize !== 'false';
   res.json({
@@ -868,9 +866,16 @@ if (fs.existsSync(path.join(buildDir, 'index.html'))) {
   });
 }
 
-const httpServer = app.listen(port, () => {
+const httpServer = app.listen(port, bindHost, () => {
   const hasUi = fs.existsSync(path.join(buildDir, 'index.html'));
-  console.log(`MedWear API http://localhost:${port} [双模式 · 真实AI · IP定位医院]`);
+  const bindLabel = bindHost === '0.0.0.0' ? 'all interfaces' : bindHost;
+  console.log(`MedWear API http://localhost:${port} (bind ${bindLabel}) [双模式 · 真实AI · IP定位医院]`);
+  if (bindHost === '0.0.0.0' && ALLOW_DEMO) {
+    console.warn('[security] Server listens on 0.0.0.0 with demo auth — do not expose to untrusted networks');
+  }
+  if (IS_PROD && ALLOW_DEMO && !process.env.MEDWEAR_JWT_SECRET) {
+    console.warn('[security] Production + ALLOW_DEMO_AUTH without MEDWEAR_JWT_SECRET — local/demo packaging only');
+  }
   if (hasUi) {
     console.log(`MedWear 应用界面 http://localhost:${port} （前后端一体，可直接浏览器打开）`);
   } else {

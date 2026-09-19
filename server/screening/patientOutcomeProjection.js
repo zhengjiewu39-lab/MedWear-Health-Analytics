@@ -412,6 +412,10 @@ function getPatientOutcomeComparison(patientId, opts = {}) {
 
   return {
     mode,
+    syntheticProjection: true,
+    exploratoryModule: true,
+    moduleScope: 'screening-outcome-counterfactual',
+    moduleScope_en: 'Exploratory counterfactual — not validated on real Apple Health individuals',
     patient: {
       id: subject.id,
       name,

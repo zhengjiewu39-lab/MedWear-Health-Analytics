@@ -1,10 +1,15 @@
 'use strict';
 
+const fs = require('fs');
 const path = require('path');
 const { getDataDir, ensureDataDir } = require('../paths');
 
 function dbPath() {
   return path.join(getDataDir(), 'health.db');
+}
+
+function stagingDbPath() {
+  return path.join(getDataDir(), 'health-staging.db');
 }
 
 function initSchema(db) {
@@ -70,29 +75,99 @@ function initSchema(db) {
 }
 
 let _db = null;
+/** During Apple Health import, all DAO writes go to a staging file until commit. */
+let _importDb = null;
 
-function getDb() {
-  if (_db) return _db;
+function openDatabase(filePath) {
   ensureDataDir();
   const Database = require('better-sqlite3');
-  _db = new Database(dbPath());
-  _db.pragma('journal_mode = WAL');
-  _db.pragma('foreign_keys = ON');
-  _db.pragma('synchronous = NORMAL');
-  initSchema(_db);
+  const db = new Database(filePath);
+  db.pragma('journal_mode = WAL');
+  db.pragma('foreign_keys = ON');
+  db.pragma('synchronous = NORMAL');
+  initSchema(db);
+  return db;
+}
+
+function getDb() {
+  if (_importDb) return _importDb;
+  if (_db) return _db;
+  _db = openDatabase(dbPath());
   return _db;
 }
 
 function closeDb() {
+  if (_importDb) {
+    _importDb.close();
+    _importDb = null;
+  }
   if (_db) {
     _db.close();
     _db = null;
   }
 }
 
+function isImportDatabaseActive() {
+  return _importDb != null;
+}
+
+/** Fresh staging DB — primary health.db is untouched until commitImportDatabase(). */
+function beginImportDatabase() {
+  if (_importDb) {
+    _importDb.close();
+    _importDb = null;
+  }
+  if (_db) {
+    _db.close();
+    _db = null;
+  }
+  const staging = stagingDbPath();
+  if (fs.existsSync(staging)) fs.unlinkSync(staging);
+  _importDb = openDatabase(staging);
+  return _importDb;
+}
+
+function commitImportDatabase() {
+  if (!_importDb) return getDb();
+  _importDb.close();
+  _importDb = null;
+  const main = dbPath();
+  const staging = stagingDbPath();
+  const backup = `${main}.pre-import.bak`;
+  if (!fs.existsSync(staging)) {
+    return getDb();
+  }
+  if (fs.existsSync(main)) {
+    if (fs.existsSync(backup)) fs.unlinkSync(backup);
+    fs.renameSync(main, backup);
+  }
+  fs.renameSync(staging, main);
+  if (fs.existsSync(backup)) {
+    try { fs.unlinkSync(backup); } catch { /* optional retention */ }
+  }
+  return getDb();
+}
+
+function rollbackImportDatabase() {
+  if (_importDb) {
+    _importDb.close();
+    _importDb = null;
+  }
+  const staging = stagingDbPath();
+  if (fs.existsSync(staging)) {
+    try { fs.unlinkSync(staging); } catch { /* ignore */ }
+  }
+  return getDb();
+}
+
 module.exports = {
   dbPath,
+  stagingDbPath,
   getDb,
   closeDb,
   initSchema,
+  isImportDatabaseActive,
+  beginImportDatabase,
+  commitImportDatabase,
+  rollbackImportDatabase,
 };

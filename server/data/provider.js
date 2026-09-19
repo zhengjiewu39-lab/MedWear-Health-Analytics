@@ -14,6 +14,7 @@ const {
   buildRealDoctorReport,
 } = require('../health/analytics');
 const { hasData, getStore } = require('../health/store');
+const { DEFAULT_ALERT_THRESHOLDS } = require('../config/alertThresholds');
 const { STANDARDS } = require('../mock/clinicalData');
 const { getExamSlots } = require('../mock/clinicalData');
 const fs = require('fs');
@@ -44,8 +45,8 @@ function saveRealAppointments(list) {
   fs.writeFileSync(REAL_APPT_FILE, JSON.stringify(list, null, 2));
 }
 
-function realAnalytics() {
-  return hasData() ? getAllAnalytics() : getEmptyAnalytics();
+function realAnalytics(thresholds = DEFAULT_ALERT_THRESHOLDS) {
+  return hasData() ? getAllAnalytics(thresholds) : getEmptyAnalytics();
 }
 
 function buildRealHealthContext() {

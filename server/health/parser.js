@@ -228,10 +228,22 @@ function parseExportXml(xmlPath, onProgress) {
 }
 
 async function importHealthFile(filePath, onProgress) {
-  const xmlPath = extractXmlFromFile(filePath);
-  const store = await parseExportXml(xmlPath, onProgress);
-  saveStore(store);
-  return store.meta;
+  const {
+    beginImportDatabase,
+    commitImportDatabase,
+    rollbackImportDatabase,
+  } = require('./db');
+
+  beginImportDatabase();
+  try {
+    const xmlPath = extractXmlFromFile(filePath);
+    const store = await parseExportXml(xmlPath, onProgress);
+    commitImportDatabase();
+    return store.meta;
+  } catch (err) {
+    rollbackImportDatabase();
+    throw err;
+  }
 }
 
 module.exports = {

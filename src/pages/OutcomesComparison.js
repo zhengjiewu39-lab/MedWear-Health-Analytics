@@ -136,7 +136,16 @@ function OutcomesComparison() {
         if (err?.needsImport) {
           setPatientError(err);
         } else if (pc.reason?.response?.status === 404) {
-          setPatientError({ message: t('当前演示患者暂无个体结局投影', 'No individual outcome projection for the selected demo patient') });
+          const err404 = pc.reason?.response?.data;
+          if (err404?.exploratoryDisabled) {
+            setPatientError({
+              exploratoryDisabled: true,
+              message: err404.message,
+              message_en: err404.message_en,
+            });
+          } else {
+            setPatientError({ message: t('当前演示患者暂无个体结局投影', 'No individual outcome projection for the selected demo patient') });
+          }
         }
       }
       if (s.status !== 'fulfilled') {
@@ -225,6 +234,21 @@ function OutcomesComparison() {
     <Box>
       <InterventionPathway />
 
+      {isReal && (
+        <Alert severity="info" sx={{ mb: 2 }}>
+          {t(
+            '真实数据模式：本页队列级 SEER/NLST 探索性模块仅供论文演示；个体反事实结局投影已关闭。请切到演示模式查看 n=5000 队列对比。',
+            'Real-data mode: cohort-level SEER/NLST exploratory module is for paper demo only; individual counterfactual projection is disabled. Switch to demo mode for n=5000 cohort comparison.',
+          )}
+        </Alert>
+      )}
+
+      {patientError?.exploratoryDisabled && isReal && (
+        <Alert severity="warning" sx={{ mb: 2 }}>
+          {isEn ? patientError.message_en : patientError.message}
+        </Alert>
+      )}
+
       {patientError?.needsImport && isReal && (
         <Alert
           severity="warning"
@@ -243,7 +267,7 @@ function OutcomesComparison() {
         <Alert severity="info" sx={{ mb: 2 }}>{patientError.message}</Alert>
       )}
 
-      {pc?.patient && (
+      {pc?.patient && !isReal && (
         <Paper
           sx={{
             p: 3, mb: 3, borderRadius: 3,
@@ -252,6 +276,14 @@ function OutcomesComparison() {
             background: `linear-gradient(135deg, ${CHART.intervention}0d 0%, ${CHART.accent}0a 100%)`,
           }}
         >
+          {pc.syntheticProjection && (
+            <Alert severity="warning" sx={{ mb: 2 }}>
+              {t(
+                '合成反事实投影（SEER/NLST 校准参考）— 非真实 Apple Health 验证结果。',
+                'Synthetic counterfactual projection (SEER/NLST-calibrated reference) — not a validated outcome for real Apple Health users.',
+              )}
+            </Alert>
+          )}
           <Box sx={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2, mb: 2 }}>
             <Box>
               <Typography variant="h6" fontWeight={700}>

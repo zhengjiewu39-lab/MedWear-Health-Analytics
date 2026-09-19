@@ -99,8 +99,17 @@ function Dashboard() {
       <Grid container spacing={3} sx={{ mb: 3 }}>
         <Grid item xs={12} md={3}>
           <Paper sx={{ p: 3, textAlign: 'center', height: '100%' }}>
-            <ScoreRing score={stats.healthScore} label={t('BHI 行为健康指数', 'BHI (behavioral health index)')} />
-            <Chip label={t(`等级 ${stats.healthGrade}`, `Grade ${stats.healthGrade}`)} color="success" size="small" sx={{ mt: 1 }} />
+            <ScoreRing
+              score={stats.healthScore}
+              unavailable={stats.bhiUnavailable}
+              unavailableLabel={t('数据不足', 'Insufficient data')}
+              label={t('BHI 行为健康指数', 'BHI (behavioral health index)')}
+            />
+            {stats.bhiUnavailable ? (
+              <Chip label={t('无法计算 BHI（缺少人口学或关键信号）', 'BHI unavailable (missing demographics or signals)')} color="default" size="small" sx={{ mt: 1 }} />
+            ) : (
+              <Chip label={t(`等级 ${stats.healthGrade}`, `Grade ${stats.healthGrade}`)} color="success" size="small" sx={{ mt: 1 }} />
+            )}
             <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-around' }}>
               <Box>
                 <Typography variant="caption" color="text.secondary">{t('恢复指数', 'Recovery Index')}</Typography>

@@ -5,6 +5,7 @@ services:
       - "3001:3001"
     environment:
       - PORT=3001
+      - MEDWEAR_BIND_HOST=0.0.0.0
       - NODE_ENV=production
       - MEDWEAR_JWT_SECRET=${MEDWEAR_JWT_SECRET:-change-me-in-production}
       - MEDWEAR_ENCRYPTION_KEY=${MEDWEAR_ENCRYPTION_KEY:-change-me-32-chars-minimum-secret}

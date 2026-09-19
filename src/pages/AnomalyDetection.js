@@ -86,7 +86,7 @@ function AnomalyDetection() {
       setAnalysis({
         analysis: data?.message || t('AI 未配置或调用失败，请前往系统设置配置 API Key', 'AI not configured or request failed — configure API key in Settings'),
         recommendation: data?.needsConfig ? t('前往系统设置', 'Go to Settings') : t('请重试', 'Retry'),
-        confidence: anomaly.confidence,
+        confidence: anomaly.heuristicStrength ?? anomaly.confidence,
         needsConfig: data?.needsConfig,
         error: true,
       });
@@ -98,7 +98,7 @@ function AnomalyDetection() {
   if (loading) return <LinearProgress />;
 
   const avgConfidence = anomalies.length
-    ? `${(anomalies.reduce((s, a) => s + a.confidence, 0) / anomalies.length).toFixed(1)}%`
+    ? `${(anomalies.reduce((s, a) => s + (a.heuristicStrength ?? a.confidence), 0) / anomalies.length).toFixed(1)}%`
     : '—';
 
   const stats = [
@@ -172,7 +172,7 @@ function AnomalyDetection() {
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <Box sx={{ display: 'flex', gap: 1 }}>
                     <Chip icon={<Psychology />} label={`${t('规则', 'Rule')}: ${anomaly.referenceDomainLabel || anomaly.aiModel_en || anomaly.aiModel}`} size="small" color="primary" variant="outlined" />
-                    <Chip label={`${t('信号强度', 'Signal')} ${anomaly.confidence}%`} size="small" color="secondary" />
+                    <Chip label={`${t('信号强度', 'Signal')} ${anomaly.heuristicStrength ?? anomaly.confidence}%`} size="small" color="secondary" />
                   </Box>
                   <Button size="small" variant="contained" onClick={() => handleAnalyze(anomaly)}>{t('信号研判', 'Signal review')}</Button>
                 </Box>

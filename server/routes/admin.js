@@ -1,8 +1,20 @@
 const { filterPatients, getAdminOverview } = require('../screening/patientRegistry');
 const { isRealMode } = require('../middleware/mode');
+const { DEMO_DEPARTMENTS, DEMO_STAFF } = require('../data/organizationDemo');
+const { requireRole } = require('../security/auth');
+
+const adminOnly = requireRole('admin');
 
 function registerAdminRoutes(app) {
-  app.get('/api/admin/patients', (req, res) => {
+  app.get('/api/admin/departments', adminOnly, (_, res) => {
+    res.json(DEMO_DEPARTMENTS);
+  });
+
+  app.get('/api/admin/staff', adminOnly, (_, res) => {
+    res.json(DEMO_STAFF);
+  });
+
+  app.get('/api/admin/patients', adminOnly, (req, res) => {
     const limit = Math.min(Number(req.query.limit) || 120, 500);
     const offset = Math.max(Number(req.query.offset) || 0, 0);
     const filters = {
@@ -19,7 +31,7 @@ function registerAdminRoutes(app) {
     res.json(payload);
   });
 
-  app.get('/api/admin/overview', (req, res) => {
+  app.get('/api/admin/overview', adminOnly, (req, res) => {
     const overview = getAdminOverview();
     if (!isRealMode(req)) overview.activeId = req.demoPatientId;
     res.json(overview);

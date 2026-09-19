@@ -261,8 +261,18 @@ function hasData() {
 }
 
 function initImportSession(meta) {
-  clearAll();
   const db = getDb();
+  const { isImportDatabaseActive } = require('./db');
+  if (isImportDatabaseActive()) {
+    db.prepare('DELETE FROM store_meta').run();
+    db.prepare('DELETE FROM daily').run();
+    db.prepare('DELETE FROM readings').run();
+    db.prepare('DELETE FROM sources').run();
+    db.prepare('DELETE FROM sleep_sessions').run();
+    db.prepare('DELETE FROM recent').run();
+  } else {
+    clearAll();
+  }
   db.prepare('INSERT INTO store_meta (key, value) VALUES (?, ?)').run('meta', JSON.stringify(meta));
   return { meta };
 }

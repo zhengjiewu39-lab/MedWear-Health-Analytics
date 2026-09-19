@@ -134,6 +134,45 @@ function getRecommendedExamsEn() {
   ];
 }
 
+const REAL_EXPLORATORY_DOMAINS = {
+  tumor: {
+    name: '心肺与血氧域 · 探索性信号',
+    name_en: 'Cardio-respiratory & SpO₂ domain · exploratory signals',
+    description: 'Wearable 间接指标生成的研究关注提示，需影像/实验室进一步评估（非诊断）。',
+    description_en: 'Research attention prompts from indirect wearable proxies — requires imaging/labs for evaluation (not a diagnosis).',
+  },
+  cancer: {
+    name: '代谢与睡眠域 · 探索性信号',
+    name_en: 'Metabolic & sleep domain · exploratory signals',
+    description: '行为模式相关的领域加权提示，非癌症概率模型。',
+    description_en: 'Domain-weighted behavior-pattern prompts — not a cancer probability model.',
+  },
+  chronic: {
+    name: '慢病相关 wearable 域',
+    name_en: 'Chronic-condition wearable domain',
+    description: '活动、心率、睡眠趋势的规则引擎关注信号。',
+    description_en: 'Rule-engine attention signals from activity, HR, and sleep trends.',
+  },
+  cardio: {
+    name: '心血管 autonomic 域',
+    name_en: 'Cardiovascular autonomic domain',
+    description: 'HRV / 静息心率等 autonomic 代理信号（探索性）。',
+    description_en: 'Autonomic proxies (HRV, resting HR) — exploratory only.',
+  },
+  common: {
+    name: '急性倾向 · 活动/HRV 域',
+    name_en: 'Acute tendency · activity/HRV domain',
+    description: '活动骤降等非特异性提示，非感冒/流感诊断。',
+    description_en: 'Non-specific prompts such as activity drops — not a cold/flu diagnosis.',
+  },
+  respiratory: {
+    name: '呼吸 wearable 域',
+    name_en: 'Respiratory wearable domain',
+    description: '血氧与活动耐量相关的探索性提示。',
+    description_en: 'Exploratory prompts from SpO₂ and activity tolerance.',
+  },
+};
+
 function buildRealScreeningCategories(store, stats, anomalies) {
   const day = Object.keys(store.daily || {}).sort().pop();
   const d = day ? store.daily[day] : null;
@@ -147,7 +186,7 @@ function buildRealScreeningCategories(store, stats, anomalies) {
 
   const catHealth = (riskScore) => Math.max(55, Math.min(99, 100 - riskScore));
 
-  return [
+  const categories = [
     {
       id: 'tumor', name: '肿瘤早期风险', name_en: 'Early Tumor Risk', riskLevel: 'low',
       score: Math.min(40, 10 + (anomalies.length * 3)),
@@ -155,8 +194,8 @@ function buildRealScreeningCategories(store, stats, anomalies) {
       description: '基于真实 Apple Health 心率、血氧、活动量评估肿瘤相关间接风险。',
       description_en: 'Assesses tumor-related indirect risk based on real Apple Health heart rate, SpO₂, and activity.',
       items: [
-        { name: '肺结节/肺癌', name_en: 'Pulmonary nodule / Lung cancer', risk: lowSpo2 ? 28 : 10, level: lowSpo2 ? 'moderate' : 'low', indicators: [`血氧 ${stats.spo2 ?? '—'}%`, `步数 ${stats.steps}`], indicators_en: [`SpO₂ ${stats.spo2 ?? '—'}%`, `Steps ${stats.steps}`], recommendation: '异常血氧请胸科/低剂量 CT 排查', recommendation_en: 'Abnormal SpO₂ warrants pulmonology / low-dose CT workup', evidenceLevel: 'B' },
-        { name: '结直肠肿瘤', name_en: 'Colorectal tumor', risk: lowActivity ? 22 : 11, level: lowActivity ? 'moderate' : 'low', indicators: [`日均步数 ${stats.steps}`], indicators_en: [`Daily steps ${stats.steps}`], recommendation: '45 岁起 FIT 或肠镜筛查', recommendation_en: 'FIT or colonoscopy screening from age 45', evidenceLevel: 'A' },
+        { name: '肺结节/肺癌', name_en: 'Pulmonary nodule / Lung cancer', risk: lowSpo2 ? 28 : 10, level: lowSpo2 ? 'moderate' : 'low', indicators: [`血氧 ${stats.spo2 ?? '—'}%`, `步数 ${stats.steps}`], indicators_en: [`SpO₂ ${stats.spo2 ?? '—'}%`, `Steps ${stats.steps}`], recommendation: '异常血氧请胸科/低剂量 CT 排查', recommendation_en: 'Abnormal SpO₂ warrants pulmonology / low-dose CT workup' },
+        { name: '结直肠肿瘤', name_en: 'Colorectal tumor', risk: lowActivity ? 22 : 11, level: lowActivity ? 'moderate' : 'low', indicators: [`日均步数 ${stats.steps}`], indicators_en: [`Daily steps ${stats.steps}`], recommendation: '45 岁起 FIT 或肠镜筛查', recommendation_en: 'FIT or colonoscopy screening from age 45' },
       ],
     },
     {
@@ -166,8 +205,8 @@ function buildRealScreeningCategories(store, stats, anomalies) {
       description: '结合真实行为数据的高发癌种风险初筛（需影像/病理确诊）。',
       description_en: 'Initial screening for high-incidence cancers using real behavior data (requires imaging/pathology for diagnosis).',
       items: [
-        { name: '胃癌', name_en: 'Gastric cancer', risk: lowSleep ? 20 : 12, level: lowSleep ? 'moderate' : 'low', indicators: [`睡眠 ${stats.sleepHours ?? '—'}h`], indicators_en: [`Sleep ${stats.sleepHours ?? '—'}h`], recommendation: '消化不适持续请胃镜检查', recommendation_en: 'Gastroscopy if digestive discomfort persists', evidenceLevel: 'B' },
-        { name: '肝癌', name_en: 'Liver cancer', risk: 10, level: 'low', indicators: ['活动代谢来自真实记录'], indicators_en: ['Activity metabolism from real records'], recommendation: '高危人群 AFP + 超声', recommendation_en: 'AFP + ultrasound for high-risk groups', evidenceLevel: 'B' },
+        { name: '胃癌', name_en: 'Gastric cancer', risk: lowSleep ? 20 : 12, level: lowSleep ? 'moderate' : 'low', indicators: [`睡眠 ${stats.sleepHours ?? '—'}h`], indicators_en: [`Sleep ${stats.sleepHours ?? '—'}h`], recommendation: '消化不适持续请胃镜检查', recommendation_en: 'Gastroscopy if digestive discomfort persists' },
+        { name: '肝癌', name_en: 'Liver cancer', risk: 10, level: 'low', indicators: ['活动代谢来自真实记录'], indicators_en: ['Activity metabolism from real records'], recommendation: '高危人群 AFP + 超声', recommendation_en: 'AFP + ultrasound for high-risk groups' },
       ],
     },
     {
@@ -178,9 +217,9 @@ function buildRealScreeningCategories(store, stats, anomalies) {
       description: '真实 wearable 数据驱动的慢病趋势分析。',
       description_en: 'Chronic disease trend analysis driven by real wearable data.',
       items: [
-        { name: '高血压', name_en: 'Hypertension', risk: hrElevated ? 35 : 18, level: hrElevated ? 'moderate' : 'low', indicators: [`静息心率 ${stats.restingHR ?? '—'} bpm`], indicators_en: [`Resting HR ${stats.restingHR ?? '—'} bpm`], recommendation: '建议动态血压监测', recommendation_en: 'Ambulatory blood pressure monitoring advised', evidenceLevel: 'A' },
-        { name: '2 型糖尿病', name_en: 'Type 2 diabetes', risk: lowActivity ? 25 : 12, level: lowActivity ? 'moderate' : 'low', indicators: [`步数 ${stats.steps}`], indicators_en: [`Steps ${stats.steps}`], recommendation: '活动不足者查空腹血糖', recommendation_en: 'Check fasting glucose if activity is insufficient', evidenceLevel: 'A' },
-        { name: '睡眠呼吸暂停', name_en: 'Sleep apnea', risk: lowSpo2 || lowSleep ? 24 : 14, level: lowSpo2 ? 'moderate' : 'low', indicators: [`SpO2 ${stats.spo2 ?? '—'}%`, `睡眠 ${stats.sleepHours ?? '—'}h`], indicators_en: [`SpO₂ ${stats.spo2 ?? '—'}%`, `Sleep ${stats.sleepHours ?? '—'}h`], recommendation: '打鼾或低氧做多导睡眠监测', recommendation_en: 'Polysomnography for snoring or hypoxia', evidenceLevel: 'B' },
+        { name: '高血压', name_en: 'Hypertension', risk: hrElevated ? 35 : 18, level: hrElevated ? 'moderate' : 'low', indicators: [`静息心率 ${stats.restingHR ?? '—'} bpm`], indicators_en: [`Resting HR ${stats.restingHR ?? '—'} bpm`], recommendation: '建议动态血压监测', recommendation_en: 'Ambulatory blood pressure monitoring advised' },
+        { name: '2 型糖尿病', name_en: 'Type 2 diabetes', risk: lowActivity ? 25 : 12, level: lowActivity ? 'moderate' : 'low', indicators: [`步数 ${stats.steps}`], indicators_en: [`Steps ${stats.steps}`], recommendation: '活动不足者查空腹血糖', recommendation_en: 'Check fasting glucose if activity is insufficient' },
+        { name: '睡眠呼吸暂停', name_en: 'Sleep apnea', risk: lowSpo2 || lowSleep ? 24 : 14, level: lowSpo2 ? 'moderate' : 'low', indicators: [`SpO2 ${stats.spo2 ?? '—'}%`, `睡眠 ${stats.sleepHours ?? '—'}h`], indicators_en: [`SpO₂ ${stats.spo2 ?? '—'}%`, `Sleep ${stats.sleepHours ?? '—'}h`], recommendation: '打鼾或低氧做多导睡眠监测', recommendation_en: 'Polysomnography for snoring or hypoxia' },
       ],
     },
     {
@@ -190,8 +229,8 @@ function buildRealScreeningCategories(store, stats, anomalies) {
       description: '真实 HRV、静息心率评估心血管事件风险。',
       description_en: 'Assesses cardiovascular event risk using real HRV and resting heart rate.',
       items: [
-        { name: '冠心病/心梗', name_en: 'Coronary heart disease / Myocardial infarction', risk: hrElevated ? 28 : 12, level: hrElevated ? 'moderate' : 'low', indicators: [`HR ${stats.heartRate}`, `HRV ${stats.hrv}`], indicators_en: [`HR ${stats.heartRate}`, `HRV ${stats.hrv}`], recommendation: '持续异常请心内科评估', recommendation_en: 'Persistent abnormalities warrant cardiology evaluation', evidenceLevel: 'A' },
-        { name: '心律失常', name_en: 'Arrhythmia', risk: lowHrv ? 26 : 11, level: lowHrv ? 'moderate' : 'low', indicators: [`HRV ${stats.hrv ?? '—'} ms`], indicators_en: [`HRV ${stats.hrv ?? '—'} ms`], recommendation: '佩戴 ECG 持续监测', recommendation_en: 'Continuous ECG monitoring', evidenceLevel: 'B' },
+        { name: '冠心病/心梗', name_en: 'Coronary heart disease / Myocardial infarction', risk: hrElevated ? 28 : 12, level: hrElevated ? 'moderate' : 'low', indicators: [`HR ${stats.heartRate}`, `HRV ${stats.hrv}`], indicators_en: [`HR ${stats.heartRate}`, `HRV ${stats.hrv}`], recommendation: '持续异常请心内科评估', recommendation_en: 'Persistent abnormalities warrant cardiology evaluation' },
+        { name: '心律失常', name_en: 'Arrhythmia', risk: lowHrv ? 26 : 11, level: lowHrv ? 'moderate' : 'low', indicators: [`HRV ${stats.hrv ?? '—'} ms`], indicators_en: [`HRV ${stats.hrv ?? '—'} ms`], recommendation: '佩戴 ECG 持续监测', recommendation_en: 'Continuous ECG monitoring' },
       ],
     },
     {
@@ -202,10 +241,10 @@ function buildRealScreeningCategories(store, stats, anomalies) {
       description: '活动骤降、HRV 波动等提示感冒、流感等急性病倾向（非诊断）。',
       description_en: 'Activity drops and HRV fluctuations suggest tendency toward colds, flu, and other acute illnesses (not a diagnosis).',
       items: [
-        { name: '普通感冒', name_en: 'Common cold', risk: recentActivityDrop ? 32 : 16, level: recentActivityDrop ? 'moderate' : 'low', indicators: [`今日步数 ${stats.steps}`, recentActivityDrop ? '活动量明显下降' : '活动正常'], indicators_en: [`Today's steps ${stats.steps}`, recentActivityDrop ? 'Marked activity decline' : 'Normal activity'], recommendation: '休息补水，3 天未缓解就医', recommendation_en: 'Rest and hydrate; seek care if not relieved in 3 days', evidenceLevel: 'C' },
-        { name: '流行性感冒', name_en: 'Influenza', risk: recentActivityDrop && lowHrv ? 30 : 14, level: recentActivityDrop ? 'moderate' : 'low', indicators: [`HRV ${stats.hrv ?? '—'}`], indicators_en: [`HRV ${stats.hrv ?? '—'}`], recommendation: '高热肌肉酸痛请发热门诊', recommendation_en: 'Visit fever clinic for high fever and muscle aches', evidenceLevel: 'B' },
-        { name: '急性上呼吸道感染', name_en: 'Acute upper respiratory infection', risk: lowSpo2 ? 28 : 18, level: lowSpo2 ? 'moderate' : 'low', indicators: [`血氧 ${stats.spo2 ?? '—'}%`], indicators_en: [`SpO₂ ${stats.spo2 ?? '—'}%`], recommendation: '血氧下降请呼吸科评估', recommendation_en: 'SpO₂ drop warrants pulmonology evaluation', evidenceLevel: 'B' },
-        { name: '病毒性发热倾向', name_en: 'Viral fever tendency', risk: hrElevated && recentActivityDrop ? 35 : 15, level: hrElevated && recentActivityDrop ? 'moderate' : 'low', indicators: [`静息 HR ${stats.restingHR}`], indicators_en: [`Resting HR ${stats.restingHR}`], recommendation: '发热伴气促立即就医', recommendation_en: 'Seek immediate care for fever with shortness of breath', evidenceLevel: 'C' },
+        { name: '普通感冒', name_en: 'Common cold', risk: recentActivityDrop ? 32 : 16, level: recentActivityDrop ? 'moderate' : 'low', indicators: [`今日步数 ${stats.steps}`, recentActivityDrop ? '活动量明显下降' : '活动正常'], indicators_en: [`Today's steps ${stats.steps}`, recentActivityDrop ? 'Marked activity decline' : 'Normal activity'], recommendation: '休息补水，3 天未缓解就医', recommendation_en: 'Rest and hydrate; seek care if not relieved in 3 days' },
+        { name: '流行性感冒', name_en: 'Influenza', risk: recentActivityDrop && lowHrv ? 30 : 14, level: recentActivityDrop ? 'moderate' : 'low', indicators: [`HRV ${stats.hrv ?? '—'}`], indicators_en: [`HRV ${stats.hrv ?? '—'}`], recommendation: '高热肌肉酸痛请发热门诊', recommendation_en: 'Visit fever clinic for high fever and muscle aches' },
+        { name: '急性上呼吸道感染', name_en: 'Acute upper respiratory infection', risk: lowSpo2 ? 28 : 18, level: lowSpo2 ? 'moderate' : 'low', indicators: [`血氧 ${stats.spo2 ?? '—'}%`], indicators_en: [`SpO₂ ${stats.spo2 ?? '—'}%`], recommendation: '血氧下降请呼吸科评估', recommendation_en: 'SpO₂ drop warrants pulmonology evaluation' },
+        { name: '病毒性发热倾向', name_en: 'Viral fever tendency', risk: hrElevated && recentActivityDrop ? 35 : 15, level: hrElevated && recentActivityDrop ? 'moderate' : 'low', indicators: [`静息 HR ${stats.restingHR}`], indicators_en: [`Resting HR ${stats.restingHR}`], recommendation: '发热伴气促立即就医', recommendation_en: 'Seek immediate care for fever with shortness of breath' },
       ],
     },
     {
@@ -215,11 +254,22 @@ function buildRealScreeningCategories(store, stats, anomalies) {
       description: '真实血氧与活动耐量评估呼吸系统风险。',
       description_en: 'Assesses respiratory risk using real SpO₂ and exercise tolerance.',
       items: [
-        { name: '社区获得性肺炎', name_en: 'Community-acquired pneumonia', risk: lowSpo2 ? 30 : 12, level: lowSpo2 ? 'moderate' : 'low', indicators: [`SpO2 ${stats.spo2 ?? '—'}%`], indicators_en: [`SpO₂ ${stats.spo2 ?? '—'}%`], recommendation: '咳嗽发热胸痛请胸片', recommendation_en: 'Chest X-ray for cough, fever, or chest pain', evidenceLevel: 'B' },
-        { name: '支气管哮喘', name_en: 'Bronchial asthma', risk: lowSpo2 ? 25 : 18, level: lowSpo2 ? 'moderate' : 'low', indicators: ['呼吸相关 wearable 指标'], indicators_en: ['Respiratory-related wearable metrics'], recommendation: '喘息发作查肺功能', recommendation_en: 'Spirometry for wheezing episodes', evidenceLevel: 'B' },
+        { name: '社区获得性肺炎', name_en: 'Community-acquired pneumonia', risk: lowSpo2 ? 30 : 12, level: lowSpo2 ? 'moderate' : 'low', indicators: [`SpO2 ${stats.spo2 ?? '—'}%`], indicators_en: [`SpO₂ ${stats.spo2 ?? '—'}%`], recommendation: '咳嗽发热胸痛请胸片', recommendation_en: 'Chest X-ray for cough, fever, or chest pain' },
+        { name: '支气管哮喘', name_en: 'Bronchial asthma', risk: lowSpo2 ? 25 : 18, level: lowSpo2 ? 'moderate' : 'low', indicators: ['呼吸相关 wearable 指标'], indicators_en: ['Respiratory-related wearable metrics'], recommendation: '喘息发作查肺功能', recommendation_en: 'Spirometry for wheezing episodes' },
       ],
     },
   ];
+  return categories.map((cat) => {
+    const meta = REAL_EXPLORATORY_DOMAINS[cat.id];
+    if (!meta) return cat;
+    return {
+      ...cat,
+      name: meta.name,
+      name_en: meta.name_en,
+      description: meta.description,
+      description_en: meta.description_en,
+    };
+  });
 }
 
 function buildRealTrendData(store) {

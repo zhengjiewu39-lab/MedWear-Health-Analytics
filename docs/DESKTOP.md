@@ -39,6 +39,12 @@ npm run desktop:win
 3. **不要直接双击图标** — 若提示「文件已损坏」，见下方 **macOS 安全提示**
 4. 登录：`admin` / `admin123` 或 `demo` / `demo123`
 
+### 安全说明（桌面 / 演示）
+
+- 桌面版内置 **`ALLOW_DEMO_AUTH=true`** 与固定演示密钥，仅适合 **本机演示**，勿将 API 端口暴露到公网或不可信 Wi‑Fi。
+- 后端默认监听 **`127.0.0.1`**（仅本机可连）；Docker 等需对外访问时设置 `MEDWEAR_BIND_HOST=0.0.0.0`，并关闭演示账号、配置 `MEDWEAR_JWT_SECRET`。
+- 管理端 API（`/api/admin/*`、干预审批、安全审计、AI 设置、Research 重算）需 **`admin` 角色**；`demo` 账号无法绕过前端直接调用。
+
 ### macOS 提示「文件已损坏」？（不是真损坏）
 
 这是 **未购买 Apple 开发者签名** 时 Gatekeeper 的常见误报。任选一种方式：
@@ -146,5 +152,6 @@ A: 需额外合规审查；当前为 **研究演示**，见 [docs/ETHICS.md](ETH
 | `PORT` / `MEDWEAR_DESKTOP_PORT` | 服务端口（桌面默认 38472） |
 | `MEDWEAR_USER_DATA` | 用户数据根目录（Electron 自动设置） |
 | `MEDWEAR_JWT_SECRET` | 生产 JWT 密钥 |
-| `ALLOW_DEMO_AUTH` | 是否允许 demo 账号 |
+| `ALLOW_DEMO_AUTH` | 是否允许 demo 账号（桌面默认开，联网部署应关） |
+| `MEDWEAR_BIND_HOST` | 监听地址，默认 `127.0.0.1` |
 | `OPENAI_API_KEY` | 真实模式 AI（可选） |
