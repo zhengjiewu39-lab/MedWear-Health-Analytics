@@ -26,7 +26,7 @@ Real and synthetic inputs are **separated at ingestion** and enter the **shared 
 
 **One-click manuscript reproduction:** [`notebooks/paper_reproduction.ipynb`](notebooks/paper_reproduction.ipynb) — **primary path:** synthetic benchmark (seed=42) → BHI → threshold signal flags → MAD → BHI watch tier → evaluation metrics. **Optional appendix:** ONNX / transparent component charts. See [`notebooks/README.md`](notebooks/README.md).
 
-**Manuscript follows system (do not reverse-edit code for Word):** run `npm run docs:manuscript-sync` → copy from [`docs/ARTICLE-FOLLOW-SYSTEM.md`](docs/ARTICLE-FOLLOW-SYSTEM.md). Freeze tag: `medwear-manuscript-v1.2.1`.
+**Manuscript follows system (do not reverse-edit code for Word):** run `npm run docs:manuscript-sync` → copy from [`docs/ARTICLE-FOLLOW-SYSTEM.md`](docs/ARTICLE-FOLLOW-SYSTEM.md). Freeze tag: `medwear-manuscript-v1.2.2`.
 
 ---
 
