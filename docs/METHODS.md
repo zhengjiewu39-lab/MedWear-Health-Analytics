@@ -182,3 +182,5 @@ Scenarios: conservative, neutral, optimistic (via `GET /api/outcomes/scenarios`)
 Notebook: `notebooks/paper_reproduction.ipynb` · Bridge: `scripts/paper_reproduction_bridge.js`
 
 See [EVALUATION.md](./EVALUATION.md) for benchmark protocol.
+
+**Manuscript drafting:** Run `npm run docs:manuscript-sync`; align Word/LaTeX only from [ARTICLE-FOLLOW-SYSTEM.md](./ARTICLE-FOLLOW-SYSTEM.md) (system is authoritative).

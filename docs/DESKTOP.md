@@ -48,6 +48,7 @@ npm run test:server              # 87 server tests (incl. HTTP RBAC + outcomes g
 npm run evaluate                 # primary benchmark metrics
 npm run analyze:manuscript-secondary   # Bland–Altman / tolerance / MAD audit JSON
 npm run docs:verify
+npm run docs:manuscript-sync   # → docs/ARTICLE-FOLLOW-SYSTEM.md（改 Word 只抄此文件）
 ```
 
 ### 安全说明（桌面 / 演示）

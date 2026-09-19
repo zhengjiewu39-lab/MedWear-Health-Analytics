@@ -182,3 +182,5 @@
 Notebook：`notebooks/paper_reproduction.ipynb` · 桥接脚本：`scripts/paper_reproduction_bridge.js`
 
 详见 [EVALUATION.zh.md](./EVALUATION.zh.md)。
+
+**改稿原则：** 运行 `npm run docs:manuscript-sync`，Word/LaTeX **仅**对照 [ARTICLE-FOLLOW-SYSTEM.md](./ARTICLE-FOLLOW-SYSTEM.md) 更新（以系统为准，勿为旧稿反改代码）。

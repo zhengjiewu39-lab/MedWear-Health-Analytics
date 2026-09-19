@@ -533,6 +533,8 @@ Scenarios: ${co.scenarios.join(', ')} (via \`GET /api/outcomes/scenarios\`).
 Notebook: \`${pr.notebook}\` · Bridge: \`${pr.bridge}\`
 
 See [EVALUATION.md](./EVALUATION.md) for benchmark protocol.
+
+**Manuscript drafting:** Run \`npm run docs:manuscript-sync\`; align Word/LaTeX only from [ARTICLE-FOLLOW-SYSTEM.md](./ARTICLE-FOLLOW-SYSTEM.md) (system is authoritative).
 `;
   }
 
@@ -690,6 +692,8 @@ ${co.outsidePrimaryManuscriptScope_zh.map((x) => `- ${x}`).join('\n')}
 Notebook：\`${pr.notebook}\` · 桥接脚本：\`${pr.bridge}\`
 
 详见 [EVALUATION.zh.md](./EVALUATION.zh.md)。
+
+**改稿原则：** 运行 \`npm run docs:manuscript-sync\`，Word/LaTeX **仅**对照 [ARTICLE-FOLLOW-SYSTEM.md](./ARTICLE-FOLLOW-SYSTEM.md) 更新（以系统为准，勿为旧稿反改代码）。
 `;
 }
 
