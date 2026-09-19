@@ -20,6 +20,14 @@ function gitSha() {
   }
 }
 
+function gitFreezeTag() {
+  try {
+    return execSync('git describe --tags --exact-match HEAD', { cwd: root, encoding: 'utf8' }).trim();
+  } catch {
+    return 'medwear-manuscript-v1.2.1';
+  }
+}
+
 function countServerTests() {
   try {
     const out = execSync('npm run test:server 2>&1', { cwd: root, encoding: 'utf8', maxBuffer: 4 * 1024 * 1024 });
@@ -45,6 +53,7 @@ function pct(x, digits = 4) {
 
 function run() {
   const sha = gitSha();
+  const freezeTag = gitFreezeTag();
   const remote = 'https://github.com/zhengjiewu39-lab/MedWear-Health-Analytics';
   const latest = loadJson(LATEST);
   const secondary = loadJson(SECONDARY);
@@ -71,7 +80,7 @@ function run() {
 \`\`\`text
 Repository: ${remote}
 Freeze commit: ${sha}
-Recommended tag: medwear-manuscript-v1.2.1 (points to this commit after tagging)
+Freeze tag: ${freezeTag}
 
 Primary reproduction:
   npm ci
@@ -89,7 +98,7 @@ Note: runtime-settings.json affects live UI only; npm run evaluate does NOT read
 
 ## Data availability（中文摘要）
 
-- 仓库：${remote}，冻结 commit \`${sha}\`
+- 仓库：${remote}，冻结 tag \`${freezeTag}\` · commit \`${sha}\`
 - 主基准：合成队列 n=5000、seed=42；引擎 **MedWear-AnalyticsCore-v1** vs 参考 **independentSyntheticReference-v1**
 - 主结果数字来源：\`npm run evaluate\` → \`benchmarks/results/latest.json\`
 - 次要分析（Bland–Altman、±5/8/10/12、MAD 路径审计）：\`npm run analyze:manuscript-secondary\` → \`manuscript-secondary.json\`
@@ -145,7 +154,7 @@ Note: runtime-settings.json affects live UI only; npm run evaluate does NOT read
 
 ## 改稿工作流（你不再「改系统迁就文章」）
 
-1. \`git checkout ${sha}\`（或 tag \`medwear-manuscript-v1.2.1\`）
+1. \`git checkout ${freezeTag}\`（或 commit \`${sha}\`）
 2. \`npm run docs:manuscript-sync\` — 刷新本文
 3. \`npm run evaluate\` + \`npm run analyze:manuscript-secondary\` — 若需重算 JSON
 4. 在 Word/LaTeX 中 **替换** Results 数字、Data availability、探索性模块措辞 → 以本文为准
