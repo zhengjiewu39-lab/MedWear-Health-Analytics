@@ -20,7 +20,7 @@
 
 公式：
 
-- 步数 (28%)：sigmoid — `1 / (1 + exp(-(steps - 5500) / 1800))`（仅当 `steps > 0` 时使用；见步数为零说明）
+- 步数 (28%)：sigmoid — `1 / (1 + exp(-(steps - 5500) / 1800))`（步数分量参与时；见步数缺失与零步数说明）
 - 睡眠 (24%)：高斯峰值 ~7.25 h — 估计睡眠时长 `(深睡 + REM + 浅睡) / 60` 小时；**清醒阶段不计入睡眠时长**
 - 睡眠得分：`exp(-((hours - 7.25)^2) / (2 * 1.4^2))`
 - 静息心率 (20%)：年龄/性别调整高斯 — 参考值 = (男 ? 62 : 65) + 0.15 × max(0, 年龄−40)；得分 `exp(-((rhr - ref)^2) / (2 * 12^2))`
@@ -37,7 +37,7 @@
 
 **人口学缺失处理（无插补）：** 人口学依赖型 BHI 分量仅在其所需元数据可用时参与计算。 RHR 分量需要有效年龄、生理性别（M/F）及静息心率测量值。 HRV-SDNN 分量需要有效年龄及 SDNN 测量值；不要求性别。 所需元数据缺失时，该分量从当日 BHI 聚合中排除，其余有效分量权重重新归一化。 不使用年龄/性别插补、中性分数或兼容后备值。 分量不可用原因 — RHR：missing_age、missing_sex、missing_age_and_sex、missing_rhr；HRV-SDNN：missing_age、missing_sdnn。
 
-**步数为零说明：** 当前实现中，步数为零视为 BHI 步数分量不可用（需 `steps > 0`）。 此路径无法区分真实零步数日与缺失的日步数记录。 步数分量被省略，其余 BHI 权重重新归一化。
+**步数缺失与零步数说明：** 真实数据路径：`server/health/dao.js` `assembleStore` 根据日步数记录设置 `stepsRecorded` / `stepsMissing`（无此字段的基准用例仍按 `steps > 0` 视为有记录）。 `stepsMissing: true` — 当日无步数记录：步数分量省略、权重重归一化；`unavailable.steps = missing_steps_record`。 `steps > 0` — 有记录的活动量：计入 `scoreSteps(steps)`，权重 28%。 `stepsRecorded: true` 且 `steps === 0` — 有记录的真实零步数：仍计入 `scoreSteps(0)`（权重 28%）；并标记 `unavailable.steps = zero_steps_day`（透明性标记，非省略分量）。
 
 **局限：** 未在临床结局上校准；无合并症/用药调整；仅可穿戴代理信号。
 

@@ -24,7 +24,7 @@ const healthScore = {
   implementation: 'server/services/behavioralHealthIndex.js → analyticsCore.computeDayScore()',
   weights: WEIGHTS,
   formulas_en: [
-    'Steps (28%): sigmoid — `1 / (1 + exp(-(steps - 5500) / 1800))` (component used only when `steps > 0`; see step-zero limitation)',
+    'Steps (28%): sigmoid — `1 / (1 + exp(-(steps - 5500) / 1800))` when the steps component participates (see steps missing vs zero-step day)',
     'Sleep (24%): Gaussian peak ~7.25 h — estimated sleep duration `(deep + rem + light) / 60` hours; **awake is excluded** from sleep duration',
     'Sleep score: `exp(-((hours - 7.25)^2) / (2 * 1.4^2))`',
     'RHR (20%): age/sex-adjusted Gaussian — ref = (male ? 62 : 65) + 0.15 × max(0, age−40); score `exp(-((rhr - ref)^2) / (2 * 12^2))`',
@@ -36,7 +36,7 @@ const healthScore = {
     'Missing data: re-normalize over available components; median-imputation sensitivity via `missingDataSensitivity()`',
   ],
   formulas_zh: [
-    '步数 (28%)：sigmoid — `1 / (1 + exp(-(steps - 5500) / 1800))`（仅当 `steps > 0` 时使用；见步数为零说明）',
+    '步数 (28%)：sigmoid — `1 / (1 + exp(-(steps - 5500) / 1800))`（步数分量参与时；见步数缺失与零步数说明）',
     '睡眠 (24%)：高斯峰值 ~7.25 h — 估计睡眠时长 `(深睡 + REM + 浅睡) / 60` 小时；**清醒阶段不计入睡眠时长**',
     '睡眠得分：`exp(-((hours - 7.25)^2) / (2 * 1.4^2))`',
     '静息心率 (20%)：年龄/性别调整高斯 — 参考值 = (男 ? 62 : 65) + 0.15 × max(0, 年龄−40)；得分 `exp(-((rhr - ref)^2) / (2 * 12^2))`',
@@ -62,18 +62,21 @@ const healthScore = {
     '不使用年龄/性别插补、中性分数或兼容后备值。',
   ],
   componentUnavailableReasons: {
+    steps: ['missing_steps_record', 'zero_steps_day'],
     rhr: ['missing_age', 'missing_sex', 'missing_age_and_sex', 'missing_rhr'],
     hrv: ['missing_age', 'missing_sdnn'],
   },
-  stepZeroLimitation_en: [
-    'Zero step count is currently treated as unavailable for BHI component scoring (`steps > 0` required).',
-    'The implementation cannot distinguish a true zero-step day from an absent daily step record in this path.',
-    'The steps component is omitted and remaining BHI weights are renormalized.',
+  stepsSemantics_en: [
+    'Real-data path: `server/health/dao.js` `assembleStore` sets `stepsRecorded` / `stepsMissing` from daily step records (benchmark cases without these flags use legacy `steps > 0` as recorded).',
+    '`stepsMissing: true` — no step record for the day: steps component omitted, weights renormalized; `unavailable.steps = missing_steps_record`.',
+    '`steps > 0` — recorded activity: include `scoreSteps(steps)` at weight 28%.',
+    '`stepsRecorded: true` with `steps === 0` — recorded zero-step day: include `scoreSteps(0)` at weight 28%; report `unavailable.steps = zero_steps_day` (transparency flag, not omission of the component).',
   ],
-  stepZeroLimitation_zh: [
-    '当前实现中，步数为零视为 BHI 步数分量不可用（需 `steps > 0`）。',
-    '此路径无法区分真实零步数日与缺失的日步数记录。',
-    '步数分量被省略，其余 BHI 权重重新归一化。',
+  stepsSemantics_zh: [
+    '真实数据路径：`server/health/dao.js` `assembleStore` 根据日步数记录设置 `stepsRecorded` / `stepsMissing`（无此字段的基准用例仍按 `steps > 0` 视为有记录）。',
+    '`stepsMissing: true` — 当日无步数记录：步数分量省略、权重重归一化；`unavailable.steps = missing_steps_record`。',
+    '`steps > 0` — 有记录的活动量：计入 `scoreSteps(steps)`，权重 28%。',
+    '`stepsRecorded: true` 且 `steps === 0` — 有记录的真实零步数：仍计入 `scoreSteps(0)`（权重 28%）；并标记 `unavailable.steps = zero_steps_day`（透明性标记，非省略分量）。',
   ],
   disclaimer_en: 'BHI is a behavioral wellness index — NOT a calibrated disease-risk score.',
   disclaimer_zh: 'BHI 为行为健康指数 — 非经临床校准的疾病风险评分。',
@@ -405,7 +408,7 @@ Implementation: \`${hs.implementation}\`
 
 **Demographic missingness (no imputation):** ${hs.demographicsMissingness_en.join(' ')} Component unavailable reasons — RHR: ${hs.componentUnavailableReasons.rhr.join(', ')}; HRV-SDNN: ${hs.componentUnavailableReasons.hrv.join(', ')}.
 
-**Step-zero limitation:** ${hs.stepZeroLimitation_en.join(' ')}
+**Steps missing vs zero-step day:** ${hs.stepsSemantics_en.join(' ')}
 
 **Limitations:** ${hs.limitations_en.join('; ')}.
 
@@ -564,7 +567,7 @@ ${hs.formulas_zh.map((f) => `- ${f}`).join('\n')}
 
 **人口学缺失处理（无插补）：** ${hs.demographicsMissingness_zh.join(' ')} 分量不可用原因 — RHR：${hs.componentUnavailableReasons.rhr.join('、')}；HRV-SDNN：${hs.componentUnavailableReasons.hrv.join('、')}。
 
-**步数为零说明：** ${hs.stepZeroLimitation_zh.join(' ')}
+**步数缺失与零步数说明：** ${hs.stepsSemantics_zh.join(' ')}
 
 **局限：** ${hs.limitations_zh.join('；')}。
 

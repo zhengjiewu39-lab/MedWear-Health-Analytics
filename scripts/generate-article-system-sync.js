@@ -24,7 +24,7 @@ function gitFreezeTag() {
   try {
     return execSync('git describe --tags --exact-match HEAD', { cwd: root, encoding: 'utf8' }).trim();
   } catch {
-    return 'medwear-manuscript-v1.2.2';
+    return 'medwear-manuscript-v1.2.3';
   }
 }
 

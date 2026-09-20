@@ -2,6 +2,10 @@
 
 All notable methodology and documentation changes for MedWear Health Analytics.
 
+## [0.1.0-doc] — 2026-09-20 · `medwear-manuscript-v1.2.3`
+
+- **METHODS / transparency:** Document BHI steps semantics to match `behavioralHealthIndex.js` — `stepsMissing` omits component; recorded zero-step days use `scoreSteps(0)` with `zero_steps_day` flag (replaces outdated “steps > 0 required” prose).
+
 ## [0.1.0] — 2026-08-09
 
 ### Methodology (BHI + MAD honest refactor)

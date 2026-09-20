@@ -20,7 +20,7 @@ Transparent, reproducible pipeline for real mode and benchmark evaluation. **No 
 
 **Formulas:**
 
-- Steps (28%): sigmoid — `1 / (1 + exp(-(steps - 5500) / 1800))` (component used only when `steps > 0`; see step-zero limitation)
+- Steps (28%): sigmoid — `1 / (1 + exp(-(steps - 5500) / 1800))` when the steps component participates (see steps missing vs zero-step day)
 - Sleep (24%): Gaussian peak ~7.25 h — estimated sleep duration `(deep + rem + light) / 60` hours; **awake is excluded** from sleep duration
 - Sleep score: `exp(-((hours - 7.25)^2) / (2 * 1.4^2))`
 - RHR (20%): age/sex-adjusted Gaussian — ref = (male ? 62 : 65) + 0.15 × max(0, age−40); score `exp(-((rhr - ref)^2) / (2 * 12^2))`
@@ -37,7 +37,7 @@ Implementation: `server/services/behavioralHealthIndex.js → analyticsCore.comp
 
 **Demographic missingness (no imputation):** Demographic-dependent BHI components are evaluated only when their required metadata are available. RHR component requires valid age AND biological sex (M/F) AND resting heart rate measurement. HRV-SDNN component requires valid age AND SDNN measurement; sex is not required. When required metadata are missing, the component is excluded from daily BHI aggregation and remaining valid component weights are renormalized. No age/sex imputation, neutral scores, or compatibility fallback values are applied. Component unavailable reasons — RHR: missing_age, missing_sex, missing_age_and_sex, missing_rhr; HRV-SDNN: missing_age, missing_sdnn.
 
-**Step-zero limitation:** Zero step count is currently treated as unavailable for BHI component scoring (`steps > 0` required). The implementation cannot distinguish a true zero-step day from an absent daily step record in this path. The steps component is omitted and remaining BHI weights are renormalized.
+**Steps missing vs zero-step day:** Real-data path: `server/health/dao.js` `assembleStore` sets `stepsRecorded` / `stepsMissing` from daily step records (benchmark cases without these flags use legacy `steps > 0` as recorded). `stepsMissing: true` — no step record for the day: steps component omitted, weights renormalized; `unavailable.steps = missing_steps_record`. `steps > 0` — recorded activity: include `scoreSteps(steps)` at weight 28%. `stepsRecorded: true` with `steps === 0` — recorded zero-step day: include `scoreSteps(0)` at weight 28%; report `unavailable.steps = zero_steps_day` (transparency flag, not omission of the component).
 
 **Limitations:** Not calibrated against clinical outcomes; No comorbidity or medication adjustment; Wearable proxy signals only.
 
