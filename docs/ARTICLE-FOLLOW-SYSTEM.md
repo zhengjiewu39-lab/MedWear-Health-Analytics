@@ -2,7 +2,7 @@
 
 > **原则：** 以本仓库 **代码 + `npm run evaluate` 输出** 为唯一事实来源。更新 Word/LaTeX 时 **只从本文与 JSON 抄数字与表述**，不要为迁就旧稿反改系统或主基准公式。
 >
-> Generated: `2026-09-20T00:44:19.705Z` · Commit: [`bfa5f2318fc7ffa69182150a3b7da4add3855123`](https://github.com/zhengjiewu39-lab/MedWear-Health-Analytics/commit/bfa5f2318fc7ffa69182150a3b7da4add3855123)
+> Generated: `2026-09-20T00:45:15.248Z` · Commit: [`ef86e6ae6d27e7d38a7e3fa49f1046efe67949dc`](https://github.com/zhengjiewu39-lab/MedWear-Health-Analytics/commit/ef86e6ae6d27e7d38a7e3fa49f1046efe67949dc)
 
 ---
 
@@ -10,7 +10,7 @@
 
 ```text
 Repository: https://github.com/zhengjiewu39-lab/MedWear-Health-Analytics
-Freeze commit: bfa5f2318fc7ffa69182150a3b7da4add3855123
+Freeze commit: ef86e6ae6d27e7d38a7e3fa49f1046efe67949dc
 Freeze tag: medwear-manuscript-v1.2.3
 
 Primary reproduction:
@@ -29,7 +29,7 @@ Note: runtime-settings.json affects live UI only; npm run evaluate does NOT read
 
 ## Data availability（中文摘要）
 
-- 仓库：https://github.com/zhengjiewu39-lab/MedWear-Health-Analytics，冻结 tag `medwear-manuscript-v1.2.3` · commit `bfa5f2318fc7ffa69182150a3b7da4add3855123`
+- 仓库：https://github.com/zhengjiewu39-lab/MedWear-Health-Analytics，冻结 tag `medwear-manuscript-v1.2.3` · commit `ef86e6ae6d27e7d38a7e3fa49f1046efe67949dc`
 - 主基准：合成队列 n=5000、seed=42；引擎 **MedWear-AnalyticsCore-v1** vs 参考 **independentSyntheticReference-v1**
 - 主结果数字来源：`npm run evaluate` → `benchmarks/results/latest.json`
 - 次要分析（Bland–Altman、±5/8/10/12、MAD 路径审计）：`npm run analyze:manuscript-secondary` → `manuscript-secondary.json`
@@ -85,7 +85,7 @@ Note: runtime-settings.json affects live UI only; npm run evaluate does NOT read
 
 ## 改稿工作流（你不再「改系统迁就文章」）
 
-1. `git checkout medwear-manuscript-v1.2.3`（或 commit `bfa5f2318fc7ffa69182150a3b7da4add3855123`）
+1. `git checkout medwear-manuscript-v1.2.3`（或 commit `ef86e6ae6d27e7d38a7e3fa49f1046efe67949dc`）
 2. `npm run docs:manuscript-sync` — 刷新本文
 3. `npm run evaluate` + `npm run analyze:manuscript-secondary` — 若需重算 JSON
 4. 在 Word/LaTeX 中 **替换** Results 数字、Data availability、探索性模块措辞 → 以本文为准
